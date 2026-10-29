@@ -1,0 +1,225 @@
+[33mc29c1d5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Actualizar Sistema EDD
+[33m117c977[m first commit
+[33ma48830c[m Primer commit del proyecto
+[33mc7b2fb1[m Mejorar portal EDD, documentos publicos y gestion de contacto
+[33m97f5d15[m Actualizar paginas publicas, menu administrativo y manejo de errores CURP
+[33m470612a[m Subir cambios del proyecto
+[33mb78ab3e[m Subir cambios del proyecto
+[33m95e59ea[m Merge pull request #28 from Viter-Lopez-Caballero/dev
+[33m5dcbdbd[m [FIX] Size Navbar
+[33m1fa8d8d[m Merge pull request #27 from Viter-Lopez-Caballero/dev
+[33m8aaf729[m [FIX] Recognitions
+[33meeeb572[m Merge pull request #26 from Viter-Lopez-Caballero/dev
+[33m6efd9fa[m [FIX] New revision
+[33ma8be85d[m Merge pull request #25 from Viter-Lopez-Caballero/dev
+[33m30a387b[m [ADD] Design and fix sidebar
+[33m93ba569[m [FIX] Bugs and vulnerabilities
+[33m1eb3d0c[m Merge pull request #24 from Viter-Lopez-Caballero/dev
+[33m876ffd7[m [ADD] New design on Documents
+[33medad8f2[m Merge pull request #23 from Viter-Lopez-Caballero/dev
+[33m923f677[m [DELETE] Markdowns
+[33md61014c[m Merge pull request #22 from Viter-Lopez-Caballero/dev
+[33m97a589e[m [FIX] Changes
+[33me71b5a0[m Merge pull request #21 from Viter-Lopez-Caballero/dev
+[33m34e4862[m [FIX] Exposed routes
+[33m29f1943[m Merge pull request #20 from Viter-Lopez-Caballero/dev
+[33m42c6841[m Merge pull request #77 from 20203tn072/feature/responsive
+[33mc4b4feb[m Merge pull request #76 from 20203tn072/feature/templates
+[33m81f04d1[m [ADD] Change Abraham
+[33m00db5a1[m feat: fixed bugs
+[33m00e28c8[m Merge pull request #19 from Viter-Lopez-Caballero/dev
+[33m2c527c3[m Merge pull request #75 from 20203tn072/feature/responsive
+[33m691e184[m [FIX] New change Abraham
+[33ma8b6d4a[m Merge pull request #74 from 20203tn072/feature/responsive
+[33m935462e[m Merge pull request #73 from 20203tn072/feature/templates
+[33md449757[m feat
+[33mf3bb9c7[m Merge pull request #72 from 20203tn072/feature/responsive
+[33mbe85d02[m Merge pull request #18 from Viter-Lopez-Caballero/dev
+[33me3366a6[m [ADD] New design to tables on movile
+[33m08a4b30[m Merge pull request #71 from 20203tn072/feature/responsive
+[33m2a6e7d2[m Merge pull request #17 from Viter-Lopez-Caballero/dev
+[33m6af590c[m [FIX] New responsive on cellphones
+[33m57347d7[m Merge pull request #70 from 20203tn072/feature/responsive
+[33m6f0ac62[m Merge pull request #69 from 20203tn072/feature/templates
+[33maed1f70[m feat: fixed bugs
+[33md466a2a[m Merge pull request #16 from Viter-Lopez-Caballero/dev
+[33m35b7e5b[m [ADD] New responsive data
+[33m0a45147[m Merge pull request #15 from Viter-Lopez-Caballero/dev
+[33mab3f1a8[m Merge pull request #68 from 20203tn072/feature/tests
+[33m587c876[m [ADD] New img and fix documents
+[33mb9dfd22[m Merge pull request #14 from Viter-Lopez-Caballero/dev
+[33m4d91f15[m [ADD] fix
+[33mc03a360[m Merge pull request #13 from Viter-Lopez-Caballero/dev
+[33ma362aea[m Merge pull request #67 from 20203tn072/feature/tests
+[33mb316ee8[m Merge pull request #66 from 20203tn072/feature/templates
+[33m53a2ce3[m feat: fixed bugs
+[33m838b0bd[m Merge pull request #12 from Viter-Lopez-Caballero/dev
+[33m932e251[m [FIX] Change design and fix bugs
+[33m65bf587[m Merge pull request #65 from 20203tn072/feature/tests
+[33mdf38a8d[m Merge pull request #11 from Viter-Lopez-Caballero/dev
+[33ma2e076f[m [ADD] New img and fix documents
+[33m711fdec[m Merge pull request #10 from Viter-Lopez-Caballero/dev
+[33m6b5b37d[m [FIX] Change
+[33m504f41b[m Merge pull request #9 from Viter-Lopez-Caballero/dev
+[33ma9be7f3[m [FIX] Change
+[33mf03bd04[m Merge pull request #8 from Viter-Lopez-Caballero/dev
+[33mebe8ad0[m [FIX] Change
+[33m845a53d[m Merge pull request #7 from Viter-Lopez-Caballero/dev
+[33m3c697b8[m [FIX] Change
+[33m775aaba[m Merge pull request #6 from Viter-Lopez-Caballero/dev
+[33m84a4dfa[m [FIX] Change
+[33mde5cbbb[m Merge pull request #5 from Viter-Lopez-Caballero/dev
+[33m68aab23[m [FIX] Change
+[33mfc62c5a[m Merge pull request #4 from Viter-Lopez-Caballero/dev
+[33m31efe6f[m [FIX] Change
+[33maf95bbd[m Merge pull request #3 from Viter-Lopez-Caballero/dev
+[33madde217[m [FIX] .env
+[33m88d758c[m Merge pull request #2 from Viter-Lopez-Caballero/dev
+[33m90add1d[m [FIX] Problem with branch fixes
+[33m37ca847[m Merge pull request #1 from Viter-Lopez-Caballero/dev
+[33mda387d0[m [FIX] Delete md not important
+[33mcd5d6a2[m Merge pull request #64 from 20203tn072/feature/tests
+[33mb6d3bda[m [FIX] Only design and fix bugs
+[33m0a5de65[m Merge pull request #63 from 20203tn072/feature/tests
+[33mbf850a7[m [FIX] Bug fixes into Apply on Teachers
+[33ma3744bd[m Merge pull request #62 from 20203tn072/feature/templates
+[33m68672c6[m feat: changes in documents, announcement and evaluation
+[33mab693a6[m Merge pull request #61 from 20203tn072/feature/tests
+[33mcfbbe55[m [ADD] Bug fixs
+[33mde0b32e[m Merge pull request #60 from 20203tn072/feature/tests
+[33mae566c4[m [ADD] Bug fixs
+[33m10999b2[m [ADD] Bug fixs
+[33m7c277f7[m Merge pull request #59 from 20203tn072/feature/templates
+[33m22689f2[m feat: fix bugs
+[33m543aa89[m Merge pull request #58 from 20203tn072/feature/tests
+[33m9ba119d[m [FIX] Bug fixes
+[33mc04824d[m Merge pull request #56 from 20203tn072/feature/tests
+[33ma093ed3[m [FIX] Bugs fixes
+[33m4b64108[m Merge pull request #55 from 20203tn072/feature/tests
+[33m19c360b[m [FIX] Logic and design
+[33mdf0d0a9[m [FIX] First tests
+[33m75c5606[m Merge pull request #54 from 20203tn072/feature/tests
+[33m9e85994[m [ADD] New tests
+[33mbde5e62[m Merge pull request #53 from 20203tn072/feature/templates
+[33m37d5135[m feat: change template logic
+[33m0939a6f[m Merge pull request #52 from 20203tn072/feature/respawn
+[33m710ef12[m [FIX] Validations
+[33m45dd7d1[m Merge pull request #51 from 20203tn072/feature/respawn
+[33m79b2423[m [ADD] New design in page Back and new page Announcement in Landing Page
+[33me607d4d[m Merge pull request #50 from 20203tn072/feature/respawn
+[33m5359290[m [ADD] New view Respaldo
+[33mde0d7e0[m Merge pull request #49 from 20203tn072/feature/templates
+[33m1c8fc41[m feat: refactor logic teplate
+[33md821e36[m feat: refactor date recognition
+[33me0f6169[m Merge pull request #48 from 20203tn072/feature/templates
+[33m3c86c39[m feat: fix
+[33mc5b8f5b[m Merge pull request #47 from 20203tn072/feature/templates
+[33mb9d1737[m feat: fix migrations
+[33m0f34b86[m Merge pull request #46 from 20203tn072/feature/desing
+[33m807dacf[m [FIX
+[33me1fbaab[m Merge pull request #45 from 20203tn072/feature/templates
+[33mf64c787[m feat: change template logic
+[33m74b8c77[m Merge pull request #44 from 20203tn072/feature/desing
+[33m6a7ac81[m [ADD] Multirol sidebar fix, alerts desing to approve and reject on change
+[33m864e061[m Merge pull request #43 from 20203tn072/feature/design
+[33m083f07c[m Merge branch 'feature/design' of https://github.com/20203tn072/BecasLaravel_AD into feature/design
+[33m2b02d16[m feat: add validations
+[33m1d43131[m Merge pull request #42 from 20203tn072/feature/desing
+[33m1aba0c6[m [ADD] New design and create notificacition to new Announcement
+[33me723d69[m Merge pull request #41 from 20203tn072/feature/desing
+[33m0859b60[m [FIX] New designs in some views
+[33mfee030f[m Merge pull request #40 from 20203tn072/feature/desing
+[33m302426a[m Merge pull request #38 from 20203tn072/feature/desing
+[33m055d04d[m [FIX] Design almost ready in Superadmin and Teacher
+[33mb37fa45[m Merge pull request #36 from 20203tn072/feature/design
+[33m1094c29[m feat: change design
+[33m03b47b3[m Merge pull request #35 from 20203tn072/feature/design
+[33md491e1d[m [FIX] Announcements calendar fix and designs
+[33md95a99e[m Merge pull request #34 from 20203tn072/feature/design
+[33m2470b57[m Merge branch 'dev' of https://github.com/20203tn072/BecasLaravel_AD into feature/design
+[33m1b4e3e0[m feat: changes in recognitions and evaluation
+[33m1a41471[m Merge pull request #33 from 20203tn072/feature/design
+[33m17137d7[m [FIX] Design Dashboard finally complete, only i will check the pages or module to use PDF or Image, i need change the view, to modal a into the page
+[33m92b9d11[m Merge pull request #32 from 20203tn072/feature/design
+[33m1e28732[m [ADD] Alerts Design and fix error with announcement
+[33ma975473[m [FIX] Design, also no yet
+[33ma4522fb[m feat: refactor
+[33m34e8b30[m Merge pull request #31 from 20203tn072/feature/design
+[33m4e06fec[m feat: add template module, and design changes
+[33ma7c7e9a[m Merge pull request #30 from 20203tn072/feature/design
+[33mebbc3bc[m [NEW] New calendar design and fix all the module Catalog and Security in Superadmin
+[33m4678da1[m Merge pull request #29 from 20203tn072/feature/notifications
+[33me27d5ac[m [ADD] Notifications
+[33m9fadf95[m Merge pull request #28 from 20203tn072/feature/desing
+[33m3c5e69c[m [ADD] Notifications
+[33m1395fc2[m Merge pull request #27 from 20203tn072/feature/design
+[33m03f5ec6[m feat: refactor design and alerts
+[33maf28fcb[m [ADD] Brevo connection correct and Forgot Password the same, only Notifications are the next stage
+[33ma8c2234[m Merge pull request #25 from 20203tn072/feature/desing
+[33m15fa142[m [ADD] New screen Reset Password
+[33m5017838[m Merge pull request #24 from 20203tn072/feature/refactor
+[33md71d9a8[m [NEW FIX] Reactorice completly, but maybe someone views are lazzy, We need put Brevo and Notifications
+[33mcaf347b[m Merge pull request #23 from 20203tn072/feature/refactor
+[33m6d8fbe4[m [FIX] Refactorice completly, only the design and the logic are unfinished but it'll be finished in the next few days
+[33m58ba75f[m feata: first part refator
+[33m2e5dd7f[m feat: changes in announcements
+[33mbc8298c[m Merge pull request #22 from 20203tn072/feature/dashboard
+[33m40012b0[m feat: resolve fixes
+[33m621fe32[m feat: resolve problems
+[33m952b748[m feat: The application became responsive
+[33mdd04b2b[m Merge pull request #21 from 20203tn072/feature/dashboard
+[33m189f570[m feat: add dashboar admin module, fixed errors
+[33mc443fa1[m Merge pull request #20 from 20203tn072/feature/lalo
+[33m0068348[m [ADD] Pantalla de Docuentos y documentos dinámicos en funcionamiento pero no terminados, algunos diseños casi por terminar pero aún falta bastante con respecto al diseño
+[33meec3620[m feat: create all modules of evaluator
+[33m029c6af[m Merge pull request #19 from 20203tn072/feature/lalo
+[33mfca20ad[m [FIX] Pequeños cambios de Usuario
+[33md63326e[m Merge pull request #18 from 20203tn072/feature/lalo
+[33mef41d4a[m [FIX] Actualización de Diseños y aún faltan algunos detalles en superadmin
+[33mab9e4ff[m Merge pull request #17 from 20203tn072/feature/lalo
+[33m8d30dca[m [ADD] Funcionamiento de Contacto listo
+[33m532346f[m Merge pull request #16 from 20203tn072/feature/admin
+[33m4ac33fd[m Merge pull request #15 from 20203tn072/feature/lalo
+[33mc2185da[m [ADD] Funcionamiento de Contacto listo
+[33ma8dd227[m fix: fixed errors
+[33mb3f4ad3[m Merge pull request #14 from 20203tn072/feature/lalo
+[33mc6a3772[m [FIX] Cambio estructural
+[33m31530c0[m Merge pull request #13 from 20203tn072/feature/admin
+[33m582b21c[m Merge pull request #12 from 20203tn072/feature/lalo
+[33m5a3b6dc[m [FIX] Cambios en Convocatorias, Registro de Usuario y diseños menores
+[33m324fffe[m [FIX] Cambios en Convocatorias, Registro de Usuario y diseños menores
+[33me7f9061[m feat: creat all modules for admin
+[33madb4c1a[m feat: add inicio and convocatoria modules for docentes
+[33ma5ec265[m Merge pull request #11 from 20203tn072/feature/lalo
+[33mb777672[m [ADD] Registro de Usuario Docente funcionando
+[33m5d406e0[m Merge pull request #10 from 20203tn072/feature/lalo
+[33mcd3cf91[m [FIX] Error corregido al salir del sistema aún teniendo las credenciales
+[33m76cb872[m Merge pull request #9 from 20203tn072/feature/lalo
+[33m775823a[m [ADD] Conexión con API externa lista, búsqueda por CURP
+[33mb97caec[m Merge pull request #8 from 20203tn072/feature/lalo
+[33md814d74[m [FIX] Seeders actualizados de Instituciones, Áreas y Subáreas
+[33m51c98f3[m Merge pull request #7 from 20203tn072/feature/lalo
+[33m2b153e0[m [FIX] Doble tabla convocatoria eliminada
+[33md9757ab[m Merge pull request #6 from 20203tn072/feature/lalo
+[33m400c860[m Merge branch 'dev' into feature/lalo
+[33m5fdae93[m [ADD] Calendario y Convocatoria aún por terminar
+[33m353e64f[m Merge pull request #5 from 20203tn072/feature/superAdmin
+[33m12c8972[m fix: fix errors
+[33m2c6b018[m feat: Control de Solicitudes module, export and import data
+[33m8dfdddf[m [FIX] Refactorización menor
+[33m2d35ee0[m [FIX] Pantallas de Login y Register
+[33m047ab33[m Merge pull request #4 from 20203tn072/feature/lalo
+[33m973dae7[m [FIX] Diseño de Pantallas Landing Page Completas
+[33m795fef9[m feat: create Área Prioritaria, Sub Área and Rubrica module
+[33m8f1d176[m feat: create institution module
+[33m8d38680[m [FIX] Diseño de Pantalla Principal lista, faltan Convo, Docs, Contacto
+[33m0b87b0f[m [ADD] Diseños listos para las pantallas de Seguridad
+[33md874185[m [ADD] Cambios de Abraham agregados
+[33m9a70bb1[m [FIX] Casi trueno todo
+[33md44a6a6[m [FIX] Cambios en el sidebar, ya funcionales
+[33m9ee0505[m [ADD] Sidebar Terminado, con detalles de dirección en algunas pantallas (Por corregir)
+[33me74dfc7[m [FIX] New changes to Abraham
+[33md35c19a[m [FIX] Reorganizacion de datos
+[33m1e21cea[m feat: login and the superadmi sidebar added
+[33med2be1f[m style: Update colors, buttons and titles
+[33m3c0d2e3[m [CREATE] Creación del Poryecto y Landing Page
