@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Evaluation extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('admin_institution', function (\Illuminate\Database\Eloquent\Builder $query) {
+            if (\App\Services\AdminInstitutionAccess::restricted()) {
+                $query->whereIn('evaluations.application_id', \App\Models\Application::query()->select('applications.id'));
+            }
+        });
+    }
+
     use HasFactory;
 
     protected $table = 'evaluations';
@@ -20,7 +29,6 @@ class Evaluation extends Model
         'answers',
         'comment',
         'deadline_at',
-        'review_level',
     ];
 
     protected $casts = [
@@ -28,12 +36,6 @@ class Evaluation extends Model
         'score' => 'decimal:2',
         'deadline_at' => 'datetime',
     ];
-
-    public function scopeVisibleTo($query, User $evaluator)
-    {
-        return $query->where('evaluator_id', $evaluator->id)
-            ->whereHas('application', fn ($q) => $q->withinEvaluatorScope($evaluator));
-    }
 
     // Relaciones
 
@@ -113,7 +115,7 @@ class Evaluation extends Model
      */
     public function scopePending($query)
     {
-        return $query->where('status', 'pending')->whereHas('application', fn ($q) => $q->whereColumn('applications.review_stage', 'evaluations.review_level')->where('applications.status', 'pending'));
+        return $query->where('status', 'pending');
     }
 
     /**

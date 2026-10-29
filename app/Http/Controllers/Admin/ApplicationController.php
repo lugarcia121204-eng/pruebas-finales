@@ -48,7 +48,7 @@ class ApplicationController extends Controller
         $applications = $query->paginate($filters->rows)->withQueryString();
 
         // Get Evaluators for the Assignment Modal
-        $evaluators = User::role('Evaluador')->where('evaluator_status', 'authorized')->whereNotNull('email_verified_at')->with('institution')->get();
+        $evaluators = \App\Services\AdminInstitutionAccess::users(User::role('Evaluador'))->with('institution')->get();
 
         // Add rows to filters for the view
         $filters->rows = (int) $filters->rows;
@@ -98,8 +98,10 @@ class ApplicationController extends Controller
         ])
             ->findOrFail($id);
 
-        $evaluators = User::role('Evaluador')->with('institution')->get()
-            ->filter(fn ($user) => $user->canEvaluateApplication($application))->values();
+        $evaluators = \App\Services\AdminInstitutionAccess::users(User::role('Evaluador'))
+            ->where('id', '!=', $application->user_id)
+            ->with('institution')
+            ->get();
 
         return Inertia::render('Admin/Applications/AssignEvaluator', [
             'application' => (new ApplicationResource($application))->resolve(),
@@ -133,7 +135,23 @@ class ApplicationController extends Controller
      */
     public function verdict(\App\Http\Requests\SubmitAdminVerdictRequest $request, $id)
     {
-        throw \Illuminate\Validation\ValidationException::withMessages(['status' => 'El resultado definitivo se emite mediante las evaluaciones Local, Estatal y Nacional.']);
+        $validated = $request->validated();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($id, $validated) {
+            $application = \App\Models\Application::lockForUpdate()->findOrFail($id);
+            $statusChanged = $application->status !== $validated['status'];
+            $application->status = $validated['status'];
+            $application->admin_comment = $validated['status'] === 'rejected' ? $validated['comentario'] : null;
+            $application->save();
+
+            app(\App\Services\FinalRecognitionService::class)->sync($application);
+
+            if ($statusChanged) {
+                $this->notificationService->notifyLocalApplicationVerdict($application);
+            }
+        });
+
+        return to_route('admin.applications.index')->with('success', 'Veredicto registrado correctamente.');
     }
 
     /**

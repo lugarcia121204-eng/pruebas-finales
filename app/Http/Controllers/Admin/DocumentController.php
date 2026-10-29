@@ -22,6 +22,7 @@ class DocumentController extends Controller
     }
     public function index(Request $request)
     {
+        $request->validate(['search' => ['nullable', 'string', 'max:255'], 'rows' => ['nullable', 'integer', 'in:5,10,15,25,50,100'], 'state' => ['nullable', 'string', 'max:255'], 'order' => ['nullable', 'in:id,created_at'], 'direction' => ['nullable', 'in:asc,desc']]);
         $search = $request->input('search');
         $rows = $request->input('rows', 10);
         $order = $request->input('order', 'created_at');

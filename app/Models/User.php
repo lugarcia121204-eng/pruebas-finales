@@ -64,39 +64,6 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function evaluatorInstitution(): BelongsTo
-    {
-        return $this->belongsTo(Institution::class, 'evaluator_institution_id');
-    }
-
-    public function evaluatorState(): BelongsTo
-    {
-        return $this->belongsTo(State::class, 'evaluator_state_id');
-    }
-
-    public function isAuthorizedEvaluator(): bool
-    {
-        return $this->hasRole('Evaluador') && $this->email_verified_at
-            && $this->evaluator_status === 'authorized'
-            && match ($this->evaluator_level) {
-                'local' => $this->evaluatorInstitution()->exists(),
-                'state' => $this->evaluatorState()->exists(),
-                'national' => true,
-                default => false,
-            };
-    }
-
-    public function canEvaluateApplication(Application $application): bool
-    {
-        if (!$this->isAuthorizedEvaluator() || $application->user_id === $this->id) {
-            return false;
-        }
-        return $application->status === 'pending'
-            && $application->review_stage === $this->evaluator_level
-            && !$application->evaluations()->where('evaluator_id', $this->id)->whereNotNull('review_level')->where('review_level', '!=', $this->evaluator_level)->exists()
-            && $application->newQuery()->whereKey($application->id)->withinEvaluatorScope($this)->exists();
-    }
-
     public function isSuperAdmin(): bool
     {
         return $this->hasRole('Super Admin');
@@ -167,9 +134,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRolesList(): array
     {
         return $this->roles()
-            ->whereIn('name', ['Admin', 'Evaluador', 'Docente'])
+            ->whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente'])
             ->pluck('name')
-            ->toArray();
+            ->unique()->values()->toArray();
     }
 
     /**
@@ -188,7 +155,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return match ($role) {
             'Super Admin' => 'LayoutAuthenticated',
-            'Admin' => 'AdminLayout',
+            'Admin', 'Admin Nacional' => 'AdminLayout',
             'Evaluador' => 'EvaluatorLayout',
             'Docente' => 'TeacherLayout',
             default => 'TeacherLayout',

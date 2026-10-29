@@ -28,6 +28,11 @@ class UpdateUserRequest extends FormRequest
             'password'          => 'nullable|max:20',
             'roles'             => 'required|array',
             'roles.*'           => 'exists:roles,id',
+            'institution_id' => [
+                Rule::excludeIf(fn () => \Spatie\Permission\Models\Role::where('name', 'Admin Nacional')->whereIn('id', (array) $this->input('roles', []))->exists()
+                    || !\Spatie\Permission\Models\Role::where('name', 'Admin')->whereIn('id', (array) $this->input('roles', []))->exists()),
+                'required', 'integer', Rule::exists('institutions', 'id')->whereNull('deleted_at'),
+            ],
         ];
     }
 
@@ -69,6 +74,8 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'institution_id.required' => 'Selecciona la institución del administrador.',
+            'institution_id.exists' => 'Selecciona una institución válida.',
             'name.required'         => 'El nombre completo es obligatorio',
             'name.max'              => 'El nombre no puede exceder 255 caracteres',
             'email.required'        => 'El correo electrónico es obligatorio',

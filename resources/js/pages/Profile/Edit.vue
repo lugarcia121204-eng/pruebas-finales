@@ -47,6 +47,9 @@ const isSuperAdmin = computed(() => {
     return props.user.roles && props.user.roles.some(role => role.name === 'Super Admin');
 });
 
+const isNationalAdmin = computed(() => props.user.roles?.some(role => role.name === 'Admin Nacional'));
+const requiresAcademicData = computed(() => !isSuperAdmin.value && !isNationalAdmin.value);
+
 const filteredSubAreas = computed(() => {
     if (!profileForm.priority_area_id) return [];
     return props.subAreas.filter(subArea => subArea.priority_area_id === profileForm.priority_area_id);
@@ -95,7 +98,7 @@ const updateProfile = () => {
         profileForm.errors.email = 'El correo electrónico es obligatorio';
         return;
     }
-    if (!isSuperAdmin.value) {
+    if (requiresAcademicData.value) {
         if (!profileForm.institution_id) {
             profileForm.errors.institution_id = 'Debes seleccionar una institución';
             return;
@@ -216,7 +219,7 @@ const updatePassword = () => {
                     </div>
 
                     <!-- Institution (only for non-SuperAdmin) -->
-                    <div v-if="!isSuperAdmin">
+                    <div v-if="requiresAcademicData">
                         <label for="institucion" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Institución: <span class="text-red-500">*</span></label>
                         <VueSelect
                             v-model="profileForm.institution_id"
@@ -239,7 +242,7 @@ const updatePassword = () => {
                     </div>
 
                     <!-- Priority Area (only for non-SuperAdmin) -->
-                    <div v-if="!isSuperAdmin">
+                    <div v-if="requiresAcademicData">
                         <label for="priority_area" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Área Prioritaria: <span class="text-red-500">*</span></label>
                         <VueSelect
                             v-model="profileForm.priority_area_id"
@@ -262,7 +265,7 @@ const updatePassword = () => {
                     </div>
 
                     <!-- Sub Area (only for non-SuperAdmin) -->
-                    <div v-if="!isSuperAdmin">
+                    <div v-if="requiresAcademicData">
                         <label for="sub_area" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Sub Área: <span class="text-red-500">*</span></label>
                         <VueSelect
                             v-model="profileForm.sub_area_id"

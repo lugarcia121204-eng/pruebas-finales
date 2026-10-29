@@ -92,7 +92,10 @@ const getCatalogItems = (routePrefix) => [
 // Incluye Dashboard como primer item de cada sección.
 // ─────────────────────────────────────────────────────────────────────────────
 export const roleMenuItems = {
+    "Admin Nacional": [{ label: "Reportes", route: "reports.closed-announcements", icon: mdiClipboardTextOutline, iconName: "ClipboardList" }, { label: "Panel principal", route: "national-review.dashboard", icon: mdiHome }, { label: "Solicitudes nacionales", route: "national-review.index", icon: mdiFileDocumentMultiple }, { label: "Reconocimientos", route: "national-review.recognitions.index", icon: mdiStar }],
     Admin: [
+        { label: "Reportes", route: "reports.closed-announcements", icon: mdiClipboardTextOutline, iconName: "ClipboardList" },
+        { label: "Chat de la sede", route: "institution-chat.index", icon: mdiAccountSupervisor, iconName: "MessageCircle" },
         {
             label: "Inicio",
             route: "admin.dashboard",
@@ -125,13 +128,14 @@ export const roleMenuItems = {
         },
     ],
     Evaluador: [
+        { label: "Evaluaci\u00f3n Nacional", route: "national-evaluations.index", icon: mdiSchool },
         {
             label: "Inicio",
             route: "evaluator.dashboard",
             icon: mdiHome,
         },
         {
-            label: "Evaluaciones",
+            label: "Evaluaci\u00f3n Local",
             route: "evaluator.evaluations.index",
             icon: mdiSchool,
             permission: "evaluator.evaluations.index",
@@ -144,6 +148,7 @@ export const roleMenuItems = {
         },
     ],
     Docente: [
+        { label: "Chat de la sede", route: "institution-chat.index", icon: mdiAccountSupervisor, iconName: "MessageCircle" },
         {
             label: "Inicio",
             route: "teacher.dashboard",
@@ -166,6 +171,7 @@ export const roleMenuItems = {
 
 // Etiquetas de sección para el sidebar multi-rol
 export const roleSectionLabels = {
+    "Admin Nacional": "Administraci\u00f3n nacional",
     Admin: "Gestión de Administrador",
     Evaluador: "Gestión de Evaluador",
     Docente: "Gestión de Docente",
@@ -175,10 +181,24 @@ export const roleSectionLabels = {
 // Configuraciones completas para layouts de un solo rol (sin cambios)
 // ─────────────────────────────────────────────────────────────────────────────
 export const menuConfigs = {
+    nationalAdmin: [
+        { label: "Inicio", icon: mdiHome, iconName: "Home", adminGroup: true, items: [
+            { label: "Panel principal", route: "national-review.dashboard", icon: mdiHome, iconName: "Home" },
+        ] },
+        { label: "Gesti\u00f3n", icon: mdiOfficeBuilding, iconName: "Building2", adminGroup: true, items: [
+            { label: "Solicitudes nacionales", route: "national-review.index", icon: mdiFileDocumentMultiple, iconName: "FileText" },
+            { label: "Reportes", route: "reports.closed-announcements", icon: mdiClipboardTextOutline, iconName: "ClipboardList" },
+            { label: "Reconocimientos", route: "national-review.recognitions.index", icon: mdiStar, iconName: "Award" },
+        ] },
+    ],
     superAdmin: [
-        { label: "Inicio", icon: mdiHome, iconName: "Home", items: [{ label: "Panel principal", route: "superadmin.dashboard", icon: mdiHome, iconName: "Home" }] },
+        { label: "Inicio", icon: mdiHome, iconName: "Home", items: [
+            { label: "Panel principal", route: "superadmin.dashboard", icon: mdiHome, iconName: "Home" },
+            { label: "Etapa nacional", route: "superadmin.national-stage.index", icon: mdiFileDocumentMultiple, iconName: "FileText" },
+        ] },
         { label: "Administración", icon: mdiOfficeBuilding, iconName: "Building2", items: [
             { label: "Mensajes de contacto", route: "superadmin.contact-messages.index", icon: mdiBell, iconName: "Mail" },
+            { label: "Reportes", route: "reports.closed-announcements", icon: mdiClipboardTextOutline, iconName: "ClipboardList" },
             { label: "Control de Solicitudes", route: "superadmin.control-applications", icon: mdiFileDocumentMultiple, iconName: "FileText" },
             { label: "Convocatorias", route: "announcements.index", icon: mdiBullhorn, iconName: "Megaphone", permission: "announcements.index" },
         ] },
@@ -195,6 +215,8 @@ export const menuConfigs = {
         ] },
         { label: "Gestión", icon: mdiOfficeBuilding, iconName: "Building2", adminGroup: true, items: [
             { label: "Solicitudes", route: "admin.applications.index", iconName: "FileText", icon: mdiFileDocumentMultiple, permission: "applications.index" },
+            { label: "Chat de la sede", route: "institution-chat.index", icon: mdiAccountSupervisor, iconName: "MessageCircle" },
+            { label: "Reportes", route: "reports.closed-announcements", icon: mdiClipboardTextOutline, iconName: "ClipboardList" },
             { label: "Reconocimiento", route: "admin.recognitions.index", iconName: "Award", icon: mdiStar, permission: "recognitions.index" },
             { label: "Respaldos", route: "superadmin.backup.index", iconName: "Database", icon: mdiDatabase, permission: "backup.index" },
         ] },
@@ -207,6 +229,7 @@ export const menuConfigs = {
             { label: "Panel principal", route: "teacher.dashboard", icon: mdiHome, iconName: "Home" },
         ] },
         { label: "Gestión", icon: mdiOfficeBuilding, iconName: "Building2", items: [
+            { label: "Chat de la sede", route: "institution-chat.index", icon: mdiAccountSupervisor, iconName: "MessageCircle" },
             { label: "Convocatorias", route: "teacher.announcements.index", icon: mdiBullhorn, iconName: "Megaphone", permission: "announcements.index" },
             { label: "Reconocimientos", route: "teacher.recognitions.index", icon: mdiStar, iconName: "Award", permission: "teacher.recognitions.index" },
         ] },
@@ -218,7 +241,8 @@ export const menuConfigs = {
             { label: "Panel principal", route: "evaluator.dashboard", icon: mdiHome, iconName: "Home" },
         ] },
         { label: "Gestión", icon: mdiOfficeBuilding, iconName: "Building2", items: [
-            { label: "Evaluaciones", route: "evaluator.evaluations.index", icon: mdiSchool, iconName: "ClipboardList", permission: "evaluator.evaluations.index" },
+            { label: "Evaluaci\u00f3n Local", route: "evaluator.evaluations.index", icon: mdiSchool, iconName: "ClipboardList", permission: "evaluator.evaluations.index" },
+            { label: "Evaluaci\u00f3n Nacional", route: "national-evaluations.index", icon: mdiSchool, iconName: "ClipboardList" },
             { label: "Reconocimientos", route: "evaluator.recognitions.index", icon: mdiStar, iconName: "Award", permission: "evaluator.recognitions.index" },
         ] },
         { label: "Seguridad", icon: mdiSecurity, iconName: "Shield", items: getSecurityItems("security.").map((item, index) => ({ ...item, iconName: ["Layers", "Lock", "KeyRound", "Users"][index] })) },

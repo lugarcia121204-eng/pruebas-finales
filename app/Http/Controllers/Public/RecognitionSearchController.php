@@ -32,7 +32,7 @@ class RecognitionSearchController extends Controller
 
         if ($searched) {
             $query = Recognition::with(['user', 'announcement', 'template'])
-                ->where('active', true)
+                ->publishable()
                 ->whereNotNull('identifier')
                 ->where(function ($q) {
                     $q->where('type', 'evaluator')
@@ -64,6 +64,7 @@ class RecognitionSearchController extends Controller
                 return [
                     'id'            => $r->id,
                     'folio'         => $r->identifier,
+                    'stage' => $r->type === 'postulante' ? $r->stage : null,
                     'participant'   => $r->user ? $r->user->name : 'N/A',
                     'template_name' => $r->template ? $r->template->name : 'Reconocimiento',
                     'template_type' => $r->template ? $r->template->type : null,
@@ -92,7 +93,7 @@ class RecognitionSearchController extends Controller
     {
         $recognition = Recognition::with(['user', 'announcement', 'template'])
             ->where('identifier', $identifier)
-            ->where('active', true)
+            ->publishable()
             ->where(function ($q) {
                 $q->where('type', 'evaluator')
                   ->orWhere(function ($sub) {

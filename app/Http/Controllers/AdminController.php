@@ -26,7 +26,7 @@ class AdminController extends Controller
         // Top Institutions by Applications Count (for chart/progress bars)
         $topInstitutions = \App\Models\Institution::with('state')
             ->withCount('applications')
-            ->having('applications_count', '>', 0)
+            ->whereHas('applications')
             ->orderByDesc('applications_count')
             ->paginate(5, ['*'], 'top_page')
             ->withQueryString();

@@ -33,3 +33,10 @@ yarn-error.log
 /public/documents/**/*.doc
 !/public/documents/**/.gitkeep
 !/public/documents/**/README.md
+
+# Private browser sessions and generated test reports
+/.auth/
+/playwright-report/
+/test-results/
+**/~$*
+/storage/app/firma/

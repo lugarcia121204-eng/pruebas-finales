@@ -6,6 +6,8 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
+    public const SYSTEM_ROLES = ['Super Admin', 'Admin', 'Admin Nacional', 'Evaluador', 'Docente'];
+
     protected $fillable = [
         'name',
         'guard_name',

@@ -110,7 +110,7 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, inject, ref, onMounted } from 'vue';
-import { Award, Home, Building2, Shield, Folder, Database, Layers, Lock, KeyRound, Users, Lightbulb, ListTree, FileText, ClipboardList, Files, Megaphone, ChevronDown, ChevronRight } from 'lucide-vue-next';
+import { MessageCircle, Award, Home, Building2, Shield, Folder, Database, Layers, Lock, KeyRound, Users, Lightbulb, ListTree, FileText, ClipboardList, Files, Megaphone, ChevronDown, ChevronRight } from 'lucide-vue-next';
 import { mdiViewModule } from "@mdi/js";
 
 const props = defineProps({
@@ -128,7 +128,7 @@ const page = usePage();
 const supremeSidebar = inject('supremeSidebar', ref(false));
 const administrativeSidebar = inject('administrativeSidebar', ref(false));
 const largeMenuOption = computed(() => ['Mensajes de contacto', 'Control de Solicitudes', 'Convocatorias', 'Respaldos'].includes(props.item.label));
-const supremeIcons = { Award, Home, Building2, Shield, Folder, Database, Layers, Lock, KeyRound, Users, Lightbulb, ListTree, FileText, ClipboardList, Files, Megaphone };
+const supremeIcons = { MessageCircle, Award, Home, Building2, Shield, Folder, Database, Layers, Lock, KeyRound, Users, Lightbulb, ListTree, FileText, ClipboardList, Files, Megaphone };
 const supremeIcon = computed(() => supremeIcons[props.item.iconName] || FileText);
 const firstVisibleChild = computed(() => props.item.items?.find(child => hasPermission(child.permission)));
 const collapsed = inject('sidebarCollapsed', ref(false));

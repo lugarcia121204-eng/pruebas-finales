@@ -96,6 +96,8 @@ class ApplicationService
             }
         }
 
+        $storedPaths = [];
+        try {
             return DB::transaction(function () use (
             $userId,
             $announcementId,
@@ -103,7 +105,8 @@ class ApplicationService
             $uploadedFiles,
             $fileTypes,
             $reusedDocuments,
-            $via
+            $via,
+            &$storedPaths
         ) {
             $application = Application::create([
                 'user_id' => $userId,
@@ -113,12 +116,16 @@ class ApplicationService
                 'via' => $via,
             ]);
 
+            $directory = app(TeacherDocumentStorage::class)->directory($application);
+
             // Guardar nuevos archivos subidos
             if ($uploadedFiles) {
                 foreach ($uploadedFiles as $key => $file) {
                     $typeName = $fileTypes[$key] ?? 'Documento';
 
-                    $path = $file->store('documents/' . $application->id, 'public');
+                    $path = $file->store($directory, 'public');
+                    if (!$path) throw new Exception('No se pudo guardar el documento.');
+                    $storedPaths[] = $path;
 
                     Document::create([
                         'application_id' => $application->id,
@@ -138,11 +145,17 @@ class ApplicationService
                         ->exists();
 
                     if (!$exists) {
-                        $originalDoc = Document::find($originalDocId);
-                        if ($originalDoc && Storage::disk('public')->exists($originalDoc->file_path)) {
-                            $newPath = 'documents/' . $application->id . '/' . basename($originalDoc->file_path);
-                            Storage::disk('public')->copy($originalDoc->file_path, $newPath);
+                        $originalDoc = Document::whereHas('application', fn ($query) => $query->where('user_id', $userId))->findOrFail($originalDocId);
+                        if (!Storage::disk('public')->exists($originalDoc->file_path)) {
+                            throw new Exception('El documento que deseas reutilizar no se encuentra disponible.');
+                        }
+                        if ($originalDoc) {
+                            $newPath = $directory . '/' . \Illuminate\Support\Str::uuid() . '.pdf';
+                            if (!Storage::disk('public')->copy($originalDoc->file_path, $newPath)) {
+                                throw new Exception('No se pudo copiar el documento reutilizado.');
+                            }
 
+                            $storedPaths[] = $newPath;
                             Document::create([
                                 'application_id' => $application->id,
                                 'name' => $name,
@@ -155,6 +168,10 @@ class ApplicationService
             }
 
             return $application;
-        });
+            });
+        } catch (\Throwable $error) {
+            Storage::disk('public')->delete($storedPaths);
+            throw $error;
+        }
     }
 }

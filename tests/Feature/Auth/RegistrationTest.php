@@ -18,7 +18,17 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register()
     {
+        \Illuminate\Support\Facades\Mail::fake();
+        \Spatie\Permission\Models\Role::findOrCreate('Docente', 'web');
+        $state = \Illuminate\Support\Facades\DB::table('states')->insertGetId(['name' => 'Test', 'abbreviation' => 'TS']);
+        $institution = \App\Models\Institution::create(['name' => 'Campus', 'state_id' => $state]);
+        $area = \App\Models\PriorityArea::create(['name' => 'Area']);
+        $sub = \App\Models\SubArea::create(['name' => 'Subarea', 'priority_area_id' => $area->id]);
         $response = $this->post(route('register.store'), [
+            'curp' => 'TEST900101HDFABC01',
+            'institution_id' => $institution->id,
+            'priority_area_id' => $area->id,
+            'sub_area_id' => $sub->id,
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
@@ -26,6 +36,10 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertSessionHasNoErrors()->assertRedirect(route('verification.notice'));
+        $user = \App\Models\User::where('email', 'test@example.com')->firstOrFail();
+        $this->assertTrue($user->hasRole('Docente'));
+        $this->assertNull($user->email_verified_at);
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\VerificationCode::class, fn ($mail) => $mail->hasTo($user->email));
     }
 }

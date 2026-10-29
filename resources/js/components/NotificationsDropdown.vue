@@ -82,6 +82,7 @@
                                         {{ getShortMessage(notification) }}
                                     </p>
 
+                                    <button v-if="notification.type === 'institution_chat' && notification.data?.contact_id" type="button" @click="openConversation(notification)" class="mb-2 text-xs font-semibold text-[var(--institutional-primary)] hover:underline">Abrir conversaci&oacute;n</button>
                                     <div class="flex items-center gap-2">
                                         <p class="text-[11px] text-gray-400 font-medium">
                                             {{ formatDate(notification.created_at) }}
@@ -121,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { 
@@ -136,7 +137,11 @@ const notifications = ref([]);
 const dropdownRef = ref(null);
 
 // Unread count from global props
-const unreadCount = computed(() => page.props.unreadNotifications || 0);
+const unreadCount = ref(page.props.unreadNotifications || 0);
+watch(() => page.props.unreadNotifications, value => { unreadCount.value = value || 0; });
+let notificationTimer;
+let notificationRequest;
+let fetchingNotifications = false;
 
 // Check if there are unread notifications
 const hasUnread = computed(() => notifications.value.some(n => !n.read_at));
@@ -168,16 +173,22 @@ const toggleDropdown = async () => {
 };
 
 // Load notifications
-const loadNotifications = async () => {
-    loading.value = true;
+const loadNotifications = async (showLoading = true) => {
+    if (fetchingNotifications) return;
+    fetchingNotifications = true;
+    if (showLoading) loading.value = true;
+    const controller = new AbortController();
+    notificationRequest = controller;
     try {
         const prefix = getNotificationRoute();
-        const response = await axios.get(route(`${prefix}.notifications.index`));
+        const response = await axios.get(route(`${prefix}.notifications.index`), { signal: controller.signal, timeout: 10000 });
         notifications.value = response.data.notifications?.data || [];
+        unreadCount.value = response.data.unread_count ?? unreadCount.value;
     } catch (error) {
-        console.error('Error loading notifications:', error);
+        if (!controller.signal.aborted) console.error('Error loading notifications:', error);
     } finally {
         loading.value = false;
+        fetchingNotifications = false;
     }
 };
 
@@ -196,6 +207,12 @@ const markAsRead = async (id) => {
     } catch (error) {
         console.error('Error marking as read:', error);
     }
+};
+
+const openConversation = async (notification) => {
+    await markAsRead(notification.id);
+    isOpen.value = false;
+    router.get(route('institution-chat.index', { contact: notification.data.contact_id }));
 };
 
 // Mark all as read
@@ -272,9 +289,16 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
+    const supportedRole = ['Admin', 'Docente', 'Evaluador'].includes(page.props.auth?.primaryRole);
+    if (supportedRole) {
+        loadNotifications(false);
+        notificationTimer = setInterval(() => { if (!document.hidden) loadNotifications(false); }, 10000);
+    }
 });
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
+    clearInterval(notificationTimer);
+    notificationRequest?.abort();
 });
 </script>

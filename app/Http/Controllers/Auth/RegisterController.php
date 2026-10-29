@@ -57,7 +57,6 @@ class RegisterController extends Controller
         // Generar código de verificación de 6 dígitos
         $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        Log::info('🔐 Código generado: ' . $verificationCode);
 
         // Verificar si el usuario ya existe por email o CURP
         $user = User::where('email', $request->email)
@@ -120,9 +119,6 @@ class RegisterController extends Controller
 
         // Asignar rol según el tipo de registro
         if ($roleType === 'evaluador') {
-            $user->forceFill(['evaluator_status' => 'pending', 'evaluator_level' => null,
-                'evaluator_institution_id' => null, 'evaluator_state_id' => null,
-                'evaluator_authorized_by' => null, 'evaluator_authorized_at' => null])->save();
             if (!$user->hasRole('Evaluador')) {
                 $user->assignRole('Evaluador');
                 Log::info('👨‍🏫 Rol asignado: Evaluador');

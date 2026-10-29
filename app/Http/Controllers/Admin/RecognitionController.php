@@ -23,6 +23,7 @@ class RecognitionController extends Controller
 
         // Query to get evaluators with their announcements (where they participated)
         $recognitions = \App\Models\Evaluation::withRecognitionDetails()
+            ->when(\App\Services\AdminInstitutionAccess::restricted(), fn ($q) => $q->where('users.institution_id', \App\Services\AdminInstitutionAccess::institutionId()))
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('users.name', 'like', "%{$search}%")
@@ -46,6 +47,7 @@ class RecognitionController extends Controller
 
         $userId = $request->user_id;
         $announcementId = $request->announcement_id;
+        \App\Services\AdminInstitutionAccess::evaluator((int) $userId);
 
         // Verify evaluator reviewed at least 1 application of this announcement
         $applicationsReviewed = \App\Models\Evaluation::where('evaluator_id', $userId)

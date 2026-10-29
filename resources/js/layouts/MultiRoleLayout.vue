@@ -1,10 +1,13 @@
 <template>
-    <div class="flex h-screen bg-gray-50 overflow-hidden">
+    <div class="authenticated-shell flex h-screen bg-gray-50 overflow-hidden">
         <AppSidebar :menu="multiRoleMenu" />
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Page Content -->
+            <header class="appearance-toolbar flex h-14 shrink-0 items-center justify-end border-b border-gray-200 bg-white px-6 dark:border-slate-700 dark:bg-[#1a1a2e]" aria-label="Apariencia del sistema">
+                <ThemeToggle />
+            </header>
             <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
                 <!-- Toggle Button and Notifications -->
                 <div class="mb-4 flex justify-between items-center">
@@ -40,11 +43,14 @@
 
                 <slot />
             </main>
+            <FooterBar />
         </div>
     </div>
 </template>
 
 <script setup>
+import ThemeToggle from "@/components/ThemeToggle.vue";
+import FooterBar from "@/components/FooterBar.vue";
 import { ref, computed, onMounted, onUnmounted, provide } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { roleMenuItems, roleSectionLabels } from '@/config/menu/menuConfig';
@@ -85,7 +91,7 @@ const multiRoleMenu = computed(() => {
     const menu = [];
 
     // Orden de visualización preferido
-    const roleOrder = ['Admin', 'Evaluador', 'Docente'];
+    const roleOrder = ['Admin', 'Admin Nacional', 'Evaluador', 'Docente'];
     const sortedRoles = roleOrder.filter(r => rolesList.includes(r));
 
     for (const role of sortedRoles) {

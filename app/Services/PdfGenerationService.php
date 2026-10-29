@@ -19,6 +19,14 @@ class PdfGenerationService
 {
     protected $signatureService;
 
+    private function recognitionDisposition(Recognition $recognition): string
+    {
+        $folio = preg_replace('/[^A-Za-z0-9_-]/', '_', $recognition->identifier ?? '');
+        $filename = ($folio !== '' ? $folio : 'Reconocimiento_'.$recognition->id).'.pdf';
+        return 'inline; filename="'.$filename.'"';
+    }
+
+
     public function __construct(SignatureService $signatureService)
     {
         $this->signatureService = $signatureService;
@@ -26,12 +34,15 @@ class PdfGenerationService
 
     public function freezeAcceptanceLetter(Application $application)
     {
+        abort_unless(Application::whereKey($application->id)->finallyApproved()->exists(), 403);
+
         $user = $application->user;
         $template = $application->template ?? Template::active()->type('acceptance')->first();
 
         if ($template && !$application->template_id) {
             $application->template_id = $template->id;
             $application->save();
+            $application->setRelation('template', $template);
         }
 
         if (!$template) return;
@@ -152,7 +163,8 @@ class PdfGenerationService
             if (!$recognition->identifier) {
                 $year = date('Y');
                 $uniqueSuffix = substr(str_shuffle(str_repeat("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 5)), 0, 6);
-                $recognition->identifier = "ACE-{$year}-DOC-{$recognition->id}-{$uniqueSuffix}";
+                $stageCode = 'NACIONAL';
+                $recognition->identifier = "ACE-{$year}-DOC-{$stageCode}-{$recognition->id}-{$uniqueSuffix}";
             }
             if (!$recognition->digital_seal) {
                 $sentAtIso = Carbon::parse($recognition->sent_at ?? now())->toIso8601String();
@@ -171,6 +183,7 @@ class PdfGenerationService
      */
     public function generateAcceptanceLetter(Application $application)
     {
+        abort_unless(Application::whereKey($application->id)->finallyApproved()->exists(), 403);
         $user = $application->user;
 
         $this->freezeAcceptanceLetter($application);
@@ -327,6 +340,7 @@ class PdfGenerationService
      */
     public function generateRecognitionPdf($recognition, $user)
     {
+        if ($recognition->type === 'postulante') return $this->generateTeacherRecognitionPdf($recognition, $user);
         $this->freezeEvaluatorRecognition($recognition, $user);
 
         $template = $recognition->template;
@@ -384,7 +398,7 @@ class PdfGenerationService
         // Output PDF
         return response($pdf->Output('S'), 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="Reconocimiento.pdf"');
+            ->header('Content-Disposition', $this->recognitionDisposition($recognition));
     }
 
     /**
@@ -397,6 +411,23 @@ class PdfGenerationService
      */
     public function generateTeacherRecognitionPdf(Recognition $recognition, $user)
     {
+        abort_unless(Recognition::whereKey($recognition->id)->publishable()->exists(), 403);
+        return response($this->storeTeacherRecognition($recognition, $user), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', $this->recognitionDisposition($recognition));
+    }
+
+    public function storeTeacherRecognition(Recognition $recognition, User $user): string
+    {
+        abort_unless($recognition->type === 'postulante' && $recognition->stage === 'national' && $recognition->user_id === $user->id, 403);
+        $application = Application::where('user_id', $recognition->user_id)->where('announcement_id', $recognition->announcement_id)
+            ->finallyApproved()->firstOrFail();
+        $disk = Storage::disk('local');
+        if ($recognition->file_path && $disk->exists($recognition->file_path)) {
+            $contents = $disk->get($recognition->file_path);
+            if (str_starts_with($contents, '%PDF-')) return $contents;
+            throw new Exception('El archivo del reconocimiento no es un PDF valido.');
+        }
         $this->freezeTeacherRecognition($recognition, $user);
 
         $template = $recognition->template;
@@ -452,10 +483,19 @@ class PdfGenerationService
         // Append Legal Page
         $this->addLegalSignaturePage($pdf, "Reconocimiento Postulante", $user->id, $recognition->id, $size);
 
-        // Output PDF
-        return response($pdf->Output('S'), 200)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="Reconocimiento_Docente.pdf"');
+        $contents = $pdf->Output('S');
+        $directory = app(TeacherDocumentStorage::class)->directory($application);
+        $directory = 'reconocimientos/'.substr($directory, strlen('documents/'));
+        $folio = preg_replace('/[^A-Za-z0-9_-]/', '_', $recognition->identifier ?? '');
+        if ($folio === '') throw new Exception('El reconocimiento no tiene folio.');
+        $path = $directory.'/'.$folio.'.pdf';
+        if (!$disk->put($path, $contents)) throw new Exception('No se pudo almacenar el reconocimiento.');
+        if (hash('sha256', $disk->get($path)) !== hash('sha256', $contents)) {
+            throw new Exception('No se pudo verificar el PDF almacenado.');
+        }
+        $recognition->file_path = $path;
+        $recognition->save();
+        return $contents;
     }
 
     /**

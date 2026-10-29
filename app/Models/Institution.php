@@ -13,6 +13,15 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Institution extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('admin_institution', function (\Illuminate\Database\Eloquent\Builder $query) {
+            if (\App\Services\AdminInstitutionAccess::restricted()) {
+                $query->where('institutions.id', \App\Services\AdminInstitutionAccess::institutionId());
+            }
+        });
+    }
+
     use SoftDeletes;
 
     protected $table = 'institutions'; // Table renamed? Assuming yes.

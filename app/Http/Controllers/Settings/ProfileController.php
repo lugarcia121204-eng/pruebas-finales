@@ -27,7 +27,8 @@ class ProfileController extends Controller
             'user' => $user->load(['priorityArea', 'subArea', 'institution']),
             'priorityAreas' => \App\Models\PriorityArea::all(),
             'subAreas' => \App\Models\SubArea::all(),
-            'institutions' => \App\Models\Institution::all(),
+            'institutions' => \App\Models\Institution::query()
+                ->when($user->hasAnyRole(['Admin', 'Admin Nacional']) && !$user->isSuperAdmin(), fn ($q) => $q->whereKey($user->institution_id ?? 0))->get(),
         ]);
     }
 

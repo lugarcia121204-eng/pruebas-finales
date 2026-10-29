@@ -1,0 +1,7 @@
+<script setup>
+import { Head, Link, router } from '@inertiajs/vue3';
+import DynamicLayout from '@/layouts/DynamicLayout.vue';
+import { ref } from 'vue';
+defineProps({ institution: Object, applications: Object });
+</script>
+<template><DynamicLayout><Head title="Solicitudes de la sede" /><div class="space-y-5"><Link :href="route('applications.control.index')" class="text-blue-800 underline">Volver al control de solicitudes</Link><h1 class="text-2xl font-bold">{{ institution.name }}</h1><div class="overflow-x-auto rounded-lg border bg-white"><table class="w-full text-left text-sm"><thead class="bg-gray-50"><tr><th class="p-3">Docente</th><th class="p-3">Convocatoria</th><th class="p-3">Dictamen local</th></tr></thead><tbody><tr v-for="item in applications.data" :key="item.id" class="border-t"><td class="p-3">{{ item.user?.name }}</td><td class="p-3">{{ item.announcement?.name }}</td><td class="p-3">{{ item.status === 'approved' ? 'Aprobada' : 'Rechazada' }}</td></tr><tr v-if="!applications.data.length"><td colspan="3" class="p-6 text-center text-gray-500">No hay solicitudes dictaminadas.</td></tr></tbody></table></div><nav class="flex gap-2" aria-label="Paginacion"><template v-for="(link,index) in applications.meta?.links || applications.links" :key="index"><Link v-if="link.url" :href="link.url" class="rounded border px-3 py-1" :class="{'bg-blue-100':link.active}" v-html="link.label" /></template></nav></div></DynamicLayout></template>

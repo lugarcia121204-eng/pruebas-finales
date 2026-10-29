@@ -35,7 +35,6 @@ class LoginResponse implements LoginResponseContract
             // Generar nuevo código si no existe o ha expirado
             if (!$user->email_verification_code || $user->email_verification_code_expires_at < now()) {
                 $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-                Log::info('🔐 Nuevo código generado: ' . $verificationCode);
                 
                 $user->update([
                     'email_verification_code' => $verificationCode,
@@ -59,8 +58,9 @@ class LoginResponse implements LoginResponseContract
             
             Log::info('🔄 Redirigiendo a verification.notice');
             
+            $request->session()->put('verification.email', $userEmail);
+
             return redirect()->route('verification.notice')
-                ->with('email', $userEmail)
                 ->with('status', $message);
         }
         
@@ -71,6 +71,7 @@ class LoginResponse implements LoginResponseContract
         // Redirigir según el rol
         $redirectRoute = match ($role) {
             'Super Admin' => 'superadmin.dashboard',
+            'Admin Nacional' => 'national-review.dashboard',
             'Admin' => 'admin.dashboard',
             'Evaluador' => 'evaluator.dashboard',
             'Docente' => 'teacher.dashboard',

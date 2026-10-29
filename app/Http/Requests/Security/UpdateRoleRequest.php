@@ -21,9 +21,14 @@ class UpdateRoleRequest extends FormRequest
      */
     public function rules(): array
     {
+        $role = $this->route('role');
+        $systemRole = $role instanceof \App\Models\Role
+            && in_array($role->name, \App\Models\Role::SYSTEM_ROLES, true);
+
         return [
-            'name'          => 'required|max:255|unique:roles,name,' . $this->id,
-            'guard_name'    => 'required',
+            'name'          => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('roles', 'name')->ignore($role?->id),
+                ...($systemRole ? [\Illuminate\Validation\Rule::in([$role->name])] : [])],
+            'guard_name'    => ['required', \Illuminate\Validation\Rule::in(['web'])],
             'description'   => 'required|max:255',
             'permissions'   => 'nullable|array',
             'permissions.*' => 'exists:permissions,id', // Valida que cada permiso exista
@@ -44,6 +49,7 @@ class UpdateRoleRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.in' => 'El nombre de un rol del sistema no se puede cambiar. Puedes editar su descripcion y permisos.',
             'name.required'         => 'El nombre del rol es obligatorio',
             'name.max'              => 'El nombre no puede exceder 255 caracteres',
             'name.unique'           => 'Este nombre de rol ya está en uso',

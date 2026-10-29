@@ -96,7 +96,9 @@ class CurpController extends Controller
      */
     public function verifyCode(VerifyCurpCodeRequest $request)
     {
-        $user = User::where('email_verification_code', $request->code)
+        $email = $request->user()?->email ?? $request->session()->get('verification.email', $request->session()->get('email'));
+        if (!$email) return back()->withErrors(['code' => 'Inicia el proceso de verificación desde tu cuenta.']);
+        $user = User::where('email', $email)->where('email_verification_code', $request->code)
             ->where('email_verification_code_expires_at', '>', now())
             ->whereNull('email_verified_at')
             ->first();
@@ -117,6 +119,7 @@ class CurpController extends Controller
         \Illuminate\Support\Facades\Auth::loginUsingId($user->id, true);
         
         // Regenerar la sesión para seguridad
+        $request->session()->forget(['verification.email', 'email']);
         $request->session()->regenerate();
 
         // Redirigir según el rol
@@ -124,6 +127,7 @@ class CurpController extends Controller
         
         $redirectRoute = match ($role) {
             'Super Admin' => 'superadmin.dashboard',
+            'Admin Nacional' => 'national-review.dashboard',
             'Admin' => 'admin.dashboard',
             'Evaluador' => 'evaluator.dashboard',
             'Docente' => 'teacher.dashboard',
@@ -140,7 +144,7 @@ class CurpController extends Controller
     public function resendCode(ResendCurpCodeRequest $request)
     {
         // Obtener email de la sesión o del request
-        $email = $request->email ?? session('email');
+        $email = $request->user()?->email ?? session('verification.email') ?? session('email');
         
         if (!$email) {
             return back()->withErrors([
@@ -158,10 +162,12 @@ class CurpController extends Controller
             ]);
         }
 
+        $request->session()->put('verification.email', $user->email);
+
         // Generar nuevo código
         $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
-        Log::info('🔄 Reenviando código. Código anterior: ' . $user->email_verification_code . ' | Nuevo código: ' . $verificationCode);
+        Log::info('Reenvio de verificacion solicitado', ['user_id' => $user->id]);
 
         $user->update([
             'email_verification_code' => $verificationCode,
@@ -173,11 +179,12 @@ class CurpController extends Controller
             \Illuminate\Support\Facades\Mail::to($user->email)->queue(new \App\Mail\VerificationCode($user, $verificationCode));
         } catch (\Exception $e) {
             Log::error('❌ Error al reenviar correo de verificación: ' . $e->getMessage());
-            // No retornamos error al usuario para evitar bloqueos si el SMTP falla
+            return back()->withErrors([
+                'email' => 'No se pudo enviar el correo de verificación. Inténtalo de nuevo o contacta a la administración.'
+            ]);
         }
 
         return back()
-            ->with('email', $user->email)
             ->with('success', 'Código de verificación reenviado exitosamente. Revisa tu bandeja de entrada.');
     }
 }

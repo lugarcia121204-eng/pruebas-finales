@@ -27,6 +27,7 @@ use App\Http\Controllers\Catalog\TemplateController;
 
 /** @var \Illuminate\Contracts\Auth\Guard|\Illuminate\Contracts\Auth\StatefulGuard $auth */
 Route::get('/', [HomeController::class, 'index'])->name('inicio');
+Route::get('/storage/{path}', [\App\Http\Controllers\Public\PublishedFileController::class, 'show'])->where('path', '.*')->name('published-file');
 
 Route::get('/verify-recognition/{identifier}', [\App\Http\Controllers\Public\VerificationController::class, 'verify'])->name('recognition.verify');
 
@@ -89,6 +90,35 @@ Route::post('/email/verify/resend', [CurpController::class, 'resendCode'])->name
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/reports/closed-announcements/{announcement}/{stage}/pdf', [\App\Http\Controllers\ClosedAnnouncementReportController::class, 'download'])->middleware('role:Super Admin|Admin|Admin Nacional')->whereNumber('announcement')->where('stage', 'local|national')->name('reports.closed-announcements.pdf');
+    Route::get('/reports/closed-announcements', [\App\Http\Controllers\ClosedAnnouncementReportController::class, 'index'])->middleware('role:Super Admin|Admin|Admin Nacional')->name('reports.closed-announcements');
+    Route::prefix('institution-chat')->name('institution-chat.')->middleware('role:Admin|Docente')->group(function () {
+        Route::get('/', [\App\Http\Controllers\InstitutionChatController::class, 'index'])->name('index');
+        Route::get('/{contact}/messages', [\App\Http\Controllers\InstitutionChatController::class, 'messages'])->whereNumber('contact')->name('messages');
+        Route::post('/{contact}/messages', [\App\Http\Controllers\InstitutionChatController::class, 'send'])->middleware('throttle:30,1')->whereNumber('contact')->name('send');
+        Route::patch('/{contact}/messages/{message}', [\App\Http\Controllers\InstitutionChatController::class, 'update'])->middleware('throttle:30,1')->whereNumber(['contact', 'message'])->name('update');
+        Route::delete('/{contact}/messages/{message}', [\App\Http\Controllers\InstitutionChatController::class, 'destroy'])->middleware('throttle:30,1')->whereNumber(['contact', 'message'])->name('destroy');
+        Route::post('/{contact}/read', [\App\Http\Controllers\InstitutionChatController::class, 'read'])->whereNumber('contact')->name('read');
+    });
+
+    Route::middleware('role:Admin Nacional')->prefix('national-review')->name('national-review.')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\NationalDashboardController::class, 'administrator'])->name('dashboard');
+        Route::get('/dashboard/export', [\App\Http\Controllers\NationalDashboardController::class, 'export'])->name('dashboard.export');
+        Route::get('/', [\App\Http\Controllers\NationalReviewController::class, 'index'])->name('index');
+        Route::get('/recognitions', [\App\Http\Controllers\NationalRecognitionController::class, 'index'])->name('recognitions.index');
+        Route::patch('/recognitions/{id}/active', [\App\Http\Controllers\NationalRecognitionController::class, 'toggle'])->name('recognitions.toggle');
+        Route::get('/recognitions/{id}/download', [\App\Http\Controllers\NationalRecognitionController::class, 'download'])->name('recognitions.download');
+        Route::get('/{id}', [\App\Http\Controllers\NationalReviewController::class, 'show'])->name('show');
+        Route::post('/{id}/evaluators', [\App\Http\Controllers\NationalReviewController::class, 'assignEvaluators'])->name('assign-evaluators');
+        Route::post('/{id}/verdict', [\App\Http\Controllers\NationalReviewController::class, 'verdict'])->name('verdict');
+        Route::get('/{id}/documents/{document}', [\App\Http\Controllers\NationalReviewController::class, 'document'])->name('document');
+    });
+    Route::middleware('role:Evaluador')->prefix('national-evaluations')->name('national-evaluations.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NationalEvaluationController::class, 'index'])->name('index');
+        Route::get('/{id}', [\App\Http\Controllers\NationalEvaluationController::class, 'show'])->name('show');
+        Route::post('/{id}', [\App\Http\Controllers\NationalEvaluationController::class, 'submit'])->name('submit');
+        Route::get('/{id}/documents/{document}', [\App\Http\Controllers\NationalEvaluationController::class, 'document'])->name('document');
+    });
     // Generic Dashboard Route (redirects by role)
     Route::get(
         'dashboard',
@@ -99,6 +129,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             return match ($role) {
                 'Super Admin' => redirect()->route('superadmin.dashboard'),
+                'Admin Nacional' => redirect()->route('national-review.dashboard'),
                 'Admin' => redirect()->route('admin.dashboard'),
                 'Evaluador' => redirect()->route('evaluator.dashboard'),
                 'Docente' => redirect()->route('teacher.dashboard'),
@@ -117,6 +148,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('work-documents/{workDocument}/download', [\App\Http\Controllers\SuperAdmin\WorkDocumentController::class, 'download'])->name('work-documents.download');
             Route::resource('work-documents', \App\Http\Controllers\SuperAdmin\WorkDocumentController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::get('dashboard', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+            Route::get('national-stage', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'index'])->name('national-stage.index');
+            Route::post('national-stage/{id}/assign', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'assign'])->name('national-stage.assign');
             Route::get('dashboard/export', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'export'])->name('dashboard.export');
             Route::get('control-applications', [\App\Http\Controllers\SuperAdmin\RequestControlController::class, 'index'])->name('control-applications'); // control-solicitudes
             Route::get('control-applications/export', [\App\Http\Controllers\SuperAdmin\RequestControlController::class, 'export'])->name('control-applications.export');
@@ -142,15 +175,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     );
 
-    Route::middleware(['role:Admin'])->prefix('admin')->name('admin.')->group(
+    Route::middleware(['role:Admin|Admin Nacional'])->prefix('admin')->name('admin.')->group(
         function () {
             Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard');
             Route::get('dashboard/export', [AdminController::class, 'export'])->name('dashboard.export');
             // Evaluators Management
             Route::get('evaluators', [\App\Http\Controllers\Admin\EvaluatorController::class, 'index'])->name('evaluators.index'); // evaluadores
             Route::delete('evaluators/{id}', [\App\Http\Controllers\Admin\EvaluatorController::class, 'destroy'])->name('evaluators.destroy');
-
-            Route::put('evaluators/{user}/configuration', [\App\Http\Controllers\Admin\EvaluatorController::class, 'updateConfiguration'])->name('evaluators.configuration');
 
             // Recognitions
             Route::get('recognitions', [\App\Http\Controllers\Admin\RecognitionController::class, 'index'])->name('recognitions.index'); // reconocimientos
@@ -164,11 +195,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     );
 
-    Route::get('/evaluator/pending', fn () => \Inertia\Inertia::render('Evaluator/Pending', [
-        'authorizationStatus' => auth()->user()->evaluator_status,
-    ]))->middleware('role:Evaluador')->name('evaluator.pending');
-
-    Route::middleware(['role:Evaluador', \App\Http\Middleware\EnsureEvaluatorAuthorized::class])->prefix('evaluator')->name('evaluator.')->group(
+    Route::middleware(['role:Evaluador'])->prefix('evaluator')->name('evaluator.')->group(
         function () { // prefix evaluador -> evaluator
             Route::get('dashboard', [EvaluatorController::class, 'inicio'])->name('dashboard'); // inicio -> dashboard
             Route::get('evaluation/{id}', [EvaluatorController::class, 'show'])->name('evaluation.show');
@@ -178,7 +205,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Evaluation History
             Route::get('evaluations', [EvaluatorController::class, 'index'])->name('evaluations.index'); // evaluaciones
             Route::get('evaluations/{id}', [EvaluatorController::class, 'showHistory'])->name('evaluations.show');
-
 
             // Recognitions
             Route::get('recognitions', [\App\Http\Controllers\Evaluator\RecognitionController::class, 'index'])->name('recognitions.index');
@@ -231,7 +257,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('documents/{id}', [AdminDocumentController::class, 'show'])->name('documents.show')->middleware('can:documents.show');
             Route::get('documents/download/{document}', [AdminDocumentController::class, 'download'])->name('documents.download')->middleware('can:documents.download');
 
-            Route::resource('permissions', PermissionController::class);
+            Route::resource('permissions', PermissionController::class)->except(['show']);
             Route::resource('roles', RoleController::class);
 
             Route::get('users/export', [UserController::class, 'export'])->name('users.export');
@@ -250,7 +276,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('control-applications/{id}', [AdminRequestControlController::class, 'show'])->name('applications.control.show')->middleware('can:requests.show');
 
     // Admin Specific Applications Logic
-    Route::middleware(['role:Admin'])->prefix('admin')->name('admin.')->group(
+    Route::middleware(['role:Admin|Admin Nacional'])->prefix('admin')->name('admin.')->group(
         function () {
             // Route::get('inicio', [AdminController::class, 'inicio'])->name('inicio'); // Already defined above
             // Admin Applications (List, Assign, Verdict)
@@ -307,17 +333,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('sub-areas/export', [SubAreaController::class, 'export'])->name('sub-areas.export');
             Route::resource('sub-areas', SubAreaController::class);
 
-            Route::resource('rubrics', RubricController::class);
+            Route::resource('rubrics', RubricController::class)->except(['show']);
             Route::post('rubrics/{rubric}/toggle-active', [RubricController::class, 'toggleActive'])->name('rubrics.toggle-active');
 
             Route::post('templates/{template}/toggle-active', [TemplateController::class, 'toggleActive'])->name('templates.toggle-active');
             Route::get('templates/{template}/stream', [TemplateController::class, 'stream'])->name('templates.stream');
             Route::put('templates/{template}/content', [TemplateController::class, 'updateContent'])->name('templates.update-content');
-            Route::resource('templates', TemplateController::class);
+            Route::resource('templates', TemplateController::class)->only(['index', 'create', 'store', 'destroy']);
             // }); // Removed nested group closing brace
     
             // Modules accessible by permission (Admin/SuperAdmin)
-            Route::middleware(['role:Admin|Super Admin'])->prefix('admin')->name('admin.')->group(
+            Route::middleware(['role:Admin|Admin Nacional|Super Admin'])->prefix('admin')->name('admin.')->group(
                 function () {
                 Route::resource('documents', \App\Http\Controllers\Admin\DocumentController::class)->only(['index', 'show']);
                 Route::get('documents/{document}/download', [\App\Http\Controllers\Admin\DocumentController::class, 'download'])->name('documents.download');

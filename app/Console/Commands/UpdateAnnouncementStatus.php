@@ -163,6 +163,8 @@ class UpdateAnnouncementStatus extends Command
                 ->get();
             
             foreach ($solicitudesEvaluadas as $app) {
+                $finalStatus = $app->finalDecision();
+                if ($finalStatus === 'pending') continue;
                 // Revisar si ya tiene una push notification enviada por esa application_id
                 $hasNotification = \App\Models\Notification::where('type', 'application_verdict')
                     ->where('user_id', $app->user_id)
@@ -173,7 +175,7 @@ class UpdateAnnouncementStatus extends Command
                     $notificationService->notifyApplicationVerdict(
                         $app->id,
                         $app->user_id,
-                        $app->status,
+                        $finalStatus,
                         $announcement->name
                     );
                     $this->info("Cron: Notificación diferida enviada para Solicitud {$app->id} ({$app->status}).");
@@ -186,26 +188,23 @@ class UpdateAnnouncementStatus extends Command
             // Evaluators (Evaluador role) are notified immediately when the Admin activates their recognition.
             $reconocimientos = \App\Models\Recognition::with('user')
                 ->where('announcement_id', $announcement->id)
-                ->where('active', true)
+                ->publishable()
                 ->get();
 
             foreach ($reconocimientos as $rec) {
                 // Skip evaluators — they are notified at activation time by the Admin
-                if ($rec->user && $rec->user->hasRole('Evaluador')) {
+                if ($rec->type === 'evaluator') {
                     continue;
                 }
 
                 $yaNotificoReconocimiento = \App\Models\Notification::where('type', 'recognition_available')
                     ->where('user_id', $rec->user_id)
                     ->where('data->announcement_id', $announcement->id)
+                    ->where('data->recognition_id', $rec->id)
                     ->exists();
 
                 if (!$yaNotificoReconocimiento) {
-                    $notificationService->notifyRecognitionAvailable(
-                        $rec->user_id,
-                        $announcement->id,
-                        $announcement->name
-                    );
+                    $notificationService->notifyTeacherRecognition($rec);
                     $this->info("Cron: Reconocimiento disponible notificado al Docente {$rec->user_id}.");
                     Log::info("Cron Convocatorias: Reconocimiento notificado al Docente {$rec->user_id} para Convocatoria {$announcement->id}");
                 }

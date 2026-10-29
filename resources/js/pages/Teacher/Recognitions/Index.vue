@@ -180,6 +180,8 @@ watch(search, (value) => {
                                     </td>
                                     <td class="px-6 py-4 font-medium text-gray-900">
                                         {{ item.announcement?.name || 'Convocatoria General' }}
+                                        <p class="mt-1 text-xs font-semibold text-[var(--institutional-primary)]">Etapa nacional</p>
+                                        <p class="mt-1 text-xs text-gray-500">{{ item.identifier }}</p>
                                     </td>
                                     <td class="px-6 py-4 text-gray-600">
                                         {{ new Date(item.sent_at).toLocaleDateString('es-ES') }}

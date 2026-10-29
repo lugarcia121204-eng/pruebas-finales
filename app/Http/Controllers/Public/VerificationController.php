@@ -24,6 +24,7 @@ class VerificationController extends Controller
 
             return Inertia::render('Public/VerifyRecognition', [
                 'identifier'       => $recognition->identifier,
+                'recognitionStage' => $recognition->type === 'postulante' ? 'Etapa nacional' : null,
                 'participant'      => $recognition->user ? mb_strtoupper($recognition->user->name) : 'PARTICIPANTE DESCONOCIDO',
                 'announcementName' => mb_strtoupper($announcementName),
                 'digitalSeal'      => $recognition->digital_seal,
@@ -33,7 +34,8 @@ class VerificationController extends Controller
         }
 
         // Fall back to applications (ACE prefix — acceptance letters)
-        $application = Application::validByIdentifier($identifier)->first();
+        $application = Application::finallyApproved()->validByIdentifier($identifier)
+            ->whereHas('announcement.calendar', fn ($calendar) => $calendar->where('results_start', '<=', now()))->first();
 
         if ($application) {
             $announcementName = $application->announcement ? $application->announcement->name : 'CONVOCATORIA GENERAL';

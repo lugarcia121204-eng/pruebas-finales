@@ -11,7 +11,7 @@ class AssignEvaluatorRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->hasRole('Admin');
+        return auth()->check() && auth()->user()->hasAnyRole(['Admin', 'Admin Nacional']);
     }
 
     /**

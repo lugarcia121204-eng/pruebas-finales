@@ -107,7 +107,7 @@ class ScheduledBackupCommand extends Command
                         : '';
 
                     $tblCmd = sprintf(
-                        '"%s" --host=%s --port=%s --user=%s --password=%s --single-transaction --no-create-info --insert-ignore --skip-add-drop-table --skip-triggers %s %s %s >> "%s" 2>&1',
+                        '"%s" --host=%s --port=%s --user=%s --password=%s --loose-column-statistics=0 --single-transaction --no-create-info --insert-ignore --skip-add-drop-table --skip-triggers %s %s %s >> "%s" 2>&1',
                         $dumpBin, $host, $port, $user, escapeshellarg($pass), $whereArg, $dbName, $table, $fullPath
                     );
                     exec($tblCmd, $tblOut, $tblCode);
@@ -124,7 +124,7 @@ class ScheduledBackupCommand extends Command
             } else {
                 // ── Full backup ──────────────────────────────────────────────
                 $command = sprintf(
-                    '"%s" --host=%s --port=%s --user=%s --password=%s --single-transaction --routines --triggers --events --add-drop-table %s > "%s" 2>&1',
+                    '"%s" --host=%s --port=%s --user=%s --password=%s --loose-column-statistics=0 --single-transaction --routines --triggers --events --add-drop-table %s > "%s" 2>&1',
                     $dumpBin, $host, $port, $user, escapeshellarg($pass), $dbName, $fullPath
                 );
                 exec($command, $output, $returnCode);

@@ -40,7 +40,7 @@ class HandleInertiaRequests extends Middleware
 
         // Get unread notifications count for Admin, Evaluador, Docente
         $unreadNotifications = 0;
-        if ($request->user() && $request->user()->hasAnyRole(['Admin', 'Evaluador', 'Docente'])) {
+        if ($request->user() && $request->user()->hasAnyRole(['Admin', 'Admin Nacional', 'Evaluador', 'Docente'])) {
             // Check if user_id column exists in notifications table
             if (\Schema::hasColumn('notifications', 'user_id')) {
                 // Only count notifications assigned to this specific user
@@ -62,6 +62,14 @@ class HandleInertiaRequests extends Middleware
                 'root' => $request->user() ? $request->user()->isSuperAdmin() : null,
                 'roles' => $request->user() ? $request->user()->getRolesArray() : [],
                 'can' => $request->user() ? $request->user()->getPermissionArray() : [],
+                'adminInstitution' => $request->user()?->hasAnyRole(['Admin', 'Admin Nacional']) && !$request->user()->isSuperAdmin()
+                    ? ($request->user()->hasRole('Admin Nacional')
+                        ? ['id' => null, 'name' => 'Admin Nacional']
+                        : ($request->user()->institution?->only(['id', 'name']) ?? ['id' => null, 'name' => 'Sin institución asignada'])) : null,
+                'evaluatorInstitution' => $request->user()?->hasRole('Evaluador')
+                    ? ($request->user()->institution?->only(['id', 'name']) ?? ['id' => null, 'name' => 'Sin institución asignada']) : null,
+                'teacherInstitution' => $request->user()?->hasRole('Docente')
+                    ? ($request->user()->institution?->only(['id', 'name']) ?? ['id' => null, 'name' => 'Sin institución asignada']) : null,
                 'primaryRole' => $request->user() ? $request->user()->getPrimaryRole() : null,
                 'layoutName' => $request->user() ? $request->user()->getLayoutName() : null,
                 'roles_list' => $request->user() ? $request->user()->getRolesList() : [],

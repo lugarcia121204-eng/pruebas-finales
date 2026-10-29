@@ -58,7 +58,7 @@
                     </div>
                     <div>
                         <h4 class="text-[13px] font-bold text-gray-400 uppercase tracking-widest mb-1">Convocatoria</h4>
-                        <p class="text-[14px] text-gray-600 uppercase">{{ announcementName || 'NO ESPECIFICADA' }}</p>
+                        <p class="text-[14px] text-gray-600 uppercase">{{ announcementName || 'NO ESPECIFICADA' }}<span v-if="recognitionStage" class="block mt-1 font-semibold">{{ recognitionStage }}</span></p>
                     </div>
                 </div>
 
@@ -114,6 +114,7 @@ defineProps({
     identifier: String,
     participant: String,
     announcementName: String,
+    recognitionStage: String,
     digitalSeal: String,
     directorName: String,
     directorTitle: String,

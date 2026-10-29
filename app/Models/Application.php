@@ -10,6 +10,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Application extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('admin_institution', function (\Illuminate\Database\Eloquent\Builder $query) {
+            if (\App\Services\AdminInstitutionAccess::restricted()) {
+                $query->whereIn('applications.user_id', \Illuminate\Support\Facades\DB::table('users')->select('id')->where('institution_id', \App\Services\AdminInstitutionAccess::institutionId()));
+            }
+        });
+    }
+
     use HasFactory, SoftDeletes;
 
     protected $table = 'applications';
@@ -25,26 +34,9 @@ class Application extends Model
         'digital_seal',
         'snapshot_data',
         'via',
-        'review_stage',
     ];
 
     protected $appends = ['position_full_type'];
-
-    protected $attributes = ['review_stage' => 'local', 'status' => 'pending'];
-
-    public function scopeWithinEvaluatorScope($query, User $evaluator)
-    {
-        $query->where('user_id', '!=', $evaluator->id);
-        if (!$evaluator->isAuthorizedEvaluator()) {
-            return $query->whereRaw('1 = 0');
-        }
-        return match ($evaluator->evaluator_level) {
-            'local' => $query->whereHas('user', fn ($q) => $q->where('institution_id', $evaluator->evaluator_institution_id)),
-            'state' => $query->whereHas('user.institution', fn ($q) => $q->where('state_id', $evaluator->evaluator_state_id)),
-            'national' => $query,
-            default => $query->whereRaw('1 = 0'),
-        };
-    }
 
     // Relaciones
 
@@ -56,6 +48,11 @@ class Application extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function nationalReview(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(NationalReview::class);
     }
 
     public function announcement(): BelongsTo
@@ -166,6 +163,18 @@ class Application extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', 'approved');
+    }
+
+    public function scopeFinallyApproved($query)
+    {
+        return $query->where('applications.status', 'approved')
+            ->whereHas('nationalReview', fn ($review) => $review->where('status', 'approved'));
+    }
+
+    public function finalDecision(): string
+    {
+        if ($this->status === 'rejected') return 'rejected';
+        return $this->status === 'approved' ? ($this->nationalReview?->status ?? 'pending') : 'pending';
     }
 
     /**

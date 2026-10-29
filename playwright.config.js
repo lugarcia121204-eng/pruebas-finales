@@ -5,7 +5,7 @@ export default defineConfig({
   testDir: './tests/playwright',
   timeout: 60000,
   use: {
-    baseURL: 'http://becaslaravel_ad.test:8080',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://sw_becadesempeno.test:8081',
     headless: true,
     video: 'on',
     actionTimeout: 15000,

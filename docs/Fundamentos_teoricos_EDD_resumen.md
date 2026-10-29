@@ -6,7 +6,7 @@ El Sistema EDD administra convocatorias, expedientes y evaluaciones del Programa
 
 La evaluación del desempeño docente requiere criterios definidos y evidencias que permitan valorar las actividades académicas. Los lineamientos del TecNM establecen criterios de evaluación y responsabilidades de las comisiones. Este fundamento justifica que el sistema relacione los documentos de cada docente con una convocatoria y registre puntuaciones, observaciones y resultados mediante rúbricas.<span style="font-size: 10pt;"><em> “Tecnológico Nacional de México, 2025, capítulos IV y V”</em></span>
 
-El flujo Local, Estatal y Nacional implementado en el proyecto organiza revisiones sucesivas y conserva sus resultados. Esta organización es una decisión funcional del sistema; no se atribuye a los lineamientos citados.
+En el proyecto, el administrador asigna los expedientes a los evaluadores. Cada evaluador registra su revisión y el administrador emite el veredicto definitivo, manteniendo separadas ambas responsabilidades.
 
 ## 1.1.2 Bases de datos relacionales
 

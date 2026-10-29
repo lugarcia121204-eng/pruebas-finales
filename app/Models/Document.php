@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope('admin_institution', function (\Illuminate\Database\Eloquent\Builder $query) {
+            if (\App\Services\AdminInstitutionAccess::restricted()) {
+                $query->whereIn('documents.application_id', \App\Models\Application::query()->select('applications.id'));
+            }
+        });
+    }
+
     use HasFactory, SoftDeletes;
 
     protected $table = 'documents';

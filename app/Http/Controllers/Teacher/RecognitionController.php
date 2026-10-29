@@ -43,7 +43,7 @@ class RecognitionController extends Controller
             ->select('recognitions.*')
             ->where('user_id', $user->id)
             ->where('recognitions.type', 'postulante')
-            ->where('recognitions.active', true)
+            ->publishable()
             ->whereExists(function ($query) {
                 $query->selectRaw('1')
                     ->from('applications')
@@ -100,14 +100,7 @@ class RecognitionController extends Controller
             }
         }
 
-        $isApproved = Application::where('user_id', $recognition->user_id)
-            ->where('announcement_id', $recognition->announcement_id)
-            ->where('status', 'approved')
-            ->exists();
-
-        if (!$isApproved) {
-            abort(403, 'Solo los docentes aprobados pueden descargar este reconocimiento.');
-        }
+        abort_unless(Recognition::whereKey($recognition->id)->publishable()->exists(), 403);
 
         try {
             return $this->pdfGenerationService->generateTeacherRecognitionPdf($recognition, $user);

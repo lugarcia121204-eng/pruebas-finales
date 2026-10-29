@@ -131,6 +131,10 @@ class RoleController extends SecurityController
      */
     public function destroy(role $role)
     {
+        if (in_array($role->name, Role::SYSTEM_ROLES, true)) {
+            return back()->withErrors(['role' => 'Los roles del sistema no se pueden eliminar.']);
+        }
+
         Cache::forget("role.{$role->id}");
         $role->forceDelete(); // Eliminación permanente
         return redirect()->route("{$this->routeName}index")->with('success', 'Rol eliminado con éxito!');

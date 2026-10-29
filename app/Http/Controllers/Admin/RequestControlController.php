@@ -17,22 +17,15 @@ class RequestControlController extends Controller
      */
     public function index(Request $request)
     {
+        $request->validate(['search' => ['nullable', 'string', 'max:255'], 'rows' => ['nullable', 'integer', 'in:5,10,15,25,50,100'], 'state' => ['nullable', 'string', 'max:255']]);
         $search = $request->input('search');
         $state = $request->input('state');
         $rows = $request->input('rows', 10);
         
         $institutions = \App\Models\Institution::with('state')
             ->withCount([
-                'users as approved_count' => function ($query) {
-                    $query->whereHas('applications', function ($q) {
-                        $q->where('status', 'approved');
-                    });
-                },
-                'users as rejected_count' => function ($query) {
-                    $query->whereHas('applications', function ($q) {
-                        $q->where('status', 'rejected');
-                    });
-                }
+                'applications as approved_count' => fn ($query) => $query->where('applications.status', 'approved'),
+                'applications as rejected_count' => fn ($query) => $query->where('applications.status', 'rejected'),
             ])
             ->when($search, function ($query, $search) {
                  $query->where('name', 'like', "%{$search}%")

@@ -25,7 +25,8 @@ class HomeController extends Controller
             
             return match ($role) {
                 'Super Admin' => redirect()->route('superadmin.dashboard'),
-                'Admin' => redirect()->route('admin.dashboard'),
+                'Admin Nacional' => redirect()->route('national-review.dashboard'),
+                  'Admin' => redirect()->route('admin.dashboard'),
                 'Evaluador' => redirect()->route('evaluator.dashboard'),
                 'Docente' => redirect()->route('teacher.dashboard'),
                 default => redirect()->route('dashboard.index'),
@@ -108,7 +109,8 @@ class HomeController extends Controller
             
             return match ($role) {
                 'Super Admin' => redirect()->route('superadmin.dashboard'),
-                'Admin' => redirect()->route('admin.dashboard'),
+                'Admin Nacional' => redirect()->route('national-review.dashboard'),
+                  'Admin' => redirect()->route('admin.dashboard'),
                 'Evaluador' => redirect()->route('evaluator.dashboard'),
                 'Docente' => redirect()->route('teacher.dashboard'),
                 default => redirect()->route('inicio'),
@@ -116,7 +118,9 @@ class HomeController extends Controller
         }
         
         // Obtener email del usuario autenticado o de la sesión
-        $email = auth()->user()?->email ?? session('email');
+        $email = auth()->user()?->email ?? session('verification.email') ?? session('email');
+        if (!$email) return redirect()->route('login')->with('status', 'Inicia sesion para continuar con la verificacion de tu correo.');
+        session()->put('verification.email', $email);
 
         return Inertia::render('Auth/VerifyEmail', [
             'email' => $email,

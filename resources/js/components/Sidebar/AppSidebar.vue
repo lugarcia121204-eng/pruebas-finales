@@ -60,6 +60,21 @@
             </Transition>
         </div>
 
+        <div v-if="page.props.auth?.adminInstitution && (!sidebarCollapsed || isMobile)" class="border-b border-white/15 px-5 py-3 text-white">
+            <p v-if="!page.props.auth?.roles?.['Admin Nacional']" class="text-center text-xs uppercase tracking-wide text-blue-200">Admin local</p>
+            <p class="text-sm font-semibold leading-snug" :class="page.props.auth?.roles?.['Admin Nacional'] ? 'text-center' : 'mt-1'">{{ page.props.auth.adminInstitution.name }}</p>
+        </div>
+
+        <div v-if="page.props.auth?.primaryRole === 'Evaluador' && (!sidebarCollapsed || isMobile)" class="border-b border-white/15 px-5 py-3 text-white">
+            <p class="text-center text-xs uppercase tracking-wide text-blue-200">Evaluador</p>
+            <p class="mt-1 text-sm font-semibold leading-snug">{{ page.props.auth?.evaluatorInstitution?.name }}</p>
+        </div>
+
+        <div v-if="page.props.auth?.primaryRole === 'Docente' && (!sidebarCollapsed || isMobile)" class="border-b border-white/15 px-5 py-3 text-white">
+            <p class="text-center text-xs uppercase tracking-wide text-blue-200">Docente</p>
+            <p class="mt-1 text-sm font-semibold leading-snug">{{ page.props.auth?.teacherInstitution?.name }}</p>
+        </div>
+
         <!-- Navigation -->
         <nav class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 custom-scrollbar">
             <SidebarContent :items="menu" />
@@ -157,7 +172,7 @@ defineProps({
 const page = usePage();
 const supremeSidebar = computed(() => page.props.auth?.primaryRole === 'Super Admin');
 provide('supremeSidebar', supremeSidebar);
-const administrativeSidebar = computed(() => ['Super Admin', 'Admin', 'Docente', 'Evaluador'].includes(page.props.auth?.primaryRole));
+const administrativeSidebar = computed(() => ['Super Admin', 'Admin', 'Admin Nacional', 'Docente', 'Evaluador'].includes(page.props.auth?.primaryRole));
 provide('administrativeSidebar', administrativeSidebar);
 const sidebarOpen = inject('sidebarOpen', ref(false));
 const sidebarCollapsed = inject('sidebarCollapsed', ref(false));
@@ -243,4 +258,12 @@ onUnmounted(() => {
 
 <style scoped>
 .administrative-sidebar { background:var(--institutional-primary, #1b396a); }
+</style>
+
+<style scoped>
+:global(.dark) .administrative-sidebar { background: #0f172a; color: #e2e8f0; }
+:global(.dark) .supreme-brand, :global(.dark) .sidebar-profile { border-color: #334155; background: #0f172a; }
+:global(.dark) .sidebar-avatar { background: #1e293b; color: #f8fafc; }
+:global(.dark) .administrative-sidebar :deep(.supreme-active) { background: #f8fafc; color: #1b396a; }
+:global(.dark) .administrative-sidebar :deep(.supreme-active:hover) { background: #e2e8f0; color: #1b396a; }
 </style>

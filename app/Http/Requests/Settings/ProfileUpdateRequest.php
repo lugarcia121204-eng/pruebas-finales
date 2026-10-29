@@ -13,6 +13,17 @@ class ProfileUpdateRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $user = $this->user();
+            if ($user->hasAnyRole(['Admin', 'Admin Nacional']) && !$user->isSuperAdmin() && $this->has('institution_id')
+                && (string) $this->input('institution_id') !== (string) $user->institution_id) {
+                $validator->errors()->add('institution_id', 'Solo el Superadministrador puede cambiar la institución del administrador.');
+            }
+        });
+    }
+
     public function rules(): array
     {
         return [

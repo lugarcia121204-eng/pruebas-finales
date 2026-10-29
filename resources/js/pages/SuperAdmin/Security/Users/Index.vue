@@ -311,7 +311,7 @@ const downloadTemplate = () => {
                     <div class="w-full md:w-52 flex-shrink-0">
                         <VueSelect
                             v-model="selectedRole"
-                            :options="[{ id: '', name: 'Todos los roles' }, ...roles]"
+                            :options="[{ id: '', name: 'Todos los roles' }, ...roles.map(rol => ({ ...rol, name: rol.name === 'Admin' ? 'Admin Local' : rol.name }))]"
                             :reduce="rol => rol.id"
                             label="name"
                             placeholder="Filtrar por rol"
@@ -359,6 +359,7 @@ const downloadTemplate = () => {
                                         </svg>
                                     </div>
                                 </th>
+                                <th scope="col" class="px-6 py-4 tracking-wider">Institución</th>
                                 <th scope="col" class="px-6 py-4 tracking-wider">Rol</th>
                                 <th v-if="useCan('users.edit') || useCan('users.delete')" scope="col" class="px-6 py-4 text-center tracking-wider">Acciones</th>
                             </tr>
@@ -368,6 +369,7 @@ const downloadTemplate = () => {
                                 <td class="px-6 py-4 font-medium text-gray-900">{{ (users.meta.current_page - 1) * users.meta.per_page + index + 1 }}</td>
                                 <td class="px-6 py-4 font-semibold text-gray-800">{{ user.name }}</td>
                                 <td class="px-6 py-4 text-gray-600">{{ user.email }}</td>
+                                <td class="px-6 py-4 text-gray-600 min-w-56">{{ user.institution?.name || 'Sin institución asignada' }}</td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-wrap gap-1.5">
                                         <span
@@ -382,7 +384,7 @@ const downloadTemplate = () => {
                                                 'text-gray-600':   !['Super Admin','Admin','Docente','Evaluador'].includes(rol.name),
                                             }"
                                         >
-                                            {{ rol.name }}
+                                            {{ rol.name === 'Admin' ? 'Admin Local' : rol.name }}
                                         </span>
                                         <span v-if="!user.roles || user.roles.length === 0" class="text-gray-400 text-xs">Sin rol</span>
                                     </div>
@@ -403,7 +405,7 @@ const downloadTemplate = () => {
                                 </td>
                             </tr>
                             <tr v-if="users.data.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <td :colspan="useCan('users.edit') || useCan('users.delete') ? 6 : 5" class="px-6 py-12 text-center text-gray-500">
                                     No se encontraron registros
                                 </td>
                             </tr>

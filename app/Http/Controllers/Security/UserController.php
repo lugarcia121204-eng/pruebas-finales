@@ -48,7 +48,7 @@ class UserController extends SecurityController
         $roleFilter = $request->query('role_id');
 
         $query = $this->model->query()
-            ->with('roles')
+            ->with(['roles', 'institution'])
             ->whereDoesntHave('roles', fn($q) => $q->where('name', 'Super Admin'))
             ->buscarGlobal($filters->search)
             ->when($roleFilter, function ($q) use ($roleFilter) {
@@ -83,18 +83,23 @@ class UserController extends SecurityController
 
     public function create()
     {
-        $roles = Role::whereIn('name', ['Admin', 'Evaluador', 'Docente'])->orderBy('name')->get();
+        $roles = Role::whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente'])->orderBy('name')->get();
         return Inertia::render("{$this->source}Create", [
             'title' => 'Agregar Usuarios',
             'routeName' => $this->routeName,
             'roles' => $roles,
+            'institutions' => \App\Models\Institution::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
 
     public function store(StoreUserRequest $request)
     {
-        $user = $this->model::create($request->validated());
+        $data = $request->validated();
+        if (Role::where('name', 'Admin Nacional')->whereIn('id', $request->roles)->exists()) {
+            $data['institution_id'] = null;
+        }
+        $user = $this->model::create($data);
         $user->syncRoles($request->roles);
 
         return redirect()->route("{$this->routeName}index")->with('success', 'Usuario creado con éxito');
@@ -113,12 +118,13 @@ class UserController extends SecurityController
      */
     public function edit(User $user)
     {
-        $roles = Role::whereIn('name', ['Admin', 'Evaluador', 'Docente'])->orderBy('name')->get();
+        $roles = Role::whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente'])->orderBy('name')->get();
         return Inertia::render("{$this->source}Edit", [
             'title' => 'Editar Usuarios',
             'routeName' => $this->routeName,
             'user' => new UserResource($user->load('roles')),
             'roles' => $roles,
+            'institutions' => \App\Models\Institution::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -128,6 +134,9 @@ class UserController extends SecurityController
     public function update(UpdateUserRequest $request, User $user)
     {
         $data = $request->validated();
+        if (Role::where('name', 'Admin Nacional')->whereIn('id', $request->roles)->exists()) {
+            $data['institution_id'] = null;
+        }
 
         if (!$request->filled('password')) {
             unset($data['password']);

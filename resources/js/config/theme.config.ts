@@ -2,7 +2,7 @@
 export interface NavItem { label: string; route: string; }
 export const theme = {
   identity: { title: 'Sistema EDD', institution: 'CENIDET', subtitle: 'Plataforma Web para la Gestión de Estímulos Docentes del TECNM' },
-  colors: { navbarBg: '#1b396a', navbarText: '#ffffff', mobileDrawerBg: '#102344', primary: '#1b396a', primaryDark: '#102344', primaryLight: '#2c5282', accent: '#d97706', success: '#16a34a', text: '#000000', white: '#ffffff', gold: '#ffbf00', darkBackground: '#1a1a2e', darkSurface: '#24243b', darkText: '#e2e8f0' },
+  colors: { navbarBg: '#1b396a', navbarText: '#ffffff', mobileDrawerBg: '#102344', primary: '#1b396a', primaryDark: '#102344', primaryLight: '#2c5282', accent: '#d97706', success: '#16a34a', text: '#000000', white: '#ffffff', gold: '#ffbf00', darkBackground: '#1a1a2e', darkSurface: 'hsl(215 28% 17%)', darkText: '#e2e8f0' },
   logos: { navbar: '/images/TecnmBlanco.png', sidebar: '/img/LogoTecNMCompleto.png', favicon: '/img/LogoTecNMCerrado.png', alt: 'Logo Institucional TecNM CENIDET' },
   publicNavigation: [
     { label: 'Inicio', route: 'inicio' }, { label: 'Convocatoria', route: 'announcement.show' },
@@ -29,5 +29,13 @@ export function applyTheme() {
     'sidebar-accent': theme.colors.primaryLight, 'sidebar-accent-foreground': theme.colors.white,
     'sidebar-border': theme.colors.primaryLight, 'sidebar-ring': theme.colors.gold,
   };
-  Object.entries(tokens).forEach(([key, value]) => style.setProperty(`--${key}`, value));
+  // Light tokens must not override the dark palette through inline styles.
+  Object.keys(tokens).forEach(key => style.removeProperty(`--${key}`));
+  let palette = document.getElementById('edd-light-palette');
+  if (!palette) {
+    palette = document.createElement('style');
+    palette.id = 'edd-light-palette';
+    document.head.appendChild(palette);
+  }
+  palette.textContent = `:root:not(.dark) { ${Object.entries(tokens).map(([key, value]) => `--${key}: ${value};`).join(' ')} }`;
 }

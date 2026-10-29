@@ -178,7 +178,7 @@
 
             <div class="announcement-box">
                 <p class="announcement-label">Convocatoria</p>
-                <p class="announcement-title">{{ $announcementTitle }}</p>
+                <p class="announcement-title">{{ $announcementTitle }}@if($stageLabel) &mdash; {{ $stageLabel }}@endif</p>
             </div>
 
             <div class="recognition-box">

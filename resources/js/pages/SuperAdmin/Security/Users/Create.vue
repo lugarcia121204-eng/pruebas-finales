@@ -1,10 +1,14 @@
 <script setup>
+import { computed, watch } from 'vue';
+import VueSelect from 'vue-select';
+import 'vue-select/dist/vue-select.css';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue';
 import { mdiSecurity } from '@mdi/js';
 import { alertaExito, alertaError, alertaCargando, cerrarAlerta } from '@/utils/alerts.js';
 
 const props = defineProps({
+    institutions: { type: Array, default: () => [] },
     title: {
         type: String,
         required: true,
@@ -20,11 +24,17 @@ const props = defineProps({
 });
 
 const form = useForm({
+    institution_id: null,
     name: '',
     email: '',
     password: '',
     roles: [],
 });
+
+const isNationalAdmin = computed(() => props.roles.some(role => role.name === 'Admin Nacional' && form.roles.some(id => String(id) === String(role.id))));
+const isAdmin = computed(() => !isNationalAdmin.value && props.roles.some(role => role.name === 'Admin' && form.roles.some(id => String(id) === String(role.id))));
+watch(isNationalAdmin, () => form.clearErrors('institution_id'));
+watch(isAdmin, () => form.clearErrors('institution_id'));
 
 const clearError = (field) => {
     if (form.errors[field]) {
@@ -54,10 +64,15 @@ const submit = () => {
         return;
     }
     
+    if (isAdmin.value && !form.institution_id) {
+        form.errors.institution_id = 'Selecciona la institución del administrador.';
+        return;
+    }
+
     // Si todo está correcto, mostrar alerta de cargando y enviar
     alertaCargando('Guardando', 'Por favor espera...');
     
-    form.post(route(`${props.routeName}store`), {
+    form.transform(data => isAdmin.value ? data : Object.fromEntries(Object.entries(data).filter(([key]) => key !== 'institution_id'))).post(route(`${props.routeName}store`), {
         onSuccess: () => {
             cerrarAlerta();
             alertaExito('¡Éxito!', 'Usuario creado correctamente');
@@ -147,6 +162,25 @@ const submit = () => {
                                 <span>Por favor, introduce una contraseña segura</span>
                             </div>
                             <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">{{ form.errors.password }}</p>
+                        <div class="mt-6">
+                            <label for="admin-institution" class="block mb-2 font-medium text-gray-900 dark:text-slate-100">Institución del administrador: <span v-if="isAdmin" class="text-red-500">*</span></label>
+                            <VueSelect
+                                input-id="admin-institution"
+                                v-model="form.institution_id"
+                                :options="institutions"
+                                :reduce="institution => institution.id"
+                                label="name"
+                                :placeholder="isNationalAdmin ? 'No aplica para Admin Nacional' : 'Buscar o seleccionar una institución...'"
+                                :disabled="isNationalAdmin"
+                                :clearable="false"
+                                class="institution-select"
+                                :class="{ 'institution-select-error': form.errors.institution_id }"
+                                @update:modelValue="clearError('institution_id')"
+                            >
+                                <template #no-options>No se encontraron instituciones.</template>
+                            </VueSelect>
+                            <p v-if="form.errors.institution_id" class="mt-1 text-sm text-red-600">{{ form.errors.institution_id }}</p>
+                        </div>
                         </div>
 
                         <!-- Roles (selección múltiple card-style) -->
@@ -176,7 +210,7 @@ const submit = () => {
                                         </div>
                                     </div>
                                     <div class="w-full py-4 ps-3 select-none">
-                                        <div class="font-medium text-gray-900 text-sm">{{ rol.name }}</div>
+                                        <div class="font-medium text-gray-900 text-sm">{{ rol.name === 'Admin' ? 'Admin Local' : rol.name }}</div>
                                     </div>
                                 </label>
                             </div>
@@ -188,6 +222,7 @@ const submit = () => {
                             </div>
                             <p v-if="form.errors.roles" class="mt-1 text-sm text-red-600">{{ form.errors.roles }}</p>
                         </div>
+
                     </div>
 
                     <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-6 border-t border-gray-200">
@@ -206,6 +241,35 @@ const submit = () => {
 </template>
 
 <style scoped>
+.institution-select :deep(.vs__dropdown-toggle) {
+    min-height: 42px;
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #f3f4f6;
+}
+.institution-select :deep(.vs__search),
+.institution-select :deep(.vs__selected) {
+    color: inherit;
+}
+.institution-select :deep(.vs__dropdown-menu) {
+    max-height: 260px;
+}
+.institution-select :deep(.vs__dropdown-option) {
+    white-space: normal;
+}
+.institution-select-error :deep(.vs__dropdown-toggle) {
+    border-color: #ef4444;
+}
+.institution-select.vs--open :deep(.vs__dropdown-toggle) {
+    border-color: var(--institutional-primary);
+}
+:global(.dark) .institution-select :deep(.vs__dropdown-toggle) {
+    background: var(--popover, #24243b);
+    border-color: var(--border, #475569);
+    color: var(--popover-foreground, #e2e8f0);
+}
+
 /* Ocultar el checkbox nativo */
 .custom-checkbox {
     position: absolute;

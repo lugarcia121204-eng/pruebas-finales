@@ -59,6 +59,25 @@ class NotificationService
     /**
      * Send notification when an application verdict is made
      */
+    public function notifyLocalApplicationVerdict(\App\Models\Application $application): void
+    {
+        $approved = $application->status === 'approved';
+        Notification::create([
+            'user_id' => $application->user_id,
+            'title' => $approved ? 'Pasaste a la etapa nacional' : 'Solicitud no aprobada en etapa local',
+            'type' => 'local_application_verdict',
+            'data' => [
+                'message' => $approved
+                    ? 'Tu solicitud fue aprobada por el administrador local. Has pasado a la etapa nacional y tu solicitud continuar? con la revisi?n nacional.'
+                    : 'Tu solicitud no fue aprobada por el administrador local, por lo que no pasa a la etapa nacional. Motivo: '.$application->admin_comment,
+                'application_id' => $application->id,
+                'announcement' => $application->announcement->name,
+                'status' => $application->status,
+                'stage' => 'local',
+            ],
+        ]);
+    }
+
     public function notifyApplicationVerdict($applicationId, $teacherId, $status, $announcementTitle)
     {
         $teacher = User::findOrFail($teacherId);
@@ -91,7 +110,8 @@ class NotificationService
     public function notifyAnnouncementStageChange($announcementId, $announcementTitle, $newStage, $stageDate = null)
     {
         // Get all users with roles: Admin, Evaluador, Docente
-        $users = User::role(['Admin', 'Evaluador', 'Docente'])->get();
+        $users = User::whereHas('roles', fn ($roles) => $roles->where('guard_name', 'web')
+            ->whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente']))->get();
 
         foreach ($users as $user) {
             // Create notification
@@ -123,7 +143,8 @@ class NotificationService
     public function notifyAnnouncementDateChange($announcementId, $announcementTitle, $changes)
     {
         // Get all users with roles: Admin, Evaluador, Docente
-        $users = User::role(['Admin', 'Evaluador', 'Docente'])->get();
+        $users = User::whereHas('roles', fn ($roles) => $roles->where('guard_name', 'web')
+            ->whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente']))->get();
 
         $changesText = implode(', ', array_column($changes, 'label'));
 
@@ -153,7 +174,8 @@ class NotificationService
      */
     public function notifyAnnouncementClosed($announcementId, $announcementTitle, $resultsEnd = null)
     {
-        $users = User::role(['Admin', 'Evaluador', 'Docente'])->get();
+        $users = User::whereHas('roles', fn ($roles) => $roles->where('guard_name', 'web')
+            ->whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente']))->get();
 
         foreach ($users as $user) {
             Notification::create([
@@ -186,7 +208,8 @@ class NotificationService
         $announcement = \App\Models\Announcement::with('calendar')->findOrFail($announcementId);
 
         // Get all users with roles: Admin, Evaluador, Docente
-        $users = User::role(['Admin', 'Evaluador', 'Docente'])->get();
+        $users = User::whereHas('roles', fn ($roles) => $roles->where('guard_name', 'web')
+            ->whereIn('name', ['Admin', 'Admin Nacional', 'Evaluador', 'Docente']))->get();
 
         foreach ($users as $user) {
             // Create database notification
@@ -213,15 +236,40 @@ class NotificationService
     /**
      * Send notification when a teacher's recognition becomes available for download.
      */
-    public function notifyRecognitionAvailable($userId, $announcementId, $announcementTitle): void
+    public function notifyTeacherRecognition(\App\Models\Recognition $recognition): void
+    {
+        if ($recognition->type !== 'postulante' || !\App\Models\Recognition::whereKey($recognition->id)->publishable()->exists()) return;
+        if (Notification::where('type', 'recognition_available')->where('user_id', $recognition->user_id)
+            ->where('data->recognition_id', $recognition->id)->exists()) return;
+        $recognition->loadMissing(['user', 'announcement']);
+        $stageLabel = 'Etapa nacional';
+        try {
+            Mail::to($recognition->user->email)->queue(new RecognitionAvailable(
+                $recognition->user->name, $recognition->announcement->name, $recognition->stage, $recognition->id
+            ));
+            Notification::create([
+                'title' => 'Reconocimiento disponible - '.$stageLabel,
+                'data' => ['message' => 'Tu reconocimiento de '.$stageLabel.' est? disponible para descargar.',
+                    'announcement_id' => $recognition->announcement_id, 'recognition_id' => $recognition->id, 'stage' => $recognition->stage],
+                'type' => 'recognition_available', 'user_id' => $recognition->user_id,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('No se pudo enviar el reconocimiento docente', ['recognition_id' => $recognition->id, 'exception' => get_class($e)]);
+        }
+    }
+
+    public function notifyRecognitionAvailable($userId, $announcementId, $announcementTitle, ?int $recognitionId = null, ?string $stage = null): void
     {
         $teacher = User::findOrFail($userId);
+        $stageLabel = $stage === 'national' ? 'Etapa nacional' : null;
 
         Notification::create([
-            'title' => 'Reconocimiento Disponible',
+            'title' => 'Reconocimiento Disponible'.($stageLabel ? ' - '.$stageLabel : ''),
             'data' => [
                 'message' => "Tu reconocimiento de la convocatoria '{$announcementTitle}' ya está disponible para descargar.",
                 'announcement_id' => $announcementId,
+                'recognition_id' => $recognitionId,
+                'stage' => $stage,
             ],
             'type' => 'recognition_available',
             'user_id' => $userId,
@@ -230,7 +278,8 @@ class NotificationService
         try {
             Mail::to($teacher->email)->queue(new RecognitionAvailable(
                 $teacher->name,
-                $announcementTitle
+                $announcementTitle,
+                $stage
             ));
         } catch (\Exception $e) {
             \Log::error("❌ Error enviando correo de reconocimiento a {$teacher->email}: " . $e->getMessage());

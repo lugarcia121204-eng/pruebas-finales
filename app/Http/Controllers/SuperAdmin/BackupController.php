@@ -446,7 +446,7 @@ class BackupController extends Controller
             // Redirect stderr to a temp file to keep the SQL output clean (password warnings must not appear in the .sql file)
             $dumpErrFile = str_replace('\\', '/', tempnam(sys_get_temp_dir(), 'mysqldump_err_'));
             $command = sprintf(
-                '"%s" --host=%s --port=%s --user=%s --password=%s --single-transaction --routines --triggers --events --add-drop-table --ignore-table=%s.backups %s > "%s" 2>"%s"',
+                '"%s" --host=%s --port=%s --user=%s --password=%s --loose-column-statistics=0 --single-transaction --routines --triggers --events --add-drop-table --ignore-table=%s.backups %s > "%s" 2>"%s"',
                 $dumpBin, $host, $port, $user, escapeshellarg($pass), $dbName, $dbName, $fullPath, $dumpErrFile
             );
 
@@ -578,7 +578,7 @@ class BackupController extends Controller
             // Redirect stderr to a temp file so password warnings don't pollute the SQL output
             $incrErrFile = str_replace('\\', '/', tempnam(sys_get_temp_dir(), 'mysqlinc_err_'));
             $cmd = sprintf(
-                '"%s" --host=%s --port=%s --user=%s --password=%s --single-transaction --no-create-info --replace --skip-add-drop-table --skip-triggers %s %s %s >> "%s" 2>"%s"',
+                '"%s" --host=%s --port=%s --user=%s --password=%s --loose-column-statistics=0 --single-transaction --no-create-info --replace --skip-add-drop-table --skip-triggers %s %s %s >> "%s" 2>"%s"',
                 $dumpBin, $host, $port, $user, escapeshellarg($pass),
                 $whereArg, $dbName, $table, $outputPath, $incrErrFile
             );

@@ -1,10 +1,13 @@
 <template>
-    <div class="flex h-screen bg-gray-50 overflow-hidden">
+    <div class="authenticated-shell flex h-screen bg-gray-50 overflow-hidden">
         <AppSidebar :menu="menuConfigs.superAdmin" />
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Page Content -->
+            <header class="appearance-toolbar flex h-14 shrink-0 items-center justify-end border-b border-gray-200 bg-white px-6 dark:border-slate-700 dark:bg-[#1a1a2e]" aria-label="Apariencia del sistema">
+                <ThemeToggle />
+            </header>
             <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
                 <!-- Toggle Button -->
                 <div class="mb-4">
@@ -35,11 +38,14 @@
                 
                 <slot />
             </main>
+            <FooterBar />
         </div>
     </div>
 </template>
 
 <script setup>
+import ThemeToggle from "@/components/ThemeToggle.vue";
+import FooterBar from "@/components/FooterBar.vue";
 import { ref, onMounted, onUnmounted, provide } from 'vue';
 import { menuConfigs } from '@/config/menu/menuConfig';
 import AppSidebar from '@/components/Sidebar/AppSidebar.vue';

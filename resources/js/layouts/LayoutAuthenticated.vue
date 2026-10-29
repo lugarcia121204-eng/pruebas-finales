@@ -1,10 +1,13 @@
 <template>
-    <div class="flex h-svh bg-gray-50 overflow-hidden">
+    <div class="authenticated-shell flex h-svh bg-gray-50 overflow-hidden">
         <AppSidebar :menu="currentMenu" />
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Page Content -->
+            <header class="appearance-toolbar flex h-14 shrink-0 items-center justify-end border-b border-gray-200 bg-white px-6 dark:border-slate-700 dark:bg-[#1a1a2e]" aria-label="Apariencia del sistema">
+                <ThemeToggle />
+            </header>
             <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
                 <!-- Toggle Button and Notifications -->
                 <div class="mb-4 flex justify-between items-center">
@@ -40,11 +43,14 @@
                 
                 <slot />
             </main>
+            <FooterBar />
         </div>
     </div>
 </template>
 
 <script setup>
+import ThemeToggle from "@/components/ThemeToggle.vue";
+import FooterBar from "@/components/FooterBar.vue";
 // import AppSidebar from '@/components/Sidebar/AppSidebar.vue';
 import { ref, onMounted, onUnmounted, onUpdated, nextTick, provide, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
@@ -75,6 +81,7 @@ const currentMenu = computed(() => {
     
     // Mapping:
     if (userRole === 'Super Admin') return menuConfigs.superAdmin;
+    if (userRole === 'Admin Nacional') return menuConfigs.nationalAdmin;
     if (userRole === 'Admin') return menuConfigs.admin;
     if (userRole === 'Docente') return menuConfigs.teacher;
     if (userRole === 'Evaluador') return menuConfigs.evaluator;
@@ -85,7 +92,7 @@ const currentMenu = computed(() => {
 // Show notifications for Admin, Evaluador, Docente
 const showNotifications = computed(() => {
     const userRole = page.props.auth.primaryRole;
-    return ['Admin', 'Evaluador', 'Docente'].includes(userRole);
+    return ['Admin', 'Admin Nacional', 'Evaluador', 'Docente'].includes(userRole);
 });
 
 const checkMobile = () => {

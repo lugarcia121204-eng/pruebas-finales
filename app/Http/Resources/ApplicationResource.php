@@ -25,6 +25,11 @@ class ApplicationResource extends JsonResource
         $status = $this->status;
         $adminComment = $this->admin_comment;
         
+        if ($isTeacher && $status === 'approved') {
+            $status = $this->nationalReview?->status ?? 'pending';
+            $adminComment = $this->nationalReview?->comment;
+        }
+
         if ($isTeacher && $this->announcement) {
             $stage = $this->announcement->current_stage;
             if (!in_array($stage, ['resultados', 'terminada'])) {
@@ -41,8 +46,8 @@ class ApplicationResource extends JsonResource
             'user_id' => $this->user_id,
             'announcement_id' => $this->announcement_id,
             'status' => $status,
-            'review_stage' => $this->review_stage,
-            'review_stage_label' => ['local'=>'Local','state'=>'Estatal','national'=>'Nacional','completed'=>'Concluida'][$this->review_stage] ?? $this->review_stage,
+            'acceptance_available' => $this->finalDecision() === 'approved'
+                && in_array($this->announcement?->current_stage, ['resultados', 'terminada'], true),
             'via' => $this->via,
             'position_type_id' => $this->position_type_id,
             'position_type_name' => $this->positionType?->name,

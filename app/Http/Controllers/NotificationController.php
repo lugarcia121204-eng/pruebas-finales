@@ -23,6 +23,7 @@ class NotificationController extends Controller
         // Only show notifications created since the user registered (clean slate on new registration)
         $query->where('created_at', '>=', auth()->user()->created_at);
 
+        $unreadCount = (clone $query)->whereNull('read_at')->count();
         $notifications = $query
             ->orderBy('created_at', 'desc')
             ->paginate(10)
@@ -38,6 +39,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'notifications' => $notifications,
+            'unread_count' => $unreadCount,
         ]);
     }
 
@@ -46,7 +48,7 @@ class NotificationController extends Controller
      */
     public function markAsRead($id)
     {
-        $notification = Notification::findOrFail($id);
+        $notification = Notification::where('user_id', auth()->id())->findOrFail($id);
         $notification->markAsRead();
 
         return response()->json(['success' => true]);
@@ -75,7 +77,7 @@ class NotificationController extends Controller
      */
     public function destroy($id)
     {
-        $notification = Notification::findOrFail($id);
+        $notification = Notification::where('user_id', auth()->id())->findOrFail($id);
         $notification->delete();
 
         return response()->json(['success' => true]);

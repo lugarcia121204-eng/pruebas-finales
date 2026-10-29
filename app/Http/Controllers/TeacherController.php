@@ -195,7 +195,7 @@ class TeacherController extends Controller
     {
         $application = \App\Models\Application::forCurrentUser()
             ->where('id', $id)
-            ->approved()
+            ->finallyApproved()
             ->with(['announcement.calendar', 'user'])
             ->firstOrFail();
 

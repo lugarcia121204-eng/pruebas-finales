@@ -116,7 +116,7 @@ const getFileIcon = (type) => {
                     </div>
 
                     <!-- Action buttons for approved state -->
-                    <div v-if="application.status === 'approved'" class="ml-auto flex items-center gap-2">
+                    <div v-if="application.acceptance_available" class="ml-auto flex items-center gap-2">
                         <button 
                             @click="showAcceptancePreview = !showAcceptancePreview"
                             class="flex items-center gap-2 px-3 py-2 border rounded-lg font-bold transition cursor-pointer text-xs uppercase shadow-sm"
@@ -134,7 +134,7 @@ const getFileIcon = (type) => {
             </transition>
 
             <!-- Inline Acceptance Letter Preview -->
-            <div v-if="application.status === 'approved' && showAcceptancePreview" class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden animate-fadeIn">
+            <div v-if="application.acceptance_available && showAcceptancePreview" class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden animate-fadeIn">
                 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
                     <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
                         <svg viewBox="0 0 24 24" class="w-5 h-5 flex-shrink-0" style="fill: #1B396A;">
