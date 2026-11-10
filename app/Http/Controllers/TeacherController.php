@@ -163,12 +163,16 @@ class TeacherController extends Controller
             ->with('documents')
             ->first();
 
-        $previousDocuments = $previousApp ? $previousApp->documents : [];
+        $previousDocuments = $previousApp ? $previousApp->documents : collect();
+        $availableDocuments = $previousDocuments->filter(fn ($document) =>
+            $document->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($document->file_path)
+        );
 
         return Inertia::render('Teacher/Announcements/Apply', [
             'announcement' => (new \App\Http\Resources\Catalog\AnnouncementResource($announcement))->resolve(),
             'catalog_documents' => \App\Http\Resources\Catalog\DocumentResource::collection($documents)->resolve(),
-            'previous_documents' => $previousDocuments,
+            'previous_documents' => $availableDocuments->values(),
+            'unavailable_previous_documents' => $previousDocuments->diff($availableDocuments)->pluck('name')->values(),
             'position_types' => \App\Models\PositionType::all(['id', 'code', 'name']),
         ]);
     }

@@ -20,6 +20,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    unavailable_previous_documents: {
+        type: Array,
+        default: () => [],
+    },
     position_types: {
         type: Array,
         default: () => [],
@@ -428,6 +432,10 @@ const submit = async () => {
                         </p>
 
                         <!-- Dynamic Documents List -->
+                        <div v-if="unavailable_previous_documents.length" role="alert" class="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                            Algunos archivos de tu solicitud anterior ya no están disponibles. Carga nuevamente los documentos solicitados que no se hayan recuperado:
+                            {{ unavailable_previous_documents.join(', ') }}.
+                        </div>
                         <div v-if="filteredCatalogDocuments && filteredCatalogDocuments.length > 0" class="space-y-8">
                             <div v-for="doc in filteredCatalogDocuments" :key="doc.id" class="border-b border-gray-100 pb-8 last:border-0 last:pb-0">
                                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">

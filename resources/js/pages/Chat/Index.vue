@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { ref, nextTick, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 import { MessageCircle, Send, Search, Pencil, Trash2 } from 'lucide-vue-next';
 import DynamicLayout from '@/layouts/DynamicLayout.vue';
 const props = defineProps({ contacts: Array, institution: String, isAdministrator: Boolean, selectedContactId: Number });
@@ -20,7 +21,19 @@ const viewport = ref(null);
 const hasOlder = ref(false);
 const olderLoading = ref(false);
 const unread = ref(Object.fromEntries(props.contacts.map(contact => [contact.id, Number(contact.unread_count)])));
-let timer;
+let socket;
+let refreshTimer;
+let destroyed = false;
+const connectionStatus = ref('Conectando al chat…');
+const refresh = () => {
+    clearTimeout(refreshTimer);
+    if (destroyed || document.hidden) return;
+    refreshTimer = setTimeout(() => {
+        if (fetching || mutating.value || olderLoading.value) { refresh(); return; }
+        load();
+    }, 150);
+};
+const resume = () => { if (!document.hidden) refresh(); };
 let request;
 let fetching = false;
 const scrollBottom = async () => { await nextTick(); if (viewport.value) viewport.value.scrollTop = viewport.value.scrollHeight; };
@@ -51,6 +64,7 @@ const load = async (initial = false) => {
             unread.value[contact] = 0;
         }
         error.value = '';
+        if (!initial && data.messages.length === 50) refresh();
     } catch (failure) {
         if (!controller.signal.aborted && selected.value?.id === contact) error.value = 'No se pudo actualizar la conversación. Se reintentará automáticamente.';
     } finally {
@@ -114,16 +128,36 @@ const changeMessage = async (message, remove = false) => {
 };
 const time = value => new Date(value).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
 onMounted(() => {
+    const url = import.meta.env.VITE_SOCKET_IO_URL || `${window.location.protocol}//${window.location.hostname}:8095`;
+    socket = io(url, { transports: ['websocket'], withCredentials: true });
+    socket.on('connect', () => { connectionStatus.value = 'Chat conectado'; refresh(); });
+    socket.on('connect_error', () => { connectionStatus.value = 'No se pudo conectar al chat. Comprueba tu sesión y la conexión.'; });
+    socket.on('disconnect', () => { connectionStatus.value = 'Chat desconectado. Los mensajes guardados se recuperarán al reconectar.'; });
+    socket.on('chat:changed', event => {
+        if (!props.contacts.some(contact => contact.id === event.contact_id)) return;
+        unread.value[event.contact_id] = event.unread_count;
+        if (selected.value?.id === event.contact_id) refresh();
+    });
+    document.addEventListener('visibilitychange', resume);
+    window.addEventListener('online', resume);
     const initial = props.contacts.find(contact => contact.id === Number(props.selectedContactId));
     if (initial) select(initial);
-    timer = setInterval(() => { if (!document.hidden) load(); }, 5000); });
-onUnmounted(() => { clearInterval(timer); request?.abort(); });
+});
+onUnmounted(() => {
+    destroyed = true;
+    clearTimeout(refreshTimer);
+    socket?.disconnect();
+    request?.abort();
+    document.removeEventListener('visibilitychange', resume);
+    window.removeEventListener('online', resume);
+});
 </script>
 
 <template>
     <DynamicLayout>
         <Head title="Chat de la institución" />
         <div class="space-y-5">
+            <p role="status" class="text-sm text-gray-600">{{ connectionStatus }}</p>
             <div><h1 class="text-3xl font-bold text-gray-900">Chat de la institución</h1><p class="mt-2 text-gray-600">{{ institution }} · {{ isAdministrator ? 'Comunicación con los docentes de tu sede' : 'Comunicación con la administración de tu sede' }}</p></div>
             <div class="grid overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:grid-cols-[280px_1fr]">
                 <aside class="border-b border-gray-200 md:border-b-0 md:border-r">

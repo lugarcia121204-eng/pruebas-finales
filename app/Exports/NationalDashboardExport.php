@@ -9,6 +9,14 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 class NationalDashboardExport implements FromCollection, WithHeadings
 {
     public function __construct(private Collection $rows) {}
-    public function collection(): Collection { return $this->rows; }
-    public function headings(): array { return ['Estado', 'Institución', 'Aprobadas', 'Rechazadas']; }
+
+    public function collection(): Collection
+    {
+        return $this->rows;
+    }
+
+    public function headings(): array
+    {
+        return ['Estado', 'Institución', 'Aprobadas', 'Rechazadas', 'Total filtrado'];
+    }
 }

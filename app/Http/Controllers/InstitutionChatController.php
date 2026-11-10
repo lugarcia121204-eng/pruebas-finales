@@ -10,6 +10,16 @@ use Inertia\Inertia;
 
 class InstitutionChatController extends Controller
 {
+    public function socketSession(Request $request)
+    {
+        $user = $this->user($request);
+
+        return response()->json([
+            'user_id' => $user->id, 'institution_id' => $user->institution_id,
+            'session' => hash('sha256', $request->session()->getId()),
+        ]);
+    }
+
     private function user(Request $request): User
     {
         $user = $request->user();
@@ -87,6 +97,7 @@ class InstitutionChatController extends Controller
             }
             return $id;
         });
+        app(\App\Services\ChatSocketService::class)->changed($user->institution_id, $user->id, $contact);
         return response()->json(['id' => $id], 201);
     }
 
@@ -106,6 +117,7 @@ class InstitutionChatController extends Controller
                     $notification->update(['data' => $payload]);
                 });
         });
+        app(\App\Services\ChatSocketService::class)->changed($user->institution_id, $user->id, $contact);
         return response()->noContent();
     }
 
@@ -119,6 +131,7 @@ class InstitutionChatController extends Controller
                 ->where('data->message_id', $row->id)->where('data->institution_id', $user->institution_id)->delete();
             DB::table('institution_messages')->where('id', $row->id)->delete();
         });
+        app(\App\Services\ChatSocketService::class)->changed($user->institution_id, $user->id, $contact);
         return response()->noContent();
     }
 

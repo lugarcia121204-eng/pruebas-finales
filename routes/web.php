@@ -93,6 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports/closed-announcements/{announcement}/{stage}/pdf', [\App\Http\Controllers\ClosedAnnouncementReportController::class, 'download'])->middleware('role:Super Admin|Admin|Admin Nacional')->whereNumber('announcement')->where('stage', 'local|national')->name('reports.closed-announcements.pdf');
     Route::get('/reports/closed-announcements', [\App\Http\Controllers\ClosedAnnouncementReportController::class, 'index'])->middleware('role:Super Admin|Admin|Admin Nacional')->name('reports.closed-announcements');
     Route::prefix('institution-chat')->name('institution-chat.')->middleware('role:Admin|Docente')->group(function () {
+        Route::get('/socket-session', [\App\Http\Controllers\InstitutionChatController::class, 'socketSession'])->middleware('throttle:120,1')->name('socket-session');
         Route::get('/', [\App\Http\Controllers\InstitutionChatController::class, 'index'])->name('index');
         Route::get('/{contact}/messages', [\App\Http\Controllers\InstitutionChatController::class, 'messages'])->whereNumber('contact')->name('messages');
         Route::post('/{contact}/messages', [\App\Http\Controllers\InstitutionChatController::class, 'send'])->middleware('throttle:30,1')->whereNumber('contact')->name('send');
@@ -273,6 +274,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ========================
 
     Route::get('control-applications', [AdminRequestControlController::class, 'index'])->name('applications.control.index')->middleware('can:requests.index');
+    Route::get('control-applications/export', [AdminRequestControlController::class, 'export'])->name('applications.control.export')->middleware('can:requests.index');
     Route::get('control-applications/{id}', [AdminRequestControlController::class, 'show'])->name('applications.control.show')->middleware('can:requests.show');
 
     // Admin Specific Applications Logic

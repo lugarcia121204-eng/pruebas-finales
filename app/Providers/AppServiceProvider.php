@@ -20,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Logout::class, function () {
+            if (request()->hasSession()) {
+                app(\App\Services\ChatSocketService::class)->revokeSession(request()->session()->getId());
+            }
+        });
         \Carbon\Carbon::setLocale('es');
         
         Gate::before(function ($user, $ability) {

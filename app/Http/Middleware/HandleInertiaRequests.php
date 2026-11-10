@@ -8,6 +8,18 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function handle(Request $request, \Closure $next)
+    {
+        $response = parent::handle($request, $next);
+
+        // Private screens and authentication responses must not be HTTP cached.
+        $response->headers->set('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+
+        return $response;
+    }
+
     /**
      * The root template that's loaded on the first page visit.
      *

@@ -15,6 +15,7 @@ class InstitutionChatTest extends TestCase
 
     private function fixture(): array
     {
+        config(['chat.secret' => null]);
         foreach (['Admin', 'Docente', 'Evaluador', 'Admin Nacional'] as $role) Role::findOrCreate($role, 'web');
         $state = DB::table('states')->insertGetId(['name' => 'Prueba', 'abbreviation' => 'PR']);
         $a = Institution::create(['name' => 'Sede A', 'state_id' => $state]);
@@ -25,6 +26,41 @@ class InstitutionChatTest extends TestCase
             $user->assignRole($role); $users[] = $user;
         }
         return $users;
+    }
+
+    public function test_socket_session_uses_authenticated_identity_and_requires_a_verified_chat_role(): void
+    {
+        [$admin, $teacher, , , , $evaluator] = $this->fixture();
+        $this->getJson(route('institution-chat.socket-session'))->assertUnauthorized();
+        $this->actingAs($teacher)->getJson(route('institution-chat.socket-session'))
+            ->assertOk()->assertJsonPath('user_id', $teacher->id)
+            ->assertJsonPath('institution_id', $teacher->institution_id)->assertJsonStructure(['session']);
+        $this->actingAs($evaluator)->getJson(route('institution-chat.socket-session'))->assertForbidden();
+        $admin->forceFill(['email_verified_at' => null])->save();
+        $this->actingAs($admin)->getJson(route('institution-chat.socket-session'))->assertForbidden();
+    }
+
+    public function test_socket_events_follow_persisted_changes_and_do_not_lose_messages_on_socket_failure(): void
+    {
+        [$admin, $teacher] = $this->fixture();
+        config(['chat.secret' => 'test-secret', 'chat.socket_url' => 'http://socket.test']);
+        \Illuminate\Support\Facades\Http::fake(['socket.test/*' => \Illuminate\Support\Facades\Http::response('', 204)]);
+        $response = $this->actingAs($admin)->postJson(route('institution-chat.send', $teacher->id), ['body' => 'Socket.IO'])->assertCreated();
+        \Illuminate\Support\Facades\Http::assertSent(fn ($request) => $request['user_id'] === $teacher->id
+            && $request['contact_id'] === $admin->id && $request['institution_id'] === $teacher->institution_id
+            && $request['unread_count'] === 1 && $request->hasHeader('Authorization', 'Bearer test-secret'));
+        $id = $response->json('id');
+        $this->patchJson(route('institution-chat.update', ['contact' => $teacher->id, 'message' => $id]), ['body' => 'Editado'])->assertNoContent();
+        $this->deleteJson(route('institution-chat.destroy', ['contact' => $teacher->id, 'message' => $id]))->assertNoContent();
+        \Illuminate\Support\Facades\Http::assertSentCount(6);
+        \Illuminate\Support\Facades\Http::fake(['socket.test/*' => \Illuminate\Support\Facades\Http::response('', 503)]);
+        $this->postJson(route('institution-chat.send', $teacher->id), ['body' => 'Conservar aunque falle el socket'])->assertCreated();
+        $this->assertDatabaseHas('institution_messages', ['body' => 'Conservar aunque falle el socket']);
+        \Illuminate\Support\Facades\Http::fake(['socket.test/*' => \Illuminate\Support\Facades\Http::response('', 204)]);
+        $this->withCredentials()->withCookie(config('session.cookie'), app('session')->getId());
+        $session = $this->getJson(route('institution-chat.socket-session'))->assertOk()->json('session');
+        $this->post(route('logout'))->assertRedirect(route('login'));
+        \Illuminate\Support\Facades\Http::assertSent(fn ($request) => $request['type'] === 'revoke' && $request['session'] === $session);
     }
 
     public function test_contacts_and_messages_are_private_and_limited_to_the_same_institution(): void

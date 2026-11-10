@@ -80,7 +80,10 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->post(route('logout'));
 
         $this->assertGuest();
-        $response->assertRedirect(route('inicio'));
+        $response->assertRedirect(route('login'));
+        $this->get(route('superadmin.dashboard'))->assertRedirect(route('login'));
+        $this->get(route('login'))->assertHeader('Pragma', 'no-cache')
+            ->assertHeader('Expires', '0');
     }
 
     public function test_users_are_rate_limited()

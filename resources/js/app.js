@@ -16,6 +16,15 @@ const appName =
   window.document.getElementsByTagName("title")[0]?.innerText || "Laravel";
 
 const pinia = createPinia();
+// Revalidate the session at the actual history destination. Never replace
+// browser history destinations with a forced home or external redirect.
+window.addEventListener('popstate', (event) => {
+  event.stopImmediatePropagation();
+  window.location.reload();
+}, { capture: true });
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) window.location.reload();
+});
 
 createInertiaApp({
   title: (title) => `${title} - ${appName}`,

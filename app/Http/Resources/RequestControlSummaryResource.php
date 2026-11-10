@@ -22,6 +22,7 @@ class RequestControlSummaryResource extends JsonResource
             }),
             'approved_count' => $this->approved_count ?? 0, // Using the aggregate aliases
             'rejected_count' => $this->rejected_count ?? 0,
+            'filtered_applications_count' => $this->filtered_applications_count ?? (($this->approved_count ?? 0) + ($this->rejected_count ?? 0)),
         ];
     }
 }

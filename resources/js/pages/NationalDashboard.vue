@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import DynamicLayout from '@/layouts/DynamicLayout.vue';
 import Pagination from '@/Shared/Pagination.vue';
+import ApplicationReportFilters from '@/components/ApplicationReportFilters.vue';
 import { ref, watch, computed, onUnmounted } from 'vue';
 import { debounce } from 'lodash';
 import VueSelect from 'vue-select';
@@ -21,7 +22,11 @@ const props = defineProps({
     states: Array,
     allInstitutions: Array,
     filters: Object,
+    priorityAreas: Array,
+    subAreas: Array,
 });
+
+const reportFilters = ref({ date_from: props.filters?.date_from, date_to: props.filters?.date_to, priority_area_id: props.filters?.priority_area_id, sub_area_id: props.filters?.sub_area_id, status: props.filters?.status });
 
 const search = ref(props.filters?.search || '');
 const rows = ref(props.filters?.rows || 10);
@@ -54,6 +59,7 @@ const rowOptions = [
 ];
 
 const getFilters = () => ({
+    ...reportFilters.value,
     search: search.value,
     rows: rows.value,
     state_id: stateId.value,
@@ -69,6 +75,7 @@ const onSearch = debounce((value) => {
 onUnmounted(() => onSearch.cancel());
 
 const cleanFilters = () => {
+    reportFilters.value = {};
     onSearch.cancel();
     search.value = '';
     rows.value = 10;
@@ -94,6 +101,7 @@ const onRowsChange = () => {
 };
 
 const onFilterChange = () => {
+    onSearch.cancel();
     router.get(route('national-review.dashboard'), getFilters(), { preserveState: true, replace: true, preserveScroll: true });
 };
 
@@ -102,6 +110,7 @@ const exportData = () => {
     if (search.value)        params.append('search', search.value);
     if (institutionId.value) params.append('institution_id', institutionId.value);
     if (stateId.value)       params.append('state_id', stateId.value);
+    Object.entries(reportFilters.value).forEach(([key, value]) => { if (value) params.append(key, value); });
     window.location.href = route('national-review.dashboard.export') + (params.toString() ? '?' + params.toString() : '');
 };
 
@@ -373,6 +382,7 @@ const getProgressWidth = (count) => {
                             @option:deselected="onFilterChange"
                         />
                     </div>
+                    <ApplicationReportFilters class="col-span-full" v-model="reportFilters" :priority-areas="priorityAreas" :sub-areas="subAreas" national @change="onFilterChange" />
                     <!-- Registros -->
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Registros</label>
@@ -415,6 +425,7 @@ const getProgressWidth = (count) => {
                                 </th>
                                 <th scope="col" class="px-6 py-4 text-center tracking-wider">Aprobadas</th>
                                 <th scope="col" class="px-6 py-4 text-center tracking-wider">Rechazadas</th>
+                                <th scope="col" class="px-6 py-4 text-center tracking-wider">Total filtrado</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
@@ -434,9 +445,10 @@ const getProgressWidth = (count) => {
                                         {{ institution.rejected_count }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 text-center">{{ institution.filtered_applications_count }}</td>
                             </tr>
                             <tr v-if="!institutions.data || institutions.data.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                     No se encontraron registros.
                                 </td>
                             </tr>

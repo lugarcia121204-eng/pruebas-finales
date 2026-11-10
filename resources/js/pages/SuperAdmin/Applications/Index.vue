@@ -2,7 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue';
 import Pagination from '@/Shared/Pagination.vue';
-import { ref, watch, computed } from 'vue';
+import ApplicationReportFilters from '@/components/ApplicationReportFilters.vue';
+import { ref, watch, computed, onUnmounted } from 'vue';
 import { debounce } from 'lodash';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
@@ -14,7 +15,11 @@ const props = defineProps({
     states: Array,
     allInstitutions: Array,
     filters: Object,
+    priorityAreas: Array,
+    subAreas: Array,
 });
+
+const reportFilters = ref({ date_from: props.filters?.date_from, date_to: props.filters?.date_to, priority_area_id: props.filters?.priority_area_id, sub_area_id: props.filters?.sub_area_id, status: props.filters?.status });
 
 const search = ref(props.filters?.search || '');
 const stateId = ref(props.filters?.state_id || null);
@@ -48,6 +53,7 @@ const rowOptions = [
 
 
 const getFilters = () => ({
+    ...reportFilters.value,
     search: search.value,
     state_id: stateId.value,
     institution_id: institutionId.value,
@@ -60,7 +66,11 @@ const onSearch = debounce((value) => {
     router.get(route('superadmin.control-applications'), { ...getFilters(), search: value }, { preserveState: true, replace: true, preserveScroll: true });
 }, 500);
 
+onUnmounted(() => onSearch.cancel());
+
 const cleanFilters = () => {
+    onSearch.cancel();
+    reportFilters.value = {};
     search.value = '';
     stateId.value = null;
     institutionId.value = null;
@@ -85,6 +95,7 @@ const onRowsChange = () => {
 };
 
 const onFilterChange = () => {
+    onSearch.cancel();
     router.get(route('superadmin.control-applications'), getFilters(), { preserveState: true, replace: true, preserveScroll: true });
 };
 
@@ -93,6 +104,7 @@ const exportData = () => {
     if (search.value)        params.append('search', search.value);
     if (institutionId.value) params.append('institution_id', institutionId.value);
     if (stateId.value)       params.append('state_id', stateId.value);
+    Object.entries(reportFilters.value).forEach(([key, value]) => { if (value) params.append(key, value); });
     window.location.href = route('superadmin.control-applications.export') + (params.toString() ? '?' + params.toString() : '');
 };
 
@@ -270,6 +282,8 @@ watch(search, (value) => {
                 </div>
             </div>
 
+            <ApplicationReportFilters v-model="reportFilters" :priority-areas="priorityAreas" :sub-areas="subAreas" @change="onFilterChange" />
+
             <!-- Table -->
             <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
@@ -295,6 +309,7 @@ watch(search, (value) => {
                                 </th>
                                 <th scope="col" class="px-6 py-4 text-center tracking-wider">Aprobadas</th>
                                 <th scope="col" class="px-6 py-4 text-center tracking-wider">Rechazadas</th>
+                                <th scope="col" class="px-6 py-4 text-center tracking-wider">Total filtrado</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -314,9 +329,10 @@ watch(search, (value) => {
                                         {{ institution.rejected_count }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 text-center">{{ institution.filtered_applications_count }}</td>
                             </tr>
                             <tr v-if="!institutions.data || institutions.data.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                     No se encontraron registros
                                 </td>
                             </tr>
