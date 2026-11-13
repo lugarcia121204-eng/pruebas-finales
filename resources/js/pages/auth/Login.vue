@@ -72,6 +72,8 @@ form { display:flex; flex-direction:column; gap:20px; }
 .field input { width:100%; height:46px; padding:0 14px; border:1px solid transparent; border-bottom-color:#cbd5e1; border-radius:9px; background:#f3f4f6; color:#102344; font-size:14px; outline:none; }
 .field input:focus { border-color:#1b396a; box-shadow:0 0 0 3px #1b396a12; }
 .field input[aria-invalid='true'] { border-color:#b91c1c; }
+.field #email { color:#000; -webkit-text-fill-color:#000; }
+.field #email::placeholder { color:#6b7280; -webkit-text-fill-color:#6b7280; opacity:1; }
 .field-help { display:flex; align-items:flex-start; gap:5px; margin-top:6px; color:#718096; font-size:11px; line-height:1.5; }
 .field-help svg { flex-shrink:0; margin-top:2px; }
 .error { color:#b91c1c; }

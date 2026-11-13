@@ -66,17 +66,31 @@ const etapas = computed(() => {
         },
         {
             id: 3,
-            titulo: 'Evaluación y Dictaminación',
+            titulo: 'Evaluación y Dictaminación Local',
             dateStartKey: 'evaluation_start',
             dateEndKey: 'evaluation_end',
             color: '#E9C81F'
         },
         {
             id: 4,
-            titulo: 'Publicación de Resultados',
+            titulo: 'Publicidad de Resultados Local',
             dateStartKey: 'results_start',
             dateEndKey: 'results_end',
             color: '#2B6CB0'
+        },
+        {
+            id: 5,
+            titulo: 'Evaluación y Dictaminación Nacional',
+            dateStartKey: 'national_evaluation_start',
+            dateEndKey: 'national_evaluation_end',
+            color: '#7C3AED'
+        },
+        {
+            id: 6,
+            titulo: 'Publicidad de Resultados Nacional',
+            dateStartKey: 'national_results_start',
+            dateEndKey: 'national_results_end',
+            color: '#0F766E'
         }
     ];
 
@@ -285,6 +299,9 @@ const etapas = computed(() => {
 .empty-announcement svg { margin:0 auto 16px; color:var(--page-muted); }
 .empty-announcement h2 { font-size:19px; font-weight:700; margin-bottom:8px; }
 .empty-announcement p { color:var(--page-muted); font-size:14px; }
+.announcement-page a:focus-visible,.announcement-page button:focus-visible { outline:3px solid var(--institutional-gold); outline-offset:4px; }
+:global(.dark .announcement-page) { --page-background:var(--institutional-dark-background); --page-surface:var(--institutional-dark-surface); --page-text:var(--institutional-dark-text); --page-muted:#bbc8dd; --page-border:#ffffff18; }
+:global(.dark .announcement-page .heading-icon),:global(.dark .announcement-page .requirement-number) { background:#ffffff08; color:#b8d8ff; }
 .stages-list { list-style:none; padding:4px 0 0; margin:0; }
 .stage-item { position:relative; display:grid; grid-template-columns:36px minmax(0,1fr); gap:16px; padding-bottom:30px; }
 .stage-item:last-child { padding-bottom:0; }
@@ -294,9 +311,6 @@ const etapas = computed(() => {
 .stage-item h3 { font-size:14px; font-weight:700; line-height:1.5; margin:4px 0 8px; }
 .stage-date { display:flex; align-items:center; gap:7px; color:var(--page-muted); font-size:12px; line-height:1.6; }
 .stage-date svg { flex-shrink:0; }
-.announcement-page a:focus-visible,.announcement-page button:focus-visible { outline:3px solid var(--institutional-gold); outline-offset:4px; }
-:global(.dark .announcement-page) { --page-background:var(--institutional-dark-background); --page-surface:var(--institutional-dark-surface); --page-text:var(--institutional-dark-text); --page-muted:#bbc8dd; --page-border:#ffffff18; }
-:global(.dark .announcement-page .heading-icon),:global(.dark .announcement-page .requirement-number) { background:#ffffff08; color:#b8d8ff; }
 @media(max-width:1023px) { .announcement-content { grid-template-columns:1fr; } .calendar-column { grid-template-columns:1fr 1fr; align-items:start; } .participation-card { flex-wrap:wrap; } }
 @media(max-width:639px) { .announcement-container { padding-left:16px; padding-right:16px; } .hero-heading { padding:26px 0; } .hero-mark { display:none; } .hero-heading p { font-size:14px; } .section-navigation { gap:14px 20px; } .section-navigation a { font-size:12px; } .announcement-content { padding-top:24px; padding-bottom:40px; gap:20px; } .calendar-column { grid-template-columns:1fr; } .information-card,.featured-announcement,.participation-card { padding:22px; } .card-heading h2 { font-size:17px; } .participation-button { width:100%; } }
 .modal-enter-active,

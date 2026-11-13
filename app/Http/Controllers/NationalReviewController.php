@@ -54,7 +54,7 @@ class NationalReviewController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $review = $this->assigned($request)->with(['application.user.institution.state', 'application.user.priorityArea', 'application.user.subArea', 'application.positionType', 'application.announcement', 'application.documents', 'evaluations.evaluator', 'evaluations.rubric.questions.options'])->findOrFail($id);
+        $review = $this->assigned($request)->with(['application.user.institution.state', 'application.user.priorityArea', 'application.user.subArea', 'application.positionType', 'application.announcement.calendar', 'application.documents', 'evaluations.evaluator', 'evaluations.rubric.questions.options'])->findOrFail($id);
         return Inertia::render('NationalReview/Show', [
             'review' => [
                 'id' => $review->id,
@@ -78,6 +78,7 @@ class NationalReviewController extends Controller
                     return ['id' => $question->id, 'question' => $question->text, 'answer' => $option?->text, 'score' => $option?->score];
                 })->values() ?? []]),
             ],
+            'evaluationPeriodOpen' => $review->application->announcement?->calendar?->nationalEvaluationIsOpen() ?? false,
             'evaluators' => User::whereHas('roles', fn ($query) => $query->where('name', 'Evaluador'))
                 ->with('institution:id,name')
                 ->when($review->application->user?->institution_id, fn ($query, $institutionId) => $query->where('institution_id', '!=', $institutionId))
@@ -96,6 +97,9 @@ class NationalReviewController extends Controller
         DB::transaction(function () use ($request, $id, $data) {
             $review = $this->assigned($request)->lockForUpdate()->findOrFail($id);
             abort_unless($review->status === 'pending', 409);
+            if (!$review->application->announcement?->calendar?->nationalEvaluationIsOpen()) {
+                throw ValidationException::withMessages(['evaluator_ids' => 'La convocatoria está fuera del periodo de evaluación nacional.']);
+            }
             $rubric = Rubric::active()->with('questions.options')->latest('id')->first();
             if (!$rubric || !$rubric->questions->count() || $rubric->questions->contains(fn ($question) => !$question->options->count())) {
                 throw ValidationException::withMessages(['evaluator_ids' => 'Configura una rúbrica activa con preguntas y opciones antes de asignar evaluadores.']);
@@ -121,6 +125,9 @@ class NationalReviewController extends Controller
         DB::transaction(function () use ($request, $id, $data) {
             $review = $this->assigned($request)->lockForUpdate()->findOrFail($id);
             abort_unless($review->status === 'pending', 409);
+            if (!$review->application->announcement?->calendar?->nationalEvaluationIsOpen()) {
+                throw ValidationException::withMessages(['status' => 'La convocatoria está fuera del periodo de evaluación nacional.']);
+            }
             if (!$review->evaluations()->exists() || $review->evaluations()->where('status', 'pending')->exists()) {
                 throw ValidationException::withMessages(['status' => 'Todas las evaluaciones nacionales deben estar completas antes de emitir el dictamen.']);
             }

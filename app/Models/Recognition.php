@@ -81,7 +81,7 @@ class Recognition extends Model
                     ->whereExists(Application::finallyApproved()->selectRaw('1')
                         ->whereColumn('applications.user_id', 'recognitions.user_id')
                         ->whereColumn('applications.announcement_id', 'recognitions.announcement_id')->toBase())
-                    ->whereHas('announcement.calendar', fn ($calendar) => $calendar->where('results_start', '<=', now()));
+                    ->whereHas('announcement.calendar', fn ($calendar) => $calendar->withPublishedFinalResults());
             });
         });
     }

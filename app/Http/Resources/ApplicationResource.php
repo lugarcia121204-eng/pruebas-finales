@@ -30,15 +30,13 @@ class ApplicationResource extends JsonResource
             $adminComment = $this->nationalReview?->comment;
         }
 
-        if ($isTeacher && $this->announcement) {
-            $stage = $this->announcement->current_stage;
-            if (!in_array($stage, ['resultados', 'terminada'])) {
-                // Si aún no son resultados, el docente solo ve "pendiente" para no arruinar la sorpresa
-                if ($status !== 'draft') { // si fuera draft, sigue siendo draft (aunque docente no tiene drafts, pero por si acaso)
-                    $status = 'pending';
-                }
-                $adminComment = null;
+        $resultsPublished = $this->announcement?->calendar?->finalResultsArePublished() ?? false;
+
+        if ($isTeacher && !$resultsPublished) {
+            if ($status !== 'draft') {
+                $status = 'pending';
             }
+            $adminComment = null;
         }
 
         return [
@@ -47,7 +45,7 @@ class ApplicationResource extends JsonResource
             'announcement_id' => $this->announcement_id,
             'status' => $status,
             'acceptance_available' => $this->finalDecision() === 'approved'
-                && in_array($this->announcement?->current_stage, ['resultados', 'terminada'], true),
+                && $resultsPublished,
             'via' => $this->via,
             'position_type_id' => $this->position_type_id,
             'position_type_name' => $this->positionType?->name,

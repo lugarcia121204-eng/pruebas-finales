@@ -93,11 +93,11 @@ const size = (bytes) =>
 <template>
     <SuperAdminLayout
         ><Head title="Documentos de Trabajo" />
-        <div class="work-page">
+        <div class="work-page text-gray-900">
             <header class="page-header">
                 <div>
                     <h1>Documentos de Trabajo</h1>
-                    <p>
+                    <p class="text-gray-500">
                         Administra los archivos que aparecen en Documentos de la
                         página pública.
                     </p>
@@ -111,7 +111,7 @@ const size = (bytes) =>
             </p>
             <section
                 v-if="open"
-                class="panel editor"
+                class="panel border border-gray-200 bg-white shadow-md editor"
                 aria-labelledby="editor-title"
             >
                 <header>
@@ -136,7 +136,7 @@ const size = (bytes) =>
                                 required
                                 maxlength="180"
                             />
-                            <p class="error">{{ form.errors.title }}</p>
+                            <p class="error text-red-700 dark:text-red-300">{{ form.errors.title }}</p>
                         </div>
                         <div>
                             <label for="category">Categoría</label
@@ -149,7 +149,7 @@ const size = (bytes) =>
                                     {{ label }}
                                 </option>
                             </select>
-                            <p class="error">{{ form.errors.category }}</p>
+                            <p class="error text-red-700 dark:text-red-300">{{ form.errors.category }}</p>
                         </div>
                         <div class="full">
                             <label for="description">Descripción</label
@@ -159,7 +159,7 @@ const size = (bytes) =>
                                 rows="3"
                                 maxlength="2000"
                             />
-                            <p class="error">{{ form.errors.description }}</p>
+                            <p class="error text-red-700 dark:text-red-300">{{ form.errors.description }}</p>
                         </div>
                         <div class="full">
                             <label for="file">{{
@@ -177,7 +177,7 @@ const size = (bytes) =>
                                     form.file = $event.target.files[0] || null
                                 "
                             />
-                            <p class="hint">
+                            <p class="hint text-gray-500">
                                 PDF, Word, Excel o PowerPoint. Máximo 20 MB.
                                 {{
                                     editing
@@ -185,19 +185,19 @@ const size = (bytes) =>
                                         : ''
                                 }}
                             </p>
-                            <p class="error">{{ form.errors.file }}</p>
+                            <p class="error text-red-700 dark:text-red-300">{{ form.errors.file }}</p>
                         </div>
                     </div>
                     <label class="checkbox"
                         ><input v-model="form.published" type="checkbox" />
                         Publicar en la página de Documentos</label
                     >
-                    <p class="hint">
+                    <p class="hint text-gray-500">
                         Si desmarcas esta opción, el documento solo estará
                         disponible en este catálogo.
                     </p>
-                    <p class="error">{{ form.errors.published }}</p>
-                    <p v-if="form.progress" role="status" class="hint">
+                    <p class="error text-red-700 dark:text-red-300">{{ form.errors.published }}</p>
+                    <p v-if="form.progress" role="status" class="hint text-gray-500">
                         Subiendo archivo: {{ form.progress.percentage }} %
                     </p>
                     <footer>
@@ -218,33 +218,33 @@ const size = (bytes) =>
                     </footer>
                 </form>
             </section>
-            <form class="panel filter-panel" @submit.prevent="filter">
+            <form class="panel border border-gray-200 bg-white shadow-md filter-panel" @submit.prevent="filter">
                 <div class="filter-heading"><h2><Filter :size="21" /> Filtro de Búsqueda</h2><button type="button" class="secondary" @click="clearFilters"><ListChecks :size="18" /> Limpiar Filtros</button></div>
-                <p class="filter-description">Buscar por nombre o descripción del documento</p>
-                <div class="filter-fields"><label>BUSCAR<div class="filter-search"><Search :size="20" /><input v-model="search" placeholder="Buscar documento..." aria-label="Buscar documento" /><button type="submit">Buscar</button></div></label><label>REGISTROS<select v-model="rows" @change="filter"><option v-for="count in [5, 10, 25, 50]" :key="count" :value="count">{{ count }} Registros</option></select></label></div>
+                <p class="filter-description text-gray-500">Buscar por nombre o descripción del documento</p>
+                <div class="filter-fields text-gray-600"><label>BUSCAR<div class="filter-search text-[var(--institutional-primary)]"><Search :size="20" /><input v-model="search" type="search" placeholder="Buscar documento..." aria-label="Buscar documento" /><button type="submit">Buscar</button></div></label><label>REGISTROS<select v-model="rows" @change="filter"><option v-for="count in [5, 10, 25, 50]" :key="count" :value="count">{{ count }} Registros</option></select></label></div>
             </form>
-            <section class="panel table-panel">
+            <section class="panel border border-gray-200 bg-white shadow-md table-panel">
                 <div class="table-scroll">
                     <table>
-                        <thead>
+                        <thead class="bg-[var(--institutional-primary)]">
                             <tr>
-                                <th>DOCUMENTO</th>
-                                <th>CATEGORÍA</th>
-                                <th>PUBLICACIÓN</th>
-                                <th class="actions-heading">ACCIONES</th>
+                                <th scope="col">DOCUMENTO</th>
+                                <th scope="col">CATEGORÍA</th>
+                                <th scope="col">PUBLICACIÓN</th>
+                                <th scope="col" class="actions-heading">ACCIONES</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-200">
                             <tr
                                 v-for="document in documents.data"
-                                :key="document.id"
+                                :key="document.id" class="transition hover:bg-gray-50"
                             >
                                 <td>
                                     <strong>{{ document.title }}</strong>
-                                    <p class="description">
+                                    <p class="description text-gray-600">
                                         {{ document.description }}
                                     </p>
-                                    <span class="hint"
+                                    <span class="hint text-gray-500"
                                         >{{ document.file_name }} ·
                                         {{ size(document.file_size) }}</span
                                     >
@@ -308,13 +308,13 @@ const size = (bytes) =>
                         </tbody>
                     </table>
                 </div>
-                <div class="table-footer"><Pagination :links="documents.links" :total="documents.total" /></div>
+                <div class="table-footer overflow-x-auto border-t border-gray-200 bg-gray-50"><Pagination :links="documents.links" :total="documents.total" :from="documents.from" :to="documents.to" /></div>
             </section>
             <a
                 :href="route('documents.index')"
                 target="_blank"
                 rel="noopener"
-                class="public-link"
+                class="public-link text-[var(--institutional-primary)]"
                 >Ver Documentos en la página pública →</a
             >
         </div></SuperAdminLayout
@@ -324,7 +324,6 @@ const size = (bytes) =>
 .work-page {
     max-width: 1320px;
     margin: auto;
-    color: #102344;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -388,9 +387,7 @@ const size = (bytes) =>
     margin-top: 4px;
 }
 .panel {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
 }
 h2 {
@@ -466,14 +463,12 @@ table {
     font-size: 13px;
 }
 th {
-    background: #1b396a;
     color: white;
     font-size: 12px;
     padding: 16px 24px;
 }
 td {
     padding: 18px 24px;
-    border-bottom: 1px solid #edf1f6;
 }
 td:first-child {
     min-width: 260px;
@@ -522,7 +517,6 @@ td:first-child {
     border-radius: 6px;
 }
 .pagination .current {
-    background: #1b396a;
     color: white;
 }
 .disabled {
@@ -575,6 +569,61 @@ a:focus-visible {
     }
 }
 
-.work-page{max-width:none;margin:0;padding:24px;color:#111827}.page-header h1{font-size:30px}.panel{border-radius:9px;box-shadow:0 3px 5px #00000018}.filter-panel{padding:20px}.filter-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.filter-heading h2{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700}.filter-description{color:#64748b;margin:10px 0 20px;font-size:14px}.filter-fields{display:grid;grid-template-columns:3fr 1fr;gap:16px}.filter-fields label{font-size:12px;color:#64748b;margin:0}.filter-fields select{margin-top:6px;height:46px;background:#fafbfc}.filter-search{margin-top:6px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;height:46px;color:#1b396a}.filter-search input{border:0;padding:0;min-width:0;flex:1;outline:none}.filter-search:focus-within{outline:2px solid #93b4e0}.filter-search button{font-size:13px;font-weight:600;cursor:pointer}th{padding:18px 24px}table{font-size:14px}tbody tr:hover{background:#f1f6fd}.actions,.actions-heading{justify-content:center;text-align:center}.action{border-radius:50%;border-color:#1b396a}.action:hover{background:#1b396a;color:white}.action.danger{border-color:#b91c1c}.action.danger:hover{background:#b91c1c;color:white}.badge{border-radius:7px;border:1px solid #e2e8f0;background:white;padding:6px 11px;font-size:12px}.published{color:#166534}.table-footer{padding:18px 24px;background:#f8f9fb}.empty{height:145px}
-@media(max-width:700px){.work-page{padding:16px}.page-header h1{font-size:25px}.filter-fields{grid-template-columns:1fr}.filter-heading{align-items:flex-start;flex-direction:column}.table-footer{padding:14px 8px;overflow-x:auto}}
+.work-page{max-width:none;margin:0}.page-header h1{font-size:30px}.filter-panel{padding:16px}.filter-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.filter-heading h2{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700}.filter-description{color:#64748b;margin:10px 0 20px;font-size:14px}.filter-fields{display:grid;grid-template-columns:3fr 1fr;gap:16px}.filter-fields label{font-size:12px;margin:0}.filter-fields select{margin-top:6px;height:46px;background:#fafbfc}.filter-search{margin-top:6px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;height:46px;color:#1b396a}.filter-search input{border:0;padding:0;min-width:0;flex:1;outline:none}.filter-search:focus-within{outline:2px solid #93b4e0}.filter-search button{font-size:13px;font-weight:600;cursor:pointer}th{padding:18px 24px}table{font-size:14px}.actions,.actions-heading{justify-content:center;text-align:center}.action{border-radius:50%;border-color:#1b396a}.action:hover{background:#1b396a;color:white}.action.danger{border-color:#b91c1c}.action.danger:hover{background:#b91c1c;color:white}.badge{border-radius:7px;border:1px solid #e2e8f0;background:white;padding:6px 11px;font-size:12px}.published{color:#166534}.table-footer{padding:16px 24px}.empty{height:145px}
+@media(max-width:700px){.page-header h1{font-size:25px}.filter-fields{grid-template-columns:1fr}.filter-heading{align-items:flex-start;flex-direction:column}.table-footer{padding:14px 8px;overflow-x:auto}}
+
+.dark .work-page .secondary {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+.dark .work-page .secondary:hover {
+    background: var(--accent);
+}
+
+.dark .work-page .primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .work-page .primary:hover {
+    background: hsl(217 59% 43%);
+}
+
+.dark .work-page .action {
+    background: transparent;
+    border-color: currentColor;
+    color: #b8d8ff;
+}
+
+.dark .work-page .action:hover {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .work-page .action.danger {
+    color: var(--color-red-300);
+}
+
+.dark .work-page .action.danger:hover {
+    background: var(--destructive);
+    color: var(--destructive-foreground);
+}
+
+.dark .work-page .filter-search {
+    background: var(--card);
+    border-color: var(--input);
+}
+
+.dark .work-page .badge {
+    background: var(--muted);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+.dark .work-page :is(.published, .notice) {
+    background: var(--color-green-950);
+    color: var(--color-green-200);
+}
 </style>

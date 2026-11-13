@@ -30,6 +30,21 @@ class UpdateAnnouncementRequest extends FormRequest
             'evaluation_end' => ['required', 'date', 'after_or_equal:evaluation_start'],
             'results_start' => ['required', 'date', 'after_or_equal:evaluation_end'],
             'results_end' => ['required', 'date', 'after_or_equal:results_start'],
+            'national_evaluation_start' => ['nullable', 'required_with:national_evaluation_end,national_results_start,national_results_end', 'date', 'after:results_end'],
+            'national_evaluation_end' => ['nullable', 'required_with:national_evaluation_start,national_results_start,national_results_end', 'date', 'after_or_equal:national_evaluation_start'],
+            'national_results_start' => ['nullable', 'required_with:national_results_end', 'date', 'after:national_evaluation_end'],
+            'national_results_end' => ['nullable', 'required_with:national_results_start', 'date', 'after_or_equal:national_results_start'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'national_evaluation_start' => 'inicio de evaluación nacional',
+            'national_evaluation_end' => 'fin de evaluación nacional',
+            'national_results_start' => 'inicio de resultados nacionales',
+            'national_results_end' => 'fin de resultados nacionales',
+            'results_end' => 'fin de resultados',
         ];
     }
 

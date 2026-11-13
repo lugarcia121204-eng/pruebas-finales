@@ -8,7 +8,7 @@ import DynamicLayout from '@/layouts/DynamicLayout.vue';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import { alertaExito } from '@/utils/alerts.js';
-const props = defineProps({ review: Object, evaluators: Array });
+const props = defineProps({ review: Object, evaluators: Array, evaluationPeriodOpen: Boolean });
 const previewOpen = ref(false);
 const previewDocument = ref(null);
 const previewUrl = ref('');
@@ -115,7 +115,8 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
             </Dialog>
             <div class="rounded-lg border bg-white p-6 space-y-4">
                 <h2 class="text-lg font-semibold">Evaluaciones nacionales</h2>
-                <form v-if="review.status === 'pending'" @submit.prevent="assign" class="space-y-3">
+                <p v-if="review.status === 'pending' && !evaluationPeriodOpen" class="text-sm text-amber-800">La convocatoria está fuera del periodo de evaluación nacional.</p>
+                <form v-if="review.status === 'pending' && evaluationPeriodOpen" @submit.prevent="assign" class="space-y-3">
                     <label for="national-evaluators" class="block font-medium">Asignar evaluadores</label>
                     <VueSelect input-id="national-evaluators" v-model="assignment.evaluator_ids" :options="evaluators.filter(user => !review.evaluations.some(evaluation => evaluation.evaluator_id === user.id))" :reduce="user => user.id" label="label" multiple placeholder="Seleccionar evaluadores...">
                         <template #no-options>No hay evaluadores disponibles.</template>
@@ -148,7 +149,7 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                 </div>
             </section>
             <div class="space-y-4">
-                <div v-if="review.status === 'pending' && review.evaluations.length && review.evaluations.every(evaluation => evaluation.status === 'completed')" class="border-t border-gray-200 pt-4 flex flex-wrap items-center justify-between gap-4">
+                <div v-if="evaluationPeriodOpen && review.status === 'pending' && review.evaluations.length && review.evaluations.every(evaluation => evaluation.status === 'completed')" class="border-t border-gray-200 pt-4 flex flex-wrap items-center justify-between gap-4">
                     <p class="text-sm text-gray-600">Todas las evaluaciones están completas. Puedes finalizar la revisión nacional.</p>
                     <button type="button" @click="closing = true" class="rounded-lg bg-[var(--institutional-primary)] px-5 py-2.5 font-medium text-white">Finalizar revisión</button>
                 </div>

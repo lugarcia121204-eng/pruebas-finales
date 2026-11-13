@@ -203,13 +203,11 @@ class TeacherController extends Controller
             ->with(['announcement.calendar', 'user'])
             ->firstOrFail();
 
-        // Bloquear descarga si todavía no estamos en resultados
-        if ($application->announcement) {
-            $stage = $application->announcement->current_stage;
-            if (!in_array($stage, ['resultados', 'terminada'])) {
-                abort(403, 'Aún no es la etapa de resultados. No puedes descargar la carta de aceptación.');
-            }
-        }
+        abort_unless(
+            $application->announcement?->calendar?->finalResultsArePublished(),
+            403,
+            'Los resultados finales aún no se han publicado.'
+        );
 
         try {
             return $this->pdfGenerationService->generateAcceptanceLetter($application);

@@ -485,7 +485,7 @@ class PdfGenerationService
 
         $contents = $pdf->Output('S');
         $directory = app(TeacherDocumentStorage::class)->directory($application);
-        $directory = 'reconocimientos/'.substr($directory, strlen('documents/'));
+        $directory = 'recognitions/'.substr($directory, strlen('documents/'));
         $folio = preg_replace('/[^A-Za-z0-9_-]/', '_', $recognition->identifier ?? '');
         if ($folio === '') throw new Exception('El reconocimiento no tiene folio.');
         $path = $directory.'/'.$folio.'.pdf';

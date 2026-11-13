@@ -90,16 +90,6 @@ class RecognitionController extends Controller
             abort(403, 'No tienes permiso para descargar este reconocimiento, no está activo, o es de evaluador.');
         }
 
-        // Ensure relations are loaded
-        $recognition->loadMissing('announcement.calendar');
-
-        if ($recognition->announcement) {
-            $stage = $recognition->announcement->current_stage;
-            if (!in_array($stage, ['resultados', 'terminada'])) {
-                abort(403, 'Aún no es la etapa de resultados. No puedes descargar el reconocimiento.');
-            }
-        }
-
         abort_unless(Recognition::whereKey($recognition->id)->publishable()->exists(), 403);
 
         try {

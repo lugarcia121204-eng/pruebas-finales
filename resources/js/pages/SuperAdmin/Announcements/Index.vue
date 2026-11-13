@@ -167,13 +167,13 @@ const closeViewer = (id) => {
 
         <Head :title="title" />
 
-        <div class="space-y-6">
+        <div class="announcement-management space-y-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ title }}</h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiBullhorn" />
                         </svg>
                         <span class="text-gray-900 font-semibold">Convocatorias</span>
@@ -181,7 +181,7 @@ const closeViewer = (id) => {
                 </div>
                 <div class="flex items-center gap-2 group relative">
                     <Link v-if="useCan('announcements.create') && canCreate" :href="route(`${routeName}create`)"
-                        class="w-full sm:w-auto justify-center px-4 py-2.5 bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition flex items-center gap-2 font-medium">
+                        class="announcement-add w-full sm:w-auto justify-center px-4 py-2.5 bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition flex items-center gap-2 font-medium">
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
                             fill="currentColor">
                             <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
@@ -190,7 +190,7 @@ const closeViewer = (id) => {
                     </Link>
                     <button v-else-if="useCan('announcements.create')"
                         @click="triggerRestrictionAlert"
-                        class="w-full sm:w-auto justify-center px-4 py-2.5 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed flex items-center gap-2 font-medium">
+                        class="announcement-add w-full sm:w-auto justify-center px-4 py-2.5 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed flex items-center gap-2 font-medium">
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
                             fill="currentColor">
                             <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
@@ -213,7 +213,7 @@ const closeViewer = (id) => {
                                 'activa').length }}</p>
                         </div>
                         <div class="p-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600 dark:text-green-300" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -233,7 +233,7 @@ const closeViewer = (id) => {
                                 'cerrada').length }}</p>
                         </div>
                         <div class="p-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none"
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600 dark:text-red-300" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -256,14 +256,14 @@ const closeViewer = (id) => {
                     class="relative flex items-center gap-4 px-5 py-4 rounded-lg bg-white shadow-sm border border-gray-100"
                     style="border-left: 5px solid #D97706;"
                 >
-                    <div class="flex-shrink-0" style="color: #D97706;">
+                    <div class="shrink-0 text-amber-700 dark:text-amber-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-[10px] uppercase font-bold tracking-widest mb-0.5" style="color: #D97706; opacity: 0.8;">Aviso</span>
+                        <span class="mb-0.5 text-xs font-semibold text-amber-700 uppercase dark:text-amber-300">Aviso</span>
                         <span class="text-sm font-bold leading-tight text-gray-800">
                             Solo puede existir una convocatoria <strong style="color: #D97706;">Activa o Pendiente</strong> a la vez — cuando llegue la fecha de publicación de una nueva, el sistema <strong style="color: #D97706;">cerrará</strong> la actual automáticamente.
                         </span>
@@ -281,7 +281,7 @@ const closeViewer = (id) => {
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
-                            fill="#374151">
+                            fill="currentColor" class="text-gray-700">
                             <path
                                 d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z" />
                         </svg>
@@ -302,7 +302,7 @@ const closeViewer = (id) => {
                     <div class="relative w-full md:flex-1">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
-                                fill="#1B396A">
+                                fill="currentColor" class="text-[var(--institutional-primary)]">
                                 <path
                                     d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z" />
                             </svg>
@@ -321,7 +321,7 @@ const closeViewer = (id) => {
             <!-- Table -->
             <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[980px] text-sm text-left">
+                    <table class="w-full min-w-[720px] text-sm text-left">
                         <thead class="bg-[var(--institutional-primary)] text-white uppercase text-xs font-semibold">
                             <tr>
                                 <th scope="col" class="px-6 py-4 text-center tracking-wider" style="width: 80px;">
@@ -353,12 +353,12 @@ const closeViewer = (id) => {
                             <template v-for="(announcement, index) in announcements.data" :key="announcement.id">
                                 <tr 
                                     class="hover:bg-gray-50 transition"
-                                    :class="{'bg-blue-50': expandedRows[announcement.id]}"
+                                    :class="{'bg-blue-50 dark:bg-slate-800': expandedRows[announcement.id]}"
                                 >
                                     <td class="px-6 py-4 text-center text-gray-900 font-medium">{{ announcements.meta.from + index }}</td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-2">
-                                            <svg viewBox="0 0 24 24" class="w-5 h-5 flex-shrink-0" style="fill: #1B396A;">
+                                            <svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 fill-current text-[var(--institutional-primary)]">
                                                 <path :d="mdiBullhorn" />
                                             </svg>
                                             <span class="text-gray-900 font-medium">{{ announcement.name }}</span>
@@ -367,17 +367,17 @@ const closeViewer = (id) => {
                                     <td class="px-6 py-4 text-center">
                                         <div class="flex items-center justify-center">
                                             <span v-if="announcement.status === 'activa'"
-                                                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-green-700 shadow-sm">
+                                                class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-800 dark:bg-green-950 dark:text-green-200">
                                                 <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
                                                 Activa
                                             </span>
                                             <span v-else-if="announcement.status === 'cerrada'"
-                                                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-red-700 shadow-sm">
+                                                class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800 dark:bg-red-950 dark:text-red-200">
                                                 <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
                                                 Cerrada
                                             </span>
                                             <span v-else-if="announcement.status === 'pendiente'"
-                                                class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-yellow-700 shadow-sm">
+                                                class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                                                 <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
                                                 Pendiente
                                             </span>
@@ -397,7 +397,7 @@ const closeViewer = (id) => {
                                             </button>
                                         </div>
                                         <button v-else disabled
-                                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-gray-400 font-bold cursor-not-allowed text-sm whitespace-nowrap bg-gray-50/50"
+                                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg text-gray-500 font-medium cursor-not-allowed text-sm whitespace-nowrap bg-gray-50"
                                             title="Sin archivo">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                                                 <path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Z"/>
@@ -418,7 +418,7 @@ const closeViewer = (id) => {
                                             </Link>
                                             <button v-if="useCan('announcements.delete')" type="button" aria-label="Eliminar convocatoria"
                                                 @click="deleteAnnouncement(announcement.id)"
-                                                class="p-2 text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition cursor-pointer" title="Eliminar">
+                                                class="p-2 text-red-600 border border-current rounded-full hover:bg-red-600 hover:text-white transition cursor-pointer dark:text-red-300 dark:hover:text-white" title="Eliminar">
                                                 <svg xmlns="http://www.w3.org/2000/svg" height="20px"
                                                     viewBox="0 -960 960 960" width="20px" fill="currentColor">
                                                     <path
@@ -479,7 +479,7 @@ const closeViewer = (id) => {
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="overflow-x-auto border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
                     <Pagination :links="announcements.meta.links" :total="announcements.meta.total"
                         :from="announcements.meta.from" :to="announcements.meta.to" />
                 </div>
@@ -532,4 +532,34 @@ const closeViewer = (id) => {
     padding-right: 4px;
 }
 
+.dark .announcement-management :deep(.vue-select-custom .vs__dropdown-toggle),
+.dark .announcement-management :deep(.vue-select-custom .vs__dropdown-menu) {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.dark .announcement-management :deep(.vue-select-custom .vs__selected),
+.dark .announcement-management :deep(.vue-select-custom .vs__search),
+.dark .announcement-management :deep(.vue-select-custom .vs__dropdown-option) {
+    color: var(--foreground);
+}
+
+.dark .announcement-management :deep(.vue-select-custom .vs__dropdown-option--highlight) {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .announcement-management :deep(.vue-select-custom .vs__clear),
+.dark .announcement-management :deep(.vue-select-custom .vs__open-indicator) {
+    fill: var(--muted-foreground);
+}
+
+.dark .announcement-management .announcement-add {
+    background-color: #264f92;
+    color: #fff;
+}
+
+.dark .announcement-management .announcement-add:any-link:hover {
+    background-color: #2d5ba6;
+}
 </style>

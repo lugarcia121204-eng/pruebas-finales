@@ -205,7 +205,27 @@
 .dark .authenticated-shell main :is(.text-gray-500, .text-gray-600) { color: #cbd5e1; }
 .dark .authenticated-shell main :is(.border-gray-100, .border-gray-200, .border-gray-300) { border-color: #475569; }
 .dark .authenticated-shell main :is(input, select, textarea) { color-scheme: dark; }
-.dark .authenticated-shell main :is(.hover\:bg-gray-50, .hover\:bg-gray-100, .hover\:bg-gray-200):hover { background-color: #334155; }
+/* Resaltado de filas y opciones al pasar el cursor en modo oscuro. */
+@media (hover: hover) {
+    :root.dark :is(.authenticated-shell, .landing-shell) tbody > tr:has(> td:not([colspan])):hover,
+    :root.dark :is(.authenticated-shell, .landing-shell) :is(
+        .hover\:bg-gray-50,
+        .hover\:bg-gray-100,
+        .hover\:bg-gray-200,
+        .hover\:bg-gray-300,
+        .hover\:bg-slate-100,
+        .hover\:bg-blue-50,
+        .hover\:bg-blue-100
+    ):hover,
+    :root.dark .authenticated-shell aside :is(
+        .supreme-single,
+        .supreme-group,
+        .hover\:bg-white\/5,
+        .hover\:bg-\[var\(--institutional-primary\)\]
+    ):hover {
+        background-color: var(--row-hover);
+    }
+}
 
 /* Dark surfaces, forms and dialogs throughout the EDD interface. */
 .dark .authenticated-shell main :is(.bg-gray-200, .bg-slate-50, .bg-slate-100, .bg-neutral-50) { background-color: #24243b; }
@@ -214,12 +234,8 @@
 .dark .authenticated-shell main :is(input, textarea)::placeholder { color: #94a3b8; }
 .dark .authenticated-shell main :is(.divide-gray-200, .divide-gray-100) > :not(:last-child) { border-color: #475569; }
 .dark .authenticated-shell main :is(.text-\[\#1b396a\], .text-\[\#1B396A\], .text-\[\#102344\], .text-\[var\(--institutional-primary\)\]) { color: #b8d8ff; }
-.dark .landing-header { background-color: #0f172a; }
 .dark .swal2-popup { background: #24243b; color: #e2e8f0; }
 .dark .swal2-title, .dark .swal2-html-container { color: #e2e8f0; }
-.dark .vs__dropdown-toggle, .dark .vs__dropdown-menu { background: #24243b; border-color: #475569; color: #e2e8f0; }
-.dark .vs__selected, .dark .vs__search, .dark .vs__dropdown-option { color: #e2e8f0; }
-.dark .vs__open-indicator, .dark .vs__clear { fill: #cbd5e1; }
 
 /* Requested EDD dark palette. Light mode retains the institutional palette. */
 :root.dark {
@@ -239,6 +255,7 @@
  --accent-foreground: hsl(210 40% 98%);
  --border: hsl(217.2 32.6% 25%);
  --input: hsl(217.2 32.6% 25%);
+ --row-hover: #334155;
  --destructive: hsl(0 62.8% 30.6%);
  --destructive-foreground: hsl(210 40% 98%);
  --sidebar-background: hsl(222 47% 11%);
@@ -259,9 +276,78 @@
 .dark :is(.authenticated-shell, .landing-shell) main :is(.text-gray-500, .text-gray-600, .text-slate-500, .text-slate-600) { color: var(--muted-foreground); }
 .dark :is(.authenticated-shell, .landing-shell) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea) { background-color: var(--card); color: var(--foreground); border-color: var(--input); }
 .dark :is(.authenticated-shell, .landing-shell) main :is(.border-gray-100, .border-gray-200, .border-gray-300, .border-slate-200, .border-slate-300) { border-color: var(--border); }
-.dark .swal2-popup, .dark .vs__dropdown-toggle, .dark .vs__dropdown-menu { background: var(--popover); color: var(--popover-foreground); border-color: var(--border); }
+.dark .swal2-popup { background: var(--popover); color: var(--popover-foreground); border-color: var(--border); }
+
+/* Los selectores comparten la paleta oscura, incluso con estilos locales y menús anexados al body. */
+:root.dark {
+    --vs-border-color: var(--input);
+    --vs-selected-bg: var(--accent);
+    --vs-selected-color: var(--foreground);
+    --vs-controls-color: var(--muted-foreground);
+    --vs-state-disabled-bg: var(--muted);
+    --vs-state-disabled-color: var(--muted-foreground);
+}
+
+:root.dark .v-select .vs__dropdown-toggle,
+:root.dark .v-select .vs__dropdown-toggle:is(:hover, :focus-within),
+:root.dark .v-select.vs--open .vs__dropdown-toggle {
+    background: var(--card);
+}
+
+:root.dark .v-select:not(.has-error, .vue-select-error, .institution-select-error, [aria-invalid="true"]) .vs__dropdown-toggle {
+    border-color: var(--input);
+}
+
+:root.dark .v-select:not(.has-error, .vue-select-error, .institution-select-error, [aria-invalid="true"]) .vs__dropdown-toggle:focus-within {
+    border-color: var(--primary);
+}
+
+:root.dark .v-select.vs--disabled .vs__dropdown-toggle {
+    background: var(--muted);
+}
+
+:root.dark .vs__dropdown-menu,
+:root.dark .v-select .vs__dropdown-menu {
+    background: var(--popover);
+    color: var(--popover-foreground);
+    border-color: var(--border);
+}
+
+:root.dark .v-select .vs__selected,
+:root.dark .vs__dropdown-menu .vs__dropdown-option {
+    color: var(--foreground);
+}
+
+:root.dark .v-select .vs__dropdown-toggle .vs__selected-options input.vs__search[type="search"] {
+    background: transparent;
+    border-color: transparent;
+    color: var(--foreground);
+}
+
+:root.dark .v-select .vs__search::placeholder,
+:root.dark .vs__dropdown-menu .vs__no-options,
+:root.dark .v-select.vs--disabled .vs__selected,
+:root.dark .vs__dropdown-menu .vs__dropdown-option--disabled {
+    color: var(--muted-foreground);
+}
+
+:root.dark .v-select :is(.vs__open-indicator, .vs__clear, .vs__deselect) {
+    fill: var(--muted-foreground);
+}
+
+:root.dark .vs__dropdown-menu .vs__dropdown-option--highlight {
+    background: var(--row-hover);
+    color: var(--foreground);
+}
+
+:root.dark .vs__dropdown-menu .vs__dropdown-option--deselect {
+    background: var(--destructive);
+    color: var(--destructive-foreground);
+}
 
 .dark :is(.authenticated-shell, .landing-shell) :is(button, a):is(.bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-indigo-600, .bg-\[\#1B396A\], .bg-\[\#1b396a\], .bg-\[var\(--institutional-primary\)\]) { background-color: var(--primary); color: var(--primary-foreground); }
 .dark :is(.authenticated-shell, .landing-shell) :is(button, a):is(.bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-indigo-600, .bg-\[\#1B396A\], .bg-\[\#1b396a\], .bg-\[var\(--institutional-primary\)\]):hover { background-color: hsl(217 59% 43%); }
 .dark :is(.authenticated-shell, .landing-shell) :is(button, a):is(.bg-red-500, .bg-red-600, .bg-red-700) { background-color: var(--destructive); color: var(--destructive-foreground); }
 .dark :is(.authenticated-shell, .landing-shell) :is(button, a):is(.bg-red-500, .bg-red-600, .bg-red-700):hover { background-color: hsl(0 62.8% 37%); }
+
+

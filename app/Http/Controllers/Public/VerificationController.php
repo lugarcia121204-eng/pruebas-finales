@@ -35,7 +35,7 @@ class VerificationController extends Controller
 
         // Fall back to applications (ACE prefix — acceptance letters)
         $application = Application::finallyApproved()->validByIdentifier($identifier)
-            ->whereHas('announcement.calendar', fn ($calendar) => $calendar->where('results_start', '<=', now()))->first();
+            ->whereHas('announcement.calendar', fn ($calendar) => $calendar->withPublishedFinalResults())->first();
 
         if ($application) {
             $announcementName = $application->announcement ? $application->announcement->name : 'CONVOCATORIA GENERAL';

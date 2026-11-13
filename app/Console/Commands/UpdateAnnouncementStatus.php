@@ -149,11 +149,7 @@ class UpdateAnnouncementStatus extends Command
 
         // 1.5 Enviar notificaciones de veredicto diferidas (ocultas a los docentes hasta etapa de resultados)
         $enResultados = \App\Models\Announcement::where('status', 'activa')
-            ->whereHas('calendar', function ($query) use ($today) {
-                // Etapa de resultados activa: hoy es mayor o igual a results_start
-                $query->whereDate('results_start', '<=', $today)
-                      ->whereDate('results_end', '>=', $today);
-            })
+            ->whereHas('calendar', fn ($query) => $query->withPublishedFinalResults())
             ->get();
 
         $notificationService = app(NotificationService::class);
@@ -211,12 +207,10 @@ class UpdateAnnouncementStatus extends Command
             }
         }
 
-        // 2. Cerrar convocatorias activas cuya fecha de resultados ya pasó
-        // Buscamos activas que tengan calendario con results_end < hoy
-        // (Es decir, ayer fue el último día)
+        // Cerrar después de la última etapa programada.
         $activas = \App\Models\Announcement::where('status', 'activa')
             ->whereHas('calendar', function ($query) use ($today) {
-                $query->where('results_end', '<', $today);
+                $query->whereDate(DB::raw('COALESCE(national_results_end, national_evaluation_end, results_end)'), '<', $today);
             })
             ->get();
 
@@ -228,7 +222,9 @@ class UpdateAnnouncementStatus extends Command
             $notificationService->notifyAnnouncementClosed(
                 $announcement->id,
                 $announcement->name,
-                $announcement->calendar->results_end ?? null
+                $announcement->calendar->national_results_end
+                    ?? $announcement->calendar->national_evaluation_end
+                    ?? $announcement->calendar->results_end
             );
 
             $this->info("Convocatoria cerrada automáticamente: {$announcement->name}");

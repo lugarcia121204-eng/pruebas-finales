@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
 .contact-link svg { color:var(--institutional-gold); flex-shrink:0; margin-top:4px; }
 .footer-link:hover,a.contact-link:hover { color:var(--institutional-gold); }
 .footer-copyright { border-top:1px solid var(--institutional-primary-light); padding-top:28px; text-align:center; font-size:12px; }
-:global(.dark) .landing-footer, :global(.dark) .landing-footer h2, :global(.dark) .brand-title span { color:var(--institutional-white); }
+:global(.dark) .landing-footer, :global(.dark) .landing-footer h2 { color:var(--institutional-white); }
 a:focus-visible,button:focus-visible { outline:2px solid var(--institutional-gold); outline-offset:4px; }
 @media(max-width:1650px) { .header-content { gap:16px; padding:14px 32px; } .brand-subtitle { max-width:none; font-size:12px; } .desktop-navigation { gap:28px; } .desktop-navigation a { font-size:14px; } .login-button,.register-button { padding:7px 12px; } }
 @media(max-width:1439px) { .header-content { padding:12px 24px; min-height:96px; } .footer-container { padding:48px 24px 24px; } .desktop-navigation,.header-actions { display:none; } .mobile-menu-button { display:block; } .mobile-navigation { display:block; } .brand-subtitle { max-width:none; white-space:normal; } .footer-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }

@@ -40,6 +40,10 @@ const form = useForm({
     evaluation_end: getCalendarDate(props.announcement, 'evaluation_end'),
     results_start: getCalendarDate(props.announcement, 'results_start'),
     results_end: getCalendarDate(props.announcement, 'results_end'),
+    national_evaluation_start: getCalendarDate(props.announcement, 'national_evaluation_start'),
+    national_evaluation_end: getCalendarDate(props.announcement, 'national_evaluation_end'),
+    national_results_start: getCalendarDate(props.announcement, 'national_results_start'),
+    national_results_end: getCalendarDate(props.announcement, 'national_results_end'),
 });
 
 function getCalendarDate(announcement, field) {
@@ -87,6 +91,10 @@ const calendarDates = ref({
     evaluation_end:     form.evaluation_end,
     results_start:      form.results_start,
     results_end:        form.results_end,
+    national_evaluation_start: form.national_evaluation_start,
+    national_evaluation_end: form.national_evaluation_end,
+    national_results_start: form.national_results_start,
+    national_results_end: form.national_results_end,
 });
 
 watch(calendarDates, (v) => {
@@ -97,6 +105,10 @@ watch(calendarDates, (v) => {
     form.evaluation_end     = v.evaluation_end;
     form.results_start      = v.results_start;
     form.results_end        = v.results_end;
+    form.national_evaluation_start = v.national_evaluation_start;
+    form.national_evaluation_end = v.national_evaluation_end;
+    form.national_results_start = v.national_results_start;
+    form.national_results_end = v.national_results_end;
 }, { deep: true });
 
 const handleFileChange = (event) => {
@@ -459,6 +471,10 @@ const submit = () => {
                             <p v-if="form.errors.evaluation_end" class="text-sm text-red-600">Evaluación fin: {{ form.errors.evaluation_end }}</p>
                             <p v-if="form.errors.results_start" class="text-sm text-red-600">Resultados inicio: {{ form.errors.results_start }}</p>
                             <p v-if="form.errors.results_end" class="text-sm text-red-600">Resultados fin: {{ form.errors.results_end }}</p>
+                            <p v-if="form.errors.national_evaluation_start" class="text-sm text-red-600">Inicio de Evaluación Nacional: {{ form.errors.national_evaluation_start }}</p>
+                            <p v-if="form.errors.national_evaluation_end" class="text-sm text-red-600">Fin de Evaluación Nacional: {{ form.errors.national_evaluation_end }}</p>
+                            <p v-if="form.errors.national_results_start" class="text-sm text-red-600">Inicio de Resultados Nacionales: {{ form.errors.national_results_start }}</p>
+                            <p v-if="form.errors.national_results_end" class="text-sm text-red-600">Fin de Resultados Nacionales: {{ form.errors.national_results_end }}</p>
                         </div>
                     </div>
 

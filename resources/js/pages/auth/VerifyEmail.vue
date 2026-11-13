@@ -269,7 +269,7 @@ const resendCode = () => {
                         </div>
                     </div>
 
-                    <!-- Volver al login (Cerrar Sesión Interno) -->
+                    <!-- Cerrar sesión y volver al inicio -->
                     <div class="text-center">
                         <button
                             @click="$inertia.post(route('logout'))"
@@ -278,7 +278,7 @@ const resendCode = () => {
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            Volver e Iniciar Sesión
+                            Cerrar sesión y volver al inicio
                         </button>
                     </div>
                 </div>

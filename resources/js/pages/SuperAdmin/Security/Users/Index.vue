@@ -175,20 +175,20 @@ const downloadTemplate = () => {
     <LayoutAuthenticated>
         <Head :title="title" />
 
-        <div class="space-y-6">
+        <div class="users-catalog space-y-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ title }}</h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiSecurity"/>
                         </svg>
                         <span class="text-gray-700 font-medium">Seguridad</span>
                         <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="#9CA3AF">
                             <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/>
                         </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#1B396A">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" class="shrink-0 text-[var(--institutional-primary)]">
                             <path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Z"/>
                         </svg>
                         <span class="text-gray-900 font-semibold">Usuarios</span>
@@ -223,7 +223,7 @@ const downloadTemplate = () => {
                 <div v-if="showImportSection" class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                         <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#374151">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-gray-700">
                                 <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
                             </svg>
                             <h2 class="text-xl font-semibold text-gray-800">Importar Usuarios</h2>
@@ -256,7 +256,7 @@ const downloadTemplate = () => {
                                     class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:mr-4 file:py-2.5 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-[var(--institutional-primary)] file:text-white hover:file:bg-[#0f2347] transition"
                                 />
                             </div>
-                            <p v-if="importForm.errors.file" class="mt-1 text-sm text-red-600">{{ importForm.errors.file }}</p>
+                            <p v-if="importForm.errors.file" class="mt-1 text-sm text-red-600 dark:text-red-300">{{ importForm.errors.file }}</p>
                             <p v-if="importForm.file" class="mt-1 text-sm text-green-600 flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -286,7 +286,7 @@ const downloadTemplate = () => {
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#374151">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-gray-700">
                             <path d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z"/>
                         </svg>
                         <h2 class="text-xl font-semibold text-gray-800">Filtro de Búsqueda</h2>
@@ -299,14 +299,14 @@ const downloadTemplate = () => {
                     </button>
                 </div>
                 <div class="text-sm text-gray-500 mb-4">Buscar y filtrar usuarios</div>
-                <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
-                    <div class="relative w-full md:flex-1">
+                <div class="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div class="relative w-full min-w-0 md:flex-1">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1B396A">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="shrink-0 text-[var(--institutional-primary)]">
                                 <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                             </svg>
                         </div>
-                        <input v-model="search" type="text" placeholder="Buscar..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition" />
+                        <input v-model="search" type="search" aria-label="Buscar usuarios" placeholder="Buscar..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition" />
                     </div>
                     <div class="w-full md:w-52 flex-shrink-0">
                         <VueSelect
@@ -375,28 +375,28 @@ const downloadTemplate = () => {
                                         <span
                                             v-for="rol in user.roles"
                                             :key="rol.id"
-                                            class="inline-flex items-center px-3 py-1.5 rounded-md bg-white text-[13px] font-bold shadow-sm"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold"
                                             :class="{
-                                                'text-purple-700': rol.name === 'Super Admin',
-                                                'text-blue-700':   rol.name === 'Admin',
-                                                'text-green-700':  rol.name === 'Docente',
-                                                'text-orange-600': rol.name === 'Evaluador',
-                                                'text-gray-600':   !['Super Admin','Admin','Docente','Evaluador'].includes(rol.name),
+                                                'bg-purple-50 text-purple-800 dark:bg-purple-950 dark:text-purple-200': rol.name === 'Super Admin',
+                                                'bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200':   rol.name === 'Admin',
+                                                'bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200':  rol.name === 'Docente',
+                                                'bg-orange-50 text-orange-800 dark:bg-orange-950 dark:text-orange-200': rol.name === 'Evaluador',
+                                                'bg-gray-100 text-gray-700':   !['Super Admin','Admin','Docente','Evaluador'].includes(rol.name),
                                             }"
                                         >
                                             {{ rol.name === 'Admin' ? 'Admin Local' : rol.name }}
                                         </span>
-                                        <span v-if="!user.roles || user.roles.length === 0" class="text-gray-400 text-xs">Sin rol</span>
+                                        <span v-if="!user.roles || user.roles.length === 0" class="text-xs text-gray-500">Sin rol</span>
                                     </div>
                                 </td>
                                 <td v-if="useCan('users.edit') || useCan('users.delete')" class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <Link v-if="useCan('users.edit')" :href="route(`${routeName}edit`, user.id)" class="p-2 text-[var(--institutional-primary)] border border-[var(--institutional-primary)] rounded-full hover:bg-[var(--institutional-primary)] hover:text-white transition group cursor-pointer" title="Editar">
+                                        <Link v-if="useCan('users.edit')" :href="route(`${routeName}edit`, user.id)" class="p-2 text-[var(--institutional-primary)] border border-current rounded-full hover:bg-[var(--institutional-primary)] hover:text-white transition group cursor-pointer" title="Editar">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                                                 <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
                                             </svg>
                                         </Link>
-                                        <button v-if="useCan('users.delete')" @click="deleteUser(user.id)" class="p-2 text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition group cursor-pointer" title="Eliminar">
+                                        <button v-if="useCan('users.delete')" @click="deleteUser(user.id)" class="p-2 text-red-600 border border-current rounded-full hover:bg-red-600 hover:text-white dark:text-red-300 dark:hover:text-white transition group cursor-pointer" title="Eliminar">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                                                 <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/>
                                             </svg>
@@ -414,7 +414,7 @@ const downloadTemplate = () => {
                 </div>
                 
                  <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="overflow-x-auto border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
                      <Pagination :links="users.meta.links" :total="users.meta.total" :from="users.meta.from" :to="users.meta.to" />
                 </div>
             </div>
@@ -563,5 +563,25 @@ const downloadTemplate = () => {
 .slide-up-leave-to {
     opacity: 0;
     transform: translateY(-20px);
+}
+
+.dark .users-catalog :deep(.vue-select-custom .vs__dropdown-toggle),
+.dark .users-catalog :deep(.vue-select-custom .vs__dropdown-menu) {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.dark .users-catalog :deep(.vue-select-custom .vs__selected),
+.dark .users-catalog :deep(.vue-select-custom .vs__dropdown-option) {
+    color: var(--foreground);
+}
+
+.dark .users-catalog :deep(.vue-select-custom .vs__dropdown-option--highlight) {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .users-catalog :deep(.vue-select-custom .vs__open-indicator) {
+    fill: var(--muted-foreground);
 }
 </style>

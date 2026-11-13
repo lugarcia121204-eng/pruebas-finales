@@ -80,7 +80,7 @@ class Announcement extends Model
     
     /**
      * Calcula la etapa actual de la convocatoria basado en el calendario.
-     * Posibles retornos: 'publicacion', 'registro', 'evaluacion', 'resultados', 'terminada', 'invalida'
+     * Posibles retornos: 'publicacion', 'registro', 'evaluacion', 'resultados', 'evaluacion_nacional', 'resultados_nacionales', 'terminada', 'invalida'
      *
      * Lógica en cascada: una etapa permanece activa hasta que comienza la siguiente,
      * evitando que huecos entre fechas den 'invalida'.
@@ -95,13 +95,22 @@ class Announcement extends Model
         $cal = $this->calendar;
 
         // Pasada la fecha de cierre de resultados → terminada
-        if ($cal->results_end && $now->gt(\Carbon\Carbon::parse($cal->results_end)->endOfDay())) {
+        $end = $cal->national_results_end ?? $cal->national_evaluation_end ?? $cal->results_end;
+        if ($end && $now->gt($end)) {
             return 'terminada';
         }
 
         // Cascada de mayor a menor prioridad: en cuanto se llega a la fecha
         // de inicio de una etapa, esa etapa es la activa aunque haya un hueco
         // desde el fin de la etapa anterior.
+
+        if ($cal->national_results_start && $now->gte($cal->national_results_start)) {
+            return 'resultados_nacionales';
+        }
+
+        if ($cal->national_evaluation_start && $now->gte($cal->national_evaluation_start)) {
+            return 'evaluacion_nacional';
+        }
 
         if ($cal->results_start && $now->gte(\Carbon\Carbon::parse($cal->results_start)->startOfDay())) {
             return 'resultados';

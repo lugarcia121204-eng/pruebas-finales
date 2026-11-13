@@ -207,20 +207,20 @@ const switchTab = (tab) => {
     <LayoutAuthenticated>
         <Head title="Plantillas de Documentos" />
 
-        <div class="space-y-6">
+        <div class="templates-catalog space-y-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div class="w-full sm:w-auto">
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Plantillas de Documentos</h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiBookOpenPageVariant"/>
                         </svg>
                         <span class="text-gray-700 font-medium">Catálogo</span>
                         <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="#9CA3AF">
                             <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/>
                         </svg>
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiFileDocumentMultiple"/>
                         </svg>
                         <span class="text-gray-900 font-semibold">Plantillas</span>
@@ -248,7 +248,7 @@ const switchTab = (tab) => {
                         type="button"
                         @click="switchTab('recognition')"
                         class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-semibold transition cursor-pointer"
-                        :class="activeTab === 'recognition' ? 'text-[var(--institutional-primary)] border-b-2 border-[var(--institutional-primary)] bg-blue-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+                        :class="activeTab === 'recognition' ? 'text-[var(--institutional-primary)] border-b-2 border-current bg-blue-50 dark:bg-slate-800' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
                     >
                         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor">
                             <path :d="mdiStar"/>
@@ -259,7 +259,7 @@ const switchTab = (tab) => {
                         type="button"
                         @click="switchTab('acceptance')"
                         class="flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-semibold transition cursor-pointer border-l border-gray-200"
-                        :class="activeTab === 'acceptance' ? 'text-[var(--institutional-primary)] border-b-2 border-[var(--institutional-primary)] bg-blue-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+                        :class="activeTab === 'acceptance' ? 'text-[var(--institutional-primary)] border-b-2 border-current bg-blue-50 dark:bg-slate-800' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
                     >
                         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor">
                             <path :d="mdiSchool"/>
@@ -273,7 +273,7 @@ const switchTab = (tab) => {
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#374151">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-gray-700">
                             <path d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z"/>
                         </svg>
                         <h2 class="text-xl font-semibold text-gray-800">Filtro de Búsqueda</h2>
@@ -289,11 +289,11 @@ const switchTab = (tab) => {
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
                     <div class="relative w-full md:flex-1">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1B396A">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="shrink-0 text-[var(--institutional-primary)]">
                                 <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                             </svg>
                         </div>
-                        <input v-model="search" type="text" placeholder="Buscar..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition" />
+                        <input v-model="search" type="search" aria-label="Buscar plantillas" placeholder="Buscar..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition" />
                     </div>
                     <div class="w-full md:w-52 flex-shrink-0">
                         <VueSelect
@@ -332,7 +332,7 @@ const switchTab = (tab) => {
                             <template v-for="(template, index) in templates.data" :key="template.id">
                                 <tr 
                                     class="hover:bg-gray-50 transition"
-                                    :class="{'bg-blue-50': expandedRows[template.id]}"
+                                    :class="{'bg-blue-50 dark:bg-slate-800': expandedRows[template.id]}"
                                 >
                                     <td class="px-6 py-4 text-center text-gray-500 font-bold">
                                         {{ (templates.current_page - 1) * templates.per_page + index + 1 }}
@@ -359,7 +359,7 @@ const switchTab = (tab) => {
                                                 class="sr-only peer" 
                                                 :disabled="!useCan('templates.edit')"
                                             />
-                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--institutional-primary)]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--institutional-primary)]"></div>
+                                            <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--institutional-primary)]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--institutional-primary)] dark:peer-checked:bg-[var(--primary)]"></div>
                                         </label>
                                     </td>
                                     <td class="px-6 py-4 text-center">
@@ -368,7 +368,7 @@ const switchTab = (tab) => {
                                             <button 
                                                 @click="useCan('templates.edit') ? toggleEdit(template) : togglePreview(template.id)"
                                                 class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg font-bold transition cursor-pointer text-sm whitespace-nowrap"
-                                                :class="expandedRows[template.id] ? 'bg-[var(--institutional-primary)] text-white border-[var(--institutional-primary)]' : 'text-[var(--institutional-primary)] border-[var(--institutional-primary)] hover:bg-[var(--institutional-primary)] hover:text-white'"
+                                                :class="expandedRows[template.id] ? 'bg-[var(--institutional-primary)] text-white border-[var(--institutional-primary)]' : 'text-[var(--institutional-primary)] border-current hover:bg-[var(--institutional-primary)] hover:text-white'"
                                                 title="Configurar y Ver Plantilla"
                                             >
                                                 <svg v-if="!(expandedRows[template.id])" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
@@ -383,7 +383,7 @@ const switchTab = (tab) => {
                                             <button 
                                                 v-if="useCan('templates.destroy')"
                                                 @click="deleteTemplate(template)"
-                                                class="p-2 text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition group cursor-pointer"
+                                                class="p-2 text-red-600 border border-current rounded-full hover:bg-red-600 hover:text-white dark:text-red-300 dark:hover:text-white transition group cursor-pointer"
                                                 title="Eliminar"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
@@ -413,14 +413,14 @@ const switchTab = (tab) => {
                                             <div class="flex flex-col gap-6">
                                                 
                                                 <!-- Action Bar -->
-                                                <div v-if="editingTemplateId === template.id" class="flex justify-between items-center bg-blue-50 border border-blue-200 p-4 rounded-xl shadow-sm">
+                                                <div v-if="editingTemplateId === template.id" class="flex justify-between items-center bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-600 p-4 rounded-xl shadow-sm">
                                                     <div class="flex items-center gap-3">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1B396A">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor" class="shrink-0 text-[var(--institutional-primary)]">
                                                             <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/>
                                                         </svg>
                                                             <div class="flex items-center gap-2 mb-4 mt-6">
                                                                 <h4 class="font-bold text-[var(--institutional-primary)]">Modo Edición Visual</h4>
-                                                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded border border-blue-200">Haz clic sobre los recuadros para editar.</span>
+                                                                <span class="bg-blue-100 text-blue-800 dark:bg-slate-700 dark:text-blue-200 text-xs px-2 py-0.5 rounded border border-blue-200 dark:border-slate-600">Haz clic sobre los recuadros para editar.</span>
                                                             </div>
                                                     </div>
                                                     <button 
@@ -443,7 +443,7 @@ const switchTab = (tab) => {
                                                 <div class="w-full flex justify-center bg-gray-100 rounded-xl p-8 border border-gray-200">
                                                     
                                                     <!-- Canvas Container with Absolute Edit Overlays -->
-                                                    <div class="relative shadow-2xl transition-all inline-block bg-white" style="line-height: 0;">
+                                                    <div class="relative shadow-2xl transition-all inline-block bg-[#ffffff]" style="line-height: 0;">
                                                         <!-- The background PDF rendered via pdf.js -->
                                                         <canvas :ref="el => { if (el) canvasRefs[template.id] = el }" class="block mx-auto"></canvas>
                                                         
@@ -465,7 +465,7 @@ const switchTab = (tab) => {
                                                                 <!-- Body Text (centered block, approx middle) -->
                                                                 <textarea 
                                                                     v-model="editForm.body_text"
-                                                                    class="absolute bg-transparent text-[#505050] text-center font-sans tracking-wide leading-tight editable-overlay pointer-events-auto resize-none outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all overflow-hidden"
+                                                                    class="absolute bg-transparent dark:bg-transparent! dark:focus:bg-blue-50/50! text-[#505050]! text-center font-sans tracking-wide leading-tight editable-overlay pointer-events-auto resize-none outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all overflow-hidden"
                                                                     style="top: 51%; left: 10%; width: 80%; height: 18%; font-size: calc(1.1 * 12px); padding: 5px;"
                                                                 ></textarea>
 
@@ -473,7 +473,7 @@ const switchTab = (tab) => {
                                                                 <input 
                                                                     v-model="editForm.director_name"
                                                                     type="text"
-                                                                    class="absolute bg-transparent text-[#505050] font-bold text-center font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
+                                                                    class="absolute bg-transparent dark:bg-transparent! dark:focus:bg-blue-50/50! text-[#505050]! font-bold text-center font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
                                                                     style="top: 74.7%; left: 10%; width: 80%; height: 3.5%; font-size: calc(1.1 * 12px); padding: 0;"
                                                                 />
 
@@ -481,7 +481,7 @@ const switchTab = (tab) => {
                                                                 <input 
                                                                     v-model="editForm.director_title"
                                                                     type="text"
-                                                                    class="absolute bg-transparent text-[#646464] text-center font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
+                                                                    class="absolute bg-transparent dark:bg-transparent! dark:focus:bg-blue-50/50! text-[#646464]! text-center font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
                                                                     style="top: 77%; left: 10%; width: 80%; height: 3.5%; font-size: calc(1.1 * 12px); padding: 0;"
                                                                 />
 
@@ -526,7 +526,7 @@ const switchTab = (tab) => {
                                                                 <!-- Body Text as Textarea -->
                                                                 <textarea 
                                                                     v-model="editForm.body_text"
-                                                                    class="absolute bg-transparent text-[#000000] text-justify font-sans editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all resize-none leading-relaxed"
+                                                                    class="absolute bg-transparent dark:bg-transparent! dark:focus:bg-blue-50/50! text-[#000000]! text-justify font-sans editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all resize-none leading-relaxed"
                                                                     style="top: 36%; left: 10.5%; width: 83%; height: 27.5%; font-size: calc(1.1 * 9px); padding: 5px; overflow-y: auto;"
                                                                 ></textarea>
 
@@ -534,7 +534,7 @@ const switchTab = (tab) => {
                                                                 <input 
                                                                     v-model="editForm.director_name"
                                                                     type="text"
-                                                                    class="absolute bg-transparent text-[#000000] font-bold text-left font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
+                                                                    class="absolute bg-transparent dark:bg-transparent! dark:focus:bg-blue-50/50! text-[#000000]! font-bold text-left font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
                                                                     style="top: 73.1%; left: 11.5%; width: 50%; font-size: calc(1.1 * 9px); padding: 0;"
                                                                 />
 
@@ -542,7 +542,7 @@ const switchTab = (tab) => {
                                                                 <input 
                                                                     v-model="editForm.director_title"
                                                                     type="text"
-                                                                    class="absolute bg-transparent text-[#000000] font-bold text-left font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
+                                                                    class="absolute bg-transparent dark:bg-transparent! dark:focus:bg-blue-50/50! text-[#000000]! font-bold text-left font-sans tracking-wide editable-overlay pointer-events-auto outline-none border-2 border-dashed border-transparent hover:border-blue-400 focus:border-blue-500 focus:bg-blue-50/50 transition-all"
                                                                     style="top: 74.6%; left: 11.5%; width: 50%; font-size: calc(1.1 * 9px); padding: 0;"
                                                                 />
                                                             </template>
@@ -617,7 +617,7 @@ const switchTab = (tab) => {
                     </table>
                 </div>
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50" v-if="templates.links">
+                <div class="overflow-x-auto border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6" v-if="templates.links">
                     <Pagination 
                         :links="templates.links" 
                         :total="templates.total" 
@@ -684,6 +684,26 @@ const switchTab = (tab) => {
 :deep(.vue-select-custom .vs__open-indicator) {
     fill: #1B396A;
     transform: scale(0.8);
+}
+
+.dark .templates-catalog :deep(.vue-select-custom .vs__dropdown-toggle),
+.dark .templates-catalog :deep(.vue-select-custom .vs__dropdown-menu) {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.dark .templates-catalog :deep(.vue-select-custom .vs__selected),
+.dark .templates-catalog :deep(.vue-select-custom .vs__dropdown-option) {
+    color: var(--foreground);
+}
+
+.dark .templates-catalog :deep(.vue-select-custom .vs__dropdown-option--highlight) {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .templates-catalog :deep(.vue-select-custom .vs__open-indicator) {
+    fill: var(--muted-foreground);
 }
 </style>
 

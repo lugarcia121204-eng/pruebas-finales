@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\{DB, Mail};
 use Spatie\Permission\Models\Role;
 use Inertia\Testing\AssertableInertia as Assert;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\Mailer\Exception\TransportException;
 
 class InstitutionAdminAccessTest extends TestCase
 {
@@ -72,6 +73,35 @@ class InstitutionAdminAccessTest extends TestCase
         $this->assertDatabaseHas('applications',['id'=>$apps[1]->id,'status'=>'approved']);
         $this->assertDatabaseHas('users',['id'=>$evaluators[1]->id]);
         $this->assertDatabaseCount('recognitions',0);
+    }
+
+    public function test_assignment_and_in_app_notification_are_saved_when_smtp_rejects_the_email(): void
+    {
+        [$admin, $institution, , $applications] = $this->fixture();
+        $application = $applications[0];
+        $evaluator = User::factory()->create(['institution_id' => $institution->id]);
+        $evaluator->assignRole('Evaluador');
+
+        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail->shouldReceive('queue')->once()
+            ->with(\Mockery::type(\App\Mail\EvaluatorAssigned::class))
+            ->andThrow(new TransportException('525 5.7.1 Unauthorized IP address', 525));
+        Mail::shouldReceive('to')->once()->with($evaluator->email)->andReturn($pendingMail);
+
+        $this->actingAs($admin)->post(route('admin.applications.assign'), [
+            'application_id' => $application->id,
+            'evaluator_ids' => [$evaluator->id],
+        ])->assertRedirect(route('admin.applications.index'))->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('evaluations', [
+            'application_id' => $application->id,
+            'evaluator_id' => $evaluator->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $evaluator->id,
+            'type' => 'evaluator_assignment',
+        ]);
     }
 
     public function test_admin_without_institution_sees_no_records_and_superadmin_keeps_global_access(): void

@@ -25,6 +25,10 @@ class CalendarResource extends JsonResource
             'evaluation_end' => $this->evaluation_end?->format('Y-m-d'),
             'results_start' => $this->results_start?->format('Y-m-d'),
             'results_end' => $this->results_end?->format('Y-m-d'),
+            'national_evaluation_start' => $this->national_evaluation_start?->format('Y-m-d'),
+            'national_evaluation_end' => $this->national_evaluation_end?->format('Y-m-d'),
+            'national_results_start' => $this->national_results_start?->format('Y-m-d'),
+            'national_results_end' => $this->national_results_end?->format('Y-m-d'),
             'created_at' => $this->created_at->toDateTimeString(),
         ];
     }

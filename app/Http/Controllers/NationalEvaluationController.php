@@ -50,7 +50,7 @@ class NationalEvaluationController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $evaluation = $this->assigned($request)->with(['rubric.questions.options', 'review.application.user.institution', 'review.application.user.priorityArea', 'review.application.user.subArea', 'review.application.positionType', 'review.application.announcement', 'review.application.documents'])->findOrFail($id);
+        $evaluation = $this->assigned($request)->with(['rubric.questions.options', 'review.application.user.institution', 'review.application.user.priorityArea', 'review.application.user.subArea', 'review.application.positionType', 'review.application.announcement.calendar', 'review.application.documents'])->findOrFail($id);
         return Inertia::render('NationalEvaluation/Show', [
             'evaluation' => $evaluation->only(['id', 'status', 'answers', 'score', 'comment', 'created_at', 'updated_at']),
             'applicant' => [
@@ -62,6 +62,7 @@ class NationalEvaluationController extends Controller
                 'via' => $evaluation->review->application->via,
                 'application_date' => $evaluation->review->application->created_at?->toIso8601String(),
             ],
+            'evaluationPeriodOpen' => $evaluation->review->application->announcement?->calendar?->nationalEvaluationIsOpen() ?? false,
             'reviewStatus' => $evaluation->review->status,
             'teacher' => $evaluation->review->application->user?->name,
             'rubric' => $evaluation->rubric,
@@ -77,6 +78,9 @@ class NationalEvaluationController extends Controller
             $review = $evaluation->review()->lockForUpdate()->firstOrFail();
             $evaluation = $this->assigned($request)->lockForUpdate()->findOrFail($id);
             abort_unless($review->status === 'pending' && $evaluation->status === 'pending', 409);
+            if (!$review->application->announcement?->calendar?->nationalEvaluationIsOpen()) {
+                throw ValidationException::withMessages(['answers' => 'La convocatoria está fuera del periodo de evaluación nacional.']);
+            }
             $rubric = $evaluation->rubric()->with('questions.options')->first();
             if (!$rubric || !$rubric->questions->count() || count($data['answers']) !== $rubric->questions->count()) {
                 throw ValidationException::withMessages(['answers' => 'Responde todas las preguntas de la rúbrica asignada.']);

@@ -287,7 +287,7 @@
                             <div class="date-card">
                                 <span class="date-tag tag-old">ANTERIOR</span>
                                 <div class="date-box box-old">
-                                    {{ \Carbon\Carbon::parse($change['old'])->translatedFormat('d \d\e F, Y') }}
+                                    {{ $change['old'] ? \Carbon\Carbon::parse($change['old'])->translatedFormat('d \d\e F, Y') : 'Sin configurar' }}
                                 </div>
                             </div>
 
@@ -298,7 +298,7 @@
                             <div class="date-card">
                                 <span class="date-tag tag-new">NUEVA</span>
                                 <div class="date-box box-new">
-                                    {{ \Carbon\Carbon::parse($change['new'])->translatedFormat('d \d\e F, Y') }}
+                                    {{ $change['new'] ? \Carbon\Carbon::parse($change['new'])->translatedFormat('d \d\e F, Y') : 'Sin configurar' }}
                                 </div>
                             </div>
                         </div>

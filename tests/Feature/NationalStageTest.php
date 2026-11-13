@@ -13,6 +13,18 @@ class NationalStageTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function openNationalEvaluation(Announcement $announcement): void
+    {
+        $localDate = today()->subDay();
+        $announcement->calendar()->create(array_fill_keys([
+            'publication_start', 'registration_start', 'registration_end', 'evaluation_start',
+            'evaluation_end', 'results_start', 'results_end',
+        ], $localDate) + [
+            'national_evaluation_start' => today(),
+            'national_evaluation_end' => today(),
+        ]);
+    }
+
     public function test_national_assignments_exclude_and_reject_evaluators_from_the_teacher_campus(): void
     {
         foreach (['Admin Nacional', 'Evaluador'] as $role) Role::findOrCreate($role, 'web');
@@ -34,6 +46,8 @@ class NationalStageTest extends TestCase
         $this->actingAs($national)->get(route('national-review.show', $review->id))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('evaluators', 1)->where('evaluators.0.id', $other->id));
         $url = route('national-review.assign-evaluators', $review->id);
+        $this->post($url, ['evaluator_ids' => [$other->id]])->assertSessionHasErrors('evaluator_ids');
+        $this->openNationalEvaluation($announcement);
         $this->post($url, ['evaluator_ids' => [$other->id, $sameCampus->id]])->assertSessionHasErrors('evaluator_ids');
         $this->assertDatabaseCount('national_evaluations', 0);
         $this->post($url, ['evaluator_ids' => [$other->id]])->assertSessionHasNoErrors();
@@ -83,6 +97,7 @@ class NationalStageTest extends TestCase
         $rubric = \App\Models\Rubric::create(['title' => 'Rúbrica nacional', 'is_active' => true]);
         $question = $rubric->questions()->create(['text' => 'Criterio']);
         $option = $question->options()->create(['text' => 'Cumple', 'score' => 10]);
+        $this->openNationalEvaluation($announcement);
         $this->actingAs($national)->post(route('national-review.verdict', $review->id), ['status' => 'approved'])->assertSessionHasErrors('status');
         $this->post(route('national-review.assign-evaluators', $review->id), ['evaluator_ids' => [$teacher->id]])->assertSessionHasErrors('evaluator_ids');
         $this->post(route('national-review.assign-evaluators', $review->id), ['evaluator_ids' => [$evaluator->id]])->assertSessionHasNoErrors();
@@ -94,6 +109,10 @@ class NationalStageTest extends TestCase
         $this->actingAs($outsider)->get(route('national-evaluations.show', $evaluation->id))->assertNotFound();
         $this->post($submit, ['answers' => [$question->id => $option->id]])->assertNotFound();
         $this->actingAs($evaluator)->get(route('national-evaluations.show', $evaluation->id))->assertOk();
+        $this->travel(1)->days();
+        $this->post($submit, ['answers' => [$question->id => $option->id]])->assertSessionHasErrors('answers');
+        $this->assertSame('pending', $evaluation->fresh()->status);
+        $this->travelBack();
         $this->post($submit, ['answers' => [$question->id => 999999]])->assertSessionHasErrors('answers');
         $this->post($submit, ['answers' => [$question->id => $option->id], 'score' => 99999])->assertSessionHasNoErrors();
         $this->assertEquals(10, $evaluation->fresh()->score);

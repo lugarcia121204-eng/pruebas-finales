@@ -22,6 +22,10 @@ class Calendar extends Model
         'evaluation_end',
         'results_start',
         'results_end',
+        'national_evaluation_start',
+        'national_evaluation_end',
+        'national_results_start',
+        'national_results_end',
     ];
 
     protected $casts = [
@@ -32,7 +36,35 @@ class Calendar extends Model
         'evaluation_end' => 'date',
         'results_start' => 'date',
         'results_end' => 'date',
+        'national_evaluation_start' => 'date',
+        'national_evaluation_end' => 'date',
+        'national_results_start' => 'date',
+        'national_results_end' => 'date',
     ];
+
+    public function nationalEvaluationIsOpen(): bool
+    {
+        $today = today();
+
+        return $this->national_evaluation_start && $this->national_evaluation_end
+            && $today->betweenIncluded($this->national_evaluation_start, $this->national_evaluation_end);
+    }
+
+    public function finalResultsArePublished(): bool
+    {
+        $start = $this->national_results_start ?? ($this->national_evaluation_start ? null : $this->results_start);
+
+        return $start !== null && today()->gte($start);
+    }
+
+    public function scopeWithPublishedFinalResults($query)
+    {
+        return $query->whereDate(
+            $query->getQuery()->raw('COALESCE(national_results_start, CASE WHEN national_evaluation_start IS NULL THEN results_start END)'),
+            '<=',
+            today()
+        );
+    }
 
     /*
     |--------------------------------------------------------------------------

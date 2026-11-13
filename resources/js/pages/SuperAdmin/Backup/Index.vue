@@ -88,13 +88,13 @@ const deleteBackup = async (id, name) => {
     <LayoutAuthenticated>
         <Head title="Gestión de Respaldos" />
 
-        <div class="space-y-6">
+        <div class="backups-catalog space-y-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Respaldos</h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill:#1B396A">
+                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiDatabaseOutline"/>
                         </svg>
                         <span class="text-gray-900 font-semibold">Respaldos</span>
@@ -107,8 +107,8 @@ const deleteBackup = async (id, name) => {
                 <!-- Respaldo Manual -->
                 <Link v-if="canCreate" :href="route('superadmin.backup.create')"
                       class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#10A558] transition-all cursor-pointer group">
-                    <div class="w-12 h-12 rounded-lg bg-[#f3f4f6] flex items-center justify-center group-hover:bg-[#10A558] transition-colors">
-                        <svg viewBox="0 0 24 24" class="w-6 h-6 text-[#10A558] group-hover:text-white transition-colors" style="fill:currentColor">
+                    <div class="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-[#10A558] transition-colors">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 text-[#10A558] group-hover:text-white dark:text-green-300 dark:group-hover:text-white transition-colors" style="fill:currentColor">
                             <path :d="mdiDatabaseArrowDown"/>
                         </svg>
                     </div>
@@ -119,8 +119,8 @@ const deleteBackup = async (id, name) => {
                 <!-- Programación -->
                 <Link v-if="canSchedule" :href="route('superadmin.backup.edit')"
                       class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col items-center gap-2 hover:shadow-md hover:border-[var(--institutional-primary)] transition-all cursor-pointer group">
-                    <div class="w-12 h-12 rounded-lg bg-[#f3f4f6] flex items-center justify-center group-hover:bg-[var(--institutional-primary)] transition-colors">
-                        <svg viewBox="0 0 24 24" class="w-6 h-6 text-[var(--institutional-primary)] group-hover:text-white transition-colors" style="fill:currentColor">
+                    <div class="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-[var(--institutional-primary)] transition-colors">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 text-[var(--institutional-primary)] group-hover:text-white dark:group-hover:text-white! transition-colors" style="fill:currentColor">
                             <path :d="mdiDatabaseSync"/>
                         </svg>
                     </div>
@@ -131,8 +131,8 @@ const deleteBackup = async (id, name) => {
                 <!-- Restaurar -->
                 <Link v-if="canRestore" :href="route('superadmin.backup.restore-view')"
                       class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#C9A800] transition-all cursor-pointer group">
-                    <div class="w-12 h-12 rounded-lg bg-[#f3f4f6] flex items-center justify-center group-hover:bg-[#C9A800] transition-colors">
-                        <svg viewBox="0 0 24 24" class="w-6 h-6 text-[#C9A800] group-hover:text-white transition-colors" style="fill:currentColor">
+                    <div class="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-[#C9A800] transition-colors">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 text-[#C9A800] group-hover:text-white dark:text-yellow-300 dark:group-hover:text-slate-950 transition-colors" style="fill:currentColor">
                             <path :d="mdiDatabaseRefresh"/>
                         </svg>
                     </div>
@@ -150,7 +150,7 @@ const deleteBackup = async (id, name) => {
                         <p class="text-lg font-bold text-gray-800 mt-1">{{ stats.last_backup }}</p>
                     </div>
                     <div class="p-2">
-                        <svg viewBox="0 0 24 24" class="w-8 h-8" style="fill:#1B396A">
+                        <svg viewBox="0 0 24 24" class="w-8 h-8 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiDatabaseArrowDown"/>
                         </svg>
                     </div>
@@ -163,7 +163,7 @@ const deleteBackup = async (id, name) => {
                         <p class="text-lg font-bold text-gray-800 mt-1">{{ stats.next_backup }}</p>
                     </div>
                     <div class="p-2">
-                        <svg viewBox="0 0 24 24" class="w-8 h-8" style="fill:#10A558">
+                        <svg viewBox="0 0 24 24" class="w-8 h-8 fill-current text-[#10A558] dark:text-green-300">
                             <path :d="mdiClock"/>
                         </svg>
                     </div>
@@ -176,7 +176,7 @@ const deleteBackup = async (id, name) => {
                         <p class="text-lg font-bold text-gray-800 mt-1">{{ stats.total }}</p>
                     </div>
                     <div class="p-2">
-                        <svg viewBox="0 0 24 24" class="w-8 h-8" style="fill:#2B6CB0">
+                        <svg viewBox="0 0 24 24" class="w-8 h-8 fill-current text-[#2B6CB0] dark:text-blue-300">
                             <path :d="mdiDatabase"/>
                         </svg>
                     </div>
@@ -187,7 +187,7 @@ const deleteBackup = async (id, name) => {
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#374151">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-gray-700">
                             <path d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z"/>
                         </svg>
                         <h2 class="text-xl font-semibold text-gray-800">Filtro de Búsqueda</h2>
@@ -203,11 +203,11 @@ const deleteBackup = async (id, name) => {
                 <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
                     <div class="relative w-full md:flex-1">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1B396A">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-[var(--institutional-primary)]">
                                 <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                             </svg>
                         </div>
-                        <input v-model="search" type="text" placeholder="Buscar..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition" />
+                        <input v-model="search" type="search" aria-label="Buscar respaldos" placeholder="Buscar..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition" />
                     </div>
                     <div class="w-full md:w-52 flex-shrink-0">
                         <VueSelect v-model="rows" :options="rowOptions" :reduce="o => o.value" :searchable="false" :clearable="false" placeholder="Registros" class="vue-select-custom" @option:selected="onRowsChange" />
@@ -220,7 +220,7 @@ const deleteBackup = async (id, name) => {
                 <!-- Section header -->
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center gap-2">
-                        <svg viewBox="0 0 24 24" class="w-5 h-5" style="fill:#1B396A">
+                        <svg viewBox="0 0 24 24" class="w-5 h-5 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiDatabaseOutline"/>
                         </svg>
                         <h2 class="text-lg font-bold text-gray-800">Auditoría y estado</h2>
@@ -262,14 +262,14 @@ const deleteBackup = async (id, name) => {
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center">
                                         <span v-if="item.backup_mode === 'incremental'"
-                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-purple-700 shadow-sm">
+                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-purple-50 text-xs font-semibold text-purple-800 dark:bg-purple-950 dark:text-purple-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="currentColor">
                                                 <path d="M480-120 200-272v-200L80-536l400-224 400 224v320h-80v-276l-120 67v200L480-120Zm0-332 274-153-274-154-274 154 274 153Zm0 241 160-89v-151L480-321 320-411v151l160 89Zm0-241Zm0 90Zm0 0Z"/>
                                             </svg>
                                             Incremental
                                         </span>
                                         <span v-else
-                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-blue-700 shadow-sm">
+                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-50 text-xs font-semibold text-blue-800 dark:bg-blue-950 dark:text-blue-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="currentColor">
                                                 <path d="M160-160v-80h80v80h-80Zm160 0v-80h80v80h-80Zm-160-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm160 320v-80h80v80h-80Zm160 0v-80h80v80h-80Zm160 160v-80h80v80h-80Zm0-160v-80h80v80h-80Zm0-160v-80h80v80h-80ZM320-640v-80h80v80h-80Zm160 480v-80h80v80h-80Zm-160 0v-80h80v80h-80Zm160-320v-80h80v80h-80Zm160 0v-80h80v80h-80Z"/>
                                             </svg>
@@ -280,21 +280,21 @@ const deleteBackup = async (id, name) => {
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center">
                                         <span v-if="item.status === 'completed'"
-                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-green-700 shadow-sm">
+                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-50 text-xs font-semibold text-green-800 dark:bg-green-950 dark:text-green-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="currentColor">
                                                 <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/>
                                             </svg>
                                             Realizado
                                         </span>
                                         <span v-else-if="item.status === 'failed'"
-                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-red-700 shadow-sm">
+                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-red-50 text-xs font-semibold text-red-800 dark:bg-red-950 dark:text-red-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="currentColor">
                                                 <path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z"/>
                                             </svg>
                                             Error
                                         </span>
                                         <span v-else
-                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-white text-[13px] font-bold text-yellow-700 shadow-sm">
+                                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-yellow-50 text-xs font-semibold text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="currentColor">
                                                 <path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-40-246v-334h80v334h-80Zm40 126q17 0 28.5-11.5T520-240q0-17-11.5-28.5T480-280q-17 0-28.5 11.5T440-240q0 17 11.5 28.5T480-200Z"/>
                                             </svg>
@@ -307,7 +307,7 @@ const deleteBackup = async (id, name) => {
                                         <button
                                             v-if="canDownload && item.status === 'completed'"
                                             @click="downloadBackup(item.id)"
-                                            class="p-2 text-[var(--institutional-primary)] border border-[var(--institutional-primary)] rounded-full hover:bg-[var(--institutional-primary)] hover:text-white transition cursor-pointer"
+                                            class="p-2 text-[var(--institutional-primary)] border border-current rounded-full hover:bg-[var(--institutional-primary)] hover:text-white transition cursor-pointer"
                                             title="Descargar"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
@@ -317,7 +317,7 @@ const deleteBackup = async (id, name) => {
                                         <button
                                             v-if="canDelete"
                                             @click="deleteBackup(item.id, item.name)"
-                                            class="p-2 text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition cursor-pointer"
+                                            class="p-2 text-red-600 border border-current rounded-full hover:bg-red-600 hover:text-white dark:text-red-300 dark:hover:text-white transition cursor-pointer"
                                             title="Eliminar"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
@@ -332,7 +332,7 @@ const deleteBackup = async (id, name) => {
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="overflow-x-auto border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
                     <Pagination :links="backups.links" :total="backups.total" :from="backups.from" :to="backups.to" />
                 </div>
             </div>
@@ -359,5 +359,25 @@ const deleteBackup = async (id, name) => {
 :deep(.vue-select-custom .vs__dropdown-option--highlight) { background: #1B396A; color: white; }
 :deep(.vue-select-custom .vs__open-indicator) { fill: #1B396A; transform: scale(.85); }
 :deep(.vue-select-custom .vs__actions) { padding-right: 4px; }
+
+.dark .backups-catalog :deep(.vue-select-custom .vs__dropdown-toggle),
+.dark .backups-catalog :deep(.vue-select-custom .vs__dropdown-menu) {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.dark .backups-catalog :deep(.vue-select-custom .vs__selected),
+.dark .backups-catalog :deep(.vue-select-custom .vs__dropdown-option) {
+    color: var(--foreground);
+}
+
+.dark .backups-catalog :deep(.vue-select-custom .vs__dropdown-option--highlight) {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .backups-catalog :deep(.vue-select-custom .vs__open-indicator) {
+    fill: var(--muted-foreground);
+}
 </style>
 

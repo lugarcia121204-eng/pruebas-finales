@@ -59,7 +59,7 @@ class InstitutionChatTest extends TestCase
         \Illuminate\Support\Facades\Http::fake(['socket.test/*' => \Illuminate\Support\Facades\Http::response('', 204)]);
         $this->withCredentials()->withCookie(config('session.cookie'), app('session')->getId());
         $session = $this->getJson(route('institution-chat.socket-session'))->assertOk()->json('session');
-        $this->post(route('logout'))->assertRedirect(route('login'));
+        $this->post(route('logout'))->assertRedirect(route('inicio'));
         \Illuminate\Support\Facades\Http::assertSent(fn ($request) => $request['type'] === 'revoke' && $request['session'] === $session);
     }
 

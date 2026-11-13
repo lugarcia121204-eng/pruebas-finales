@@ -208,7 +208,7 @@ const exportData = () => {
             </div>
 
             <!-- Filter Section -->
-            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
+            <div class="dashboard-filters bg-white rounded-lg shadow-md border border-gray-200 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                      <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#374151">
@@ -360,6 +360,29 @@ const exportData = () => {
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+.dark .dashboard-filters :deep(.vue-select-custom .vs__dropdown-toggle),
+.dark .dashboard-filters :deep(.vue-select-custom .vs__dropdown-menu) {
+    background: #1a1a2e;
+    border-color: var(--input);
+}
+
+.dark .dashboard-filters :deep(.vue-select-custom input.vs__search[type="search"]) {
+    background: transparent;
+    color: #fff;
+}
+
+.dark .dashboard-filters :deep(.vue-select-custom .vs__search::placeholder),
+.dark .dashboard-filters :deep(.vue-select-custom .vs__selected),
+.dark .dashboard-filters :deep(.vue-select-custom .vs__dropdown-option) {
+    color: #fff;
+    opacity: 1;
+}
+
+.dark .dashboard-filters :deep(.vue-select-custom .vs__open-indicator),
+.dark .dashboard-filters :deep(.vue-select-custom .vs__clear) {
+    fill: #fff;
 }
 </style>
 

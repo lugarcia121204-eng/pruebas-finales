@@ -12,7 +12,10 @@ use App\Mail\NewAnnouncement;
 use App\Mail\RecognitionAvailable;
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class NotificationService
 {
@@ -34,12 +37,20 @@ class NotificationService
             'user_id' => $evaluatorId,
         ]);
 
-        // Send email (queued so users don't wait)
-        Mail::to($evaluator->email)->queue(new EvaluatorAssigned(
-            $evaluator->name,
-            $evaluationsCount,
-            7 // días hábiles límite
-        ));
+        DB::afterCommit(function () use ($evaluator, $evaluationsCount) {
+            try {
+                Mail::to($evaluator->email)->queue(new EvaluatorAssigned(
+                    $evaluator->name,
+                    $evaluationsCount,
+                    7 // días hábiles límite
+                ));
+            } catch (TransportExceptionInterface $exception) {
+                Log::warning('No se pudo enviar el correo de asignación de evaluador.', [
+                    'evaluator_id' => $evaluator->id,
+                    'transport_code' => $exception->getCode(),
+                ]);
+            }
+        });
     }
 
     /**

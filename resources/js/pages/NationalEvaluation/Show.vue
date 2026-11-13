@@ -5,9 +5,9 @@ import { ArrowLeft, ChevronRight, ClipboardCheck, Save, CheckCircle2, Clock } fr
 import DocumentPreviewCards from '@/components/DocumentPreviewCards.vue';
 import DynamicLayout from '@/layouts/DynamicLayout.vue';
 import { alertaExito } from '@/utils/alerts.js';
-const props = defineProps({ evaluation: Object, reviewStatus: String, teacher: String, rubric: Object, documents: Array, applicant: { type: Object, default: () => ({}) } });
+const props = defineProps({ evaluation: Object, reviewStatus: String, evaluationPeriodOpen: Boolean, teacher: String, rubric: Object, documents: Array, applicant: { type: Object, default: () => ({}) } });
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Mexico_City' }) : 'No disponible';
-const canEdit = computed(() => props.evaluation.status === 'pending' && props.reviewStatus === 'pending');
+const canEdit = computed(() => props.evaluationPeriodOpen && props.evaluation.status === 'pending' && props.reviewStatus === 'pending');
 const form = useForm({ answers: props.evaluation.answers ?? {}, comment: props.evaluation.comment ?? '' });
 const selectedScore = computed(() => (props.rubric?.questions ?? []).reduce((total, question) => total + Number(question.options.find(option => String(option.id) === String(form.answers[question.id]))?.score ?? 0), 0));
 const submit = () => form.post(route('national-evaluations.submit', props.evaluation.id), { preserveScroll: true, onSuccess: () => alertaExito('Evaluación registrada', 'La evaluación nacional se guardó correctamente.') });
@@ -67,6 +67,7 @@ const submit = () => form.post(route('national-evaluations.submit', props.evalua
                 <h2 class="font-bold text-lg text-gray-900 border-b border-gray-100 pb-3">Resumen de Evaluación</h2>
                 <div><label for="evaluation-comment" class="block mb-2 font-medium text-gray-900">Observaciones</label>
                 <textarea id="evaluation-comment" v-model="form.comment" :disabled="!canEdit" maxlength="1000" rows="4" placeholder="Escribe tus observaciones sobre la evaluación..." class="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 focus:border-[var(--institutional-primary)] focus:ring-[var(--institutional-primary)] disabled:opacity-100" /></div>
+                <p v-if="evaluation.status === 'pending' && !evaluationPeriodOpen" class="text-sm text-amber-800">La convocatoria está fuera del periodo de evaluación nacional.</p>
                 <p v-for="(error, field) in form.errors" :key="field" class="text-red-600">{{ error }}</p>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 border-t border-gray-200 pt-5">
                     <template v-if="canEdit"><Link :href="route('national-evaluations.index')" class="rounded-lg border border-gray-300 px-5 py-2.5 text-center font-medium text-gray-700 hover:bg-gray-50">Cancelar</Link><button :disabled="form.processing || !rubric" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--institutional-primary)] px-5 py-2.5 font-medium text-white shadow-sm hover:bg-[#0f2347] disabled:opacity-50"><Save class="w-4 h-4" aria-hidden="true" />{{ form.processing ? 'Guardando...' : 'Guardar evaluación nacional' }}</button></template>

@@ -1,12 +1,19 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import DeleteUser from '@/components/DeleteUser.vue';
 import DynamicLayout from '@/layouts/DynamicLayout.vue';
 import EyeIcon from '@/components/icons/EyeIcon.vue';
 import EyeOffIcon from '@/components/icons/EyeOffIcon.vue';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import { alertaExito, alertaError, alertaCargando, cerrarAlerta } from '@/utils/alerts.js';
+
+const sections = [
+    { value: 'perfil', label: 'Perfil' },
+    { value: 'seguridad', label: 'Seguridad' },
+];
 
 const props = defineProps({
     mustVerifyEmail: {
@@ -167,277 +174,315 @@ const updatePassword = () => {
     <DynamicLayout>
         <Head title="Perfil" />
 
-        <div class="space-y-6">
-            <!-- Profile Information -->
-            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
-                <div class="border-b border-gray-200 pb-4 mb-6">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-[var(--institutional-primary)]">Información del Perfil</h2>
-                    <p class="text-sm text-gray-600 mt-1">Actualiza tu información personal</p>
-                </div>
+        <header class="mb-6">
+            <h1 class="text-xl sm:text-2xl font-semibold text-[var(--institutional-primary)]">Configuración de la cuenta</h1>
+            <p class="mt-1 text-sm text-gray-600">Gestiona tu perfil y la configuración de tu cuenta</p>
+        </header>
 
-                <form @submit.prevent="updateProfile" class="space-y-5">
-                    <!-- Name -->
-                    <div>
-                        <label for="name" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Nombre Completo: <span class="text-red-500">*</span></label>
-                        <input
-                            id="name"
-                            v-model="profileForm.name"
-                            type="text"
-                            class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
-                            :class="{ 'border-b-red-500': profileForm.errors.name }"
-                            placeholder="Tu nombre completo"
-                            @input="clearProfileError('name')"
-                        />
-                        <div v-if="!profileForm.errors.name" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Por favor, introduce tu nombre completo</span>
-                        </div>
-                        <p v-if="profileForm.errors.name" class="mt-1 text-sm text-red-600">{{ profileForm.errors.name }}</p>
+        <Tabs default-value="perfil" orientation="vertical" class="items-stretch gap-6 md:flex-row md:items-start">
+            <TabsList aria-label="Configuración de la cuenta" class="account-tabs-list h-auto w-full flex-col items-stretch justify-start gap-1 bg-white p-2 md:w-64 md:shrink-0 dark:p-0 dark:md:w-60">
+                <TabsTrigger
+                    v-for="section in sections"
+                    :key="section.value"
+                    :value="section.value"
+                    class="account-tab h-auto min-h-[45px] cursor-pointer justify-start rounded-lg px-5 py-2.5 text-base hover:bg-[#f5f5f5] data-[state=active]:bg-[#f5f5f5] data-[state=active]:shadow-none"
+                >
+                    {{ section.label }}
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="perfil" class="min-w-0 space-y-6">
+                <!-- Profile Information -->
+                <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+                    <div class="border-b border-gray-200 pb-4 mb-6">
+                        <h2 class="text-xl sm:text-2xl font-semibold text-[var(--institutional-primary)]">Información del Perfil</h2>
+                        <p class="text-sm text-gray-600 mt-1">Actualiza tu información personal</p>
                     </div>
 
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Correo Electrónico: <span class="text-red-500">*</span></label>
-                        <input
-                            id="email"
-                            v-model="profileForm.email"
-                            type="email"
-                            class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
-                            :class="{ 'border-b-red-500': profileForm.errors.email }"
-                            placeholder="tu@email.com"
-                            @input="clearProfileError('email')"
-                        />
-                        <div v-if="!profileForm.errors.email" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Por favor, introduce tu correo electrónico</span>
+                    <form @submit.prevent="updateProfile" class="space-y-5">
+                        <!-- Name -->
+                        <div>
+                            <label for="name" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Nombre Completo: <span class="text-red-500">*</span></label>
+                            <input
+                                id="name"
+                                v-model="profileForm.name"
+                                type="text"
+                                class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
+                                :class="{ 'border-b-red-500': profileForm.errors.name }"
+                                placeholder="Tu nombre completo"
+                                @input="clearProfileError('name')"
+                            />
+                            <div v-if="!profileForm.errors.name" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Por favor, introduce tu nombre completo</span>
+                            </div>
+                            <p v-if="profileForm.errors.name" class="mt-1 text-sm text-red-600">{{ profileForm.errors.name }}</p>
                         </div>
-                        <p v-if="profileForm.errors.email" class="mt-1 text-sm text-red-600">{{ profileForm.errors.email }}</p>
-                    </div>
 
-                    <!-- Institution (only for non-SuperAdmin) -->
-                    <div v-if="requiresAcademicData">
-                        <label for="institucion" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Institución: <span class="text-red-500">*</span></label>
-                        <VueSelect
-                            v-model="profileForm.institution_id"
-                            :options="institutions"
-                            :reduce="institution => institution.id"
-                            label="name"
-                            placeholder="Selecciona una institución"
-                            class="vue-select-custom"
-                            :class="{ 'vue-select-error': profileForm.errors.institution_id }"
-                            @option:selected="clearProfileError('institution_id')"
-                            @option:deselected="clearProfileError('institution_id')"
-                        />
-                        <div v-if="!profileForm.errors.institution_id" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Selecciona la institución a la que perteneces</span>
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Correo Electrónico: <span class="text-red-500">*</span></label>
+                            <input
+                                id="email"
+                                v-model="profileForm.email"
+                                type="email"
+                                class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
+                                :class="{ 'border-b-red-500': profileForm.errors.email }"
+                                placeholder="tu@email.com"
+                                @input="clearProfileError('email')"
+                            />
+                            <div v-if="!profileForm.errors.email" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Por favor, introduce tu correo electrónico</span>
+                            </div>
+                            <p v-if="profileForm.errors.email" class="mt-1 text-sm text-red-600">{{ profileForm.errors.email }}</p>
                         </div>
-                        <p v-if="profileForm.errors.institution_id" class="mt-1 text-sm text-red-600">{{ profileForm.errors.institution_id }}</p>
-                    </div>
 
-                    <!-- Priority Area (only for non-SuperAdmin) -->
-                    <div v-if="requiresAcademicData">
-                        <label for="priority_area" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Área Prioritaria: <span class="text-red-500">*</span></label>
-                        <VueSelect
-                            v-model="profileForm.priority_area_id"
-                            :options="priorityAreas"
-                            :reduce="area => area.id"
-                            label="name"
-                            placeholder="Selecciona un área prioritaria"
-                            class="vue-select-custom"
-                            :class="{ 'vue-select-error': profileForm.errors.priority_area_id }"
-                            @option:selected="clearProfileError('priority_area_id')"
-                            @option:deselected="clearProfileError('priority_area_id')"
-                        />
-                        <div v-if="!profileForm.errors.priority_area_id" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Selecciona el área prioritaria de tu trabajo</span>
+                        <!-- Institution (only for non-SuperAdmin) -->
+                        <div v-if="requiresAcademicData">
+                            <label for="institucion" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Institución: <span class="text-red-500">*</span></label>
+                            <VueSelect
+                                v-model="profileForm.institution_id"
+                                :options="institutions"
+                                :reduce="institution => institution.id"
+                                label="name"
+                                placeholder="Selecciona una institución"
+                                class="vue-select-custom"
+                                :class="{ 'vue-select-error': profileForm.errors.institution_id }"
+                                @option:selected="clearProfileError('institution_id')"
+                                @option:deselected="clearProfileError('institution_id')"
+                            />
+                            <div v-if="!profileForm.errors.institution_id" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Selecciona la institución a la que perteneces</span>
+                            </div>
+                            <p v-if="profileForm.errors.institution_id" class="mt-1 text-sm text-red-600">{{ profileForm.errors.institution_id }}</p>
                         </div>
-                        <p v-if="profileForm.errors.priority_area_id" class="mt-1 text-sm text-red-600">{{ profileForm.errors.priority_area_id }}</p>
-                    </div>
 
-                    <!-- Sub Area (only for non-SuperAdmin) -->
-                    <div v-if="requiresAcademicData">
-                        <label for="sub_area" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Sub Área: <span class="text-red-500">*</span></label>
-                        <VueSelect
-                            v-model="profileForm.sub_area_id"
-                            :options="filteredSubAreas"
-                            :reduce="subArea => subArea.id"
-                            label="name"
-                            placeholder="Selecciona una sub área"
-                            :searchable="true"
-                            :clearable="true"
-                            class="vue-select-custom"
-                            :class="{ 'vue-select-error': profileForm.errors.sub_area_id }"
-                            @option:selected="clearProfileError('sub_area_id')"
-                            @option:deselected="clearProfileError('sub_area_id')"
-                        >
-                            <template #no-options="{ search, searching }">
-                                <template v-if="searching">
-                                    No se encontraron resultados para <em>{{ search }}</em>.
+                        <!-- Priority Area (only for non-SuperAdmin) -->
+                        <div v-if="requiresAcademicData">
+                            <label for="priority_area" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Área Prioritaria: <span class="text-red-500">*</span></label>
+                            <VueSelect
+                                v-model="profileForm.priority_area_id"
+                                :options="priorityAreas"
+                                :reduce="area => area.id"
+                                label="name"
+                                placeholder="Selecciona un área prioritaria"
+                                class="vue-select-custom"
+                                :class="{ 'vue-select-error': profileForm.errors.priority_area_id }"
+                                @option:selected="clearProfileError('priority_area_id')"
+                                @option:deselected="clearProfileError('priority_area_id')"
+                            />
+                            <div v-if="!profileForm.errors.priority_area_id" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Selecciona el área prioritaria de tu trabajo</span>
+                            </div>
+                            <p v-if="profileForm.errors.priority_area_id" class="mt-1 text-sm text-red-600">{{ profileForm.errors.priority_area_id }}</p>
+                        </div>
+
+                        <!-- Sub Area (only for non-SuperAdmin) -->
+                        <div v-if="requiresAcademicData">
+                            <label for="sub_area" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Sub Área: <span class="text-red-500">*</span></label>
+                            <VueSelect
+                                v-model="profileForm.sub_area_id"
+                                :options="filteredSubAreas"
+                                :reduce="subArea => subArea.id"
+                                label="name"
+                                placeholder="Selecciona una sub área"
+                                :searchable="true"
+                                :clearable="true"
+                                class="vue-select-custom"
+                                :class="{ 'vue-select-error': profileForm.errors.sub_area_id }"
+                                @option:selected="clearProfileError('sub_area_id')"
+                                @option:deselected="clearProfileError('sub_area_id')"
+                            >
+                                <template #no-options="{ search, searching }">
+                                    <template v-if="searching">
+                                        No se encontraron resultados para <em>{{ search }}</em>.
+                                    </template>
+                                    <em v-else>Selecciona un Área Prioritaria primero...</em>
                                 </template>
-                                <em v-else>Selecciona un Área Prioritaria primero...</em>
-                            </template>
-                        </VueSelect>
-                        <div v-if="!profileForm.errors.sub_area_id" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Selecciona la sub área correspondiente</span>
+                            </VueSelect>
+                            <div v-if="!profileForm.errors.sub_area_id" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Selecciona la sub área correspondiente</span>
+                            </div>
+                            <p v-if="profileForm.errors.sub_area_id" class="mt-1 text-sm text-red-600">{{ profileForm.errors.sub_area_id }}</p>
                         </div>
-                        <p v-if="profileForm.errors.sub_area_id" class="mt-1 text-sm text-red-600">{{ profileForm.errors.sub_area_id }}</p>
-                    </div>
 
-                    <!-- Email Verification -->
-                    <div v-if="mustVerifyEmail && !user.email_verified_at" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p class="text-sm text-yellow-800">
-                            Tu correo electrónico no está verificado.
-                        </p>
-                    </div>
+                        <!-- Email Verification -->
+                        <div v-if="mustVerifyEmail && !user.email_verified_at" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <p class="text-sm text-yellow-800">
+                                Tu correo electrónico no está verificado.
+                            </p>
+                        </div>
 
 
-                    <!-- Submit Button -->
-                    <div class="flex justify-stretch sm:justify-end">
-                        <button
-                            type="submit"
-                            :disabled="profileForm.processing"
-                            class="w-full sm:w-auto px-6 py-2 cursor-pointer bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition shadow-lg hover:shadow-xl disabled:opacity-75 flex items-center justify-center gap-2 font-medium"
-                        >
-                            <span v-if="!profileForm.processing">Guardar Cambios</span>
-                            <span v-else>Guardando...</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Update Password -->
-            <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
-                <div class="border-b border-gray-200 pb-4 mb-6">
-                    <h2 class="text-xl sm:text-2xl font-semibold text-[var(--institutional-primary)]">Actualizar Contraseña</h2>
-                    <p class="text-sm text-gray-600 mt-1">Asegúrate de usar una contraseña larga y segura</p>
+                        <!-- Submit Button -->
+                        <div class="flex justify-stretch sm:justify-end">
+                            <button
+                                type="submit"
+                                :disabled="profileForm.processing"
+                                class="w-full sm:w-auto px-6 py-2 cursor-pointer bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition shadow-lg hover:shadow-xl disabled:opacity-75 flex items-center justify-center gap-2 font-medium"
+                            >
+                                <span v-if="!profileForm.processing">Guardar Cambios</span>
+                                <span v-else>Guardando...</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <form @submit.prevent="updatePassword" class="space-y-5">
-                    <!-- Current Password -->
-                    <div>
-                        <label for="current_password" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Contraseña Actual: <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <input
-                                id="current_password"
-                                v-model="passwordForm.current_password"
-                                :type="showCurrentPassword ? 'text' : 'password'"
-                                class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 pr-10 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
-                                :class="{ 'border-b-red-500': passwordForm.errors.current_password }"
-                                placeholder="••••••••"
-                                @input="clearPasswordError('current_password')"
-                            />
+                <DeleteUser class="bg-white rounded-lg shadow-md p-4 sm:p-6" />
+            </TabsContent>
+
+            <TabsContent value="seguridad" class="min-w-0">
+                <!-- Update Password -->
+                <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+                    <div class="border-b border-gray-200 pb-4 mb-6">
+                        <h2 class="text-xl sm:text-2xl font-semibold text-[var(--institutional-primary)]">Actualizar Contraseña</h2>
+                        <p class="text-sm text-gray-600 mt-1">Asegúrate de usar una contraseña larga y segura</p>
+                    </div>
+
+                    <form @submit.prevent="updatePassword" class="space-y-5">
+                        <!-- Current Password -->
+                        <div>
+                            <label for="current_password" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Contraseña Actual: <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input
+                                    id="current_password"
+                                    v-model="passwordForm.current_password"
+                                    :type="showCurrentPassword ? 'text' : 'password'"
+                                    class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 pr-10 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
+                                    :class="{ 'border-b-red-500': passwordForm.errors.current_password }"
+                                    placeholder="••••••••"
+                                    @input="clearPasswordError('current_password')"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showCurrentPassword = !showCurrentPassword"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                                >
+                                    <EyeIcon v-if="!showCurrentPassword" size="20" class="text-gray-600" />
+                                    <EyeOffIcon v-else size="20" class="text-gray-600" />
+                                </button>
+                            </div>
+                            <div v-if="!passwordForm.errors.current_password" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Introduce tu contraseña actual para confirmar el cambio</span>
+                            </div>
+                            <p v-if="passwordForm.errors.current_password" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.current_password }}</p>
+                        </div>
+
+                        <!-- New Password -->
+                        <div>
+                            <label for="password" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Nueva Contraseña: <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input
+                                    id="password"
+                                    v-model="passwordForm.password"
+                                    :type="showPassword ? 'text' : 'password'"
+                                    class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 pr-10 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
+                                    :class="{ 'border-b-red-500': passwordForm.errors.password }"
+                                    placeholder="••••••••"
+                                    @input="clearPasswordError('password')"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                                >
+                                    <EyeIcon v-if="!showPassword" size="20" class="text-gray-600" />
+                                    <EyeOffIcon v-else size="20" class="text-gray-600" />
+                                </button>
+                            </div>
+                            <div v-if="!passwordForm.errors.password" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Introduce la nueva contraseña</span>
+                            </div>
+                            <p v-if="passwordForm.errors.password" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.password }}</p>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div>
+                            <label for="password_confirmation" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Confirmar Nueva Contraseña: <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input
+                                    id="password_confirmation"
+                                    v-model="passwordForm.password_confirmation"
+                                    :type="showPasswordConfirmation ? 'text' : 'password'"
+                                    class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 pr-10 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
+                                    :class="{ 'border-b-red-500': passwordForm.errors.password_confirmation }"
+                                    placeholder="••••••••"
+                                    @input="clearPasswordError('password_confirmation')"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPasswordConfirmation = !showPasswordConfirmation"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                                >
+                                    <EyeIcon v-if="!showPasswordConfirmation" size="20" class="text-gray-600" />
+                                    <EyeOffIcon v-else size="20" class="text-gray-600" />
+                                </button>
+                            </div>
+                            <div v-if="!passwordForm.errors.password_confirmation" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Repite la nueva contraseña para confirmar</span>
+                            </div>
+                            <p v-if="passwordForm.errors.password_confirmation" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.password_confirmation }}</p>
+                        </div>
+
+
+                        <!-- Submit Button -->
+                        <div class="flex justify-stretch sm:justify-end">
                             <button
-                                type="button"
-                                @click="showCurrentPassword = !showCurrentPassword"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                                type="submit"
+                                :disabled="passwordForm.processing"
+                                class="w-full sm:w-auto px-6 py-2 cursor-pointer bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition shadow-lg hover:shadow-xl disabled:opacity-75 flex items-center justify-center gap-2 font-medium"
                             >
-                                <EyeIcon v-if="!showCurrentPassword" size="20" class="text-gray-600" />
-                                <EyeOffIcon v-else size="20" class="text-gray-600" />
+                                <span v-if="!passwordForm.processing">Actualizar Contraseña</span>
+                                <span v-else>Actualizando...</span>
                             </button>
                         </div>
-                        <div v-if="!passwordForm.errors.current_password" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Introduce tu contraseña actual para confirmar el cambio</span>
-                        </div>
-                        <p v-if="passwordForm.errors.current_password" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.current_password }}</p>
-                    </div>
-
-                    <!-- New Password -->
-                    <div>
-                        <label for="password" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Nueva Contraseña: <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <input
-                                id="password"
-                                v-model="passwordForm.password"
-                                :type="showPassword ? 'text' : 'password'"
-                                class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 pr-10 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
-                                :class="{ 'border-b-red-500': passwordForm.errors.password }"
-                                placeholder="••••••••"
-                                @input="clearPasswordError('password')"
-                            />
-                            <button
-                                type="button"
-                                @click="showPassword = !showPassword"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition cursor-pointer"
-                            >
-                                <EyeIcon v-if="!showPassword" size="20" class="text-gray-600" />
-                                <EyeOffIcon v-else size="20" class="text-gray-600" />
-                            </button>
-                        </div>
-                        <div v-if="!passwordForm.errors.password" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Introduce la nueva contraseña</span>
-                        </div>
-                        <p v-if="passwordForm.errors.password" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.password }}</p>
-                    </div>
-
-                    <!-- Confirm Password -->
-                    <div>
-                        <label for="password_confirmation" class="block mb-2 text-base text-[var(--institutional-primary)] font-medium">Confirmar Nueva Contraseña: <span class="text-red-500">*</span></label>
-                        <div class="relative">
-                            <input
-                                id="password_confirmation"
-                                v-model="passwordForm.password_confirmation"
-                                :type="showPasswordConfirmation ? 'text' : 'password'"
-                                class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 pr-10 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]"
-                                :class="{ 'border-b-red-500': passwordForm.errors.password_confirmation }"
-                                placeholder="••••••••"
-                                @input="clearPasswordError('password_confirmation')"
-                            />
-                            <button
-                                type="button"
-                                @click="showPasswordConfirmation = !showPasswordConfirmation"
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition cursor-pointer"
-                            >
-                                <EyeIcon v-if="!showPasswordConfirmation" size="20" class="text-gray-600" />
-                                <EyeOffIcon v-else size="20" class="text-gray-600" />
-                            </button>
-                        </div>
-                        <div v-if="!passwordForm.errors.password_confirmation" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Repite la nueva contraseña para confirmar</span>
-                        </div>
-                        <p v-if="passwordForm.errors.password_confirmation" class="mt-1 text-sm text-red-600">{{ passwordForm.errors.password_confirmation }}</p>
-                    </div>
-
-
-                    <!-- Submit Button -->
-                    <div class="flex justify-stretch sm:justify-end">
-                        <button
-                            type="submit"
-                            :disabled="passwordForm.processing"
-                            class="w-full sm:w-auto px-6 py-2 cursor-pointer bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition shadow-lg hover:shadow-xl disabled:opacity-75 flex items-center justify-center gap-2 font-medium"
-                        >
-                            <span v-if="!passwordForm.processing">Actualizar Contraseña</span>
-                            <span v-else>Actualizando...</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    </form>
+                </div>
+            </TabsContent>
+        </Tabs>
     </DynamicLayout>
 </template>
 
 <style scoped>
+.dark .account-tabs-list[data-slot="tabs-list"] {
+    background-color: #1a1a2e;
+}
+
+.account-tab[data-slot="tabs-trigger"] {
+    color: #000;
+}
+
+.dark .account-tab[data-slot="tabs-trigger"] {
+    color: #e2e8f0;
+}
+
+.dark .account-tab[data-slot="tabs-trigger"]:is([data-state="active"], :hover) {
+    background-color: #1e293b;
+}
+
 .vue-select-custom :deep(.vs__dropdown-toggle) {
     background: linear-gradient(to bottom right, #F3F4F6, #E5E7EB);
     border: none !important;

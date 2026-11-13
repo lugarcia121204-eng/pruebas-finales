@@ -41,7 +41,7 @@ const phases = [
     },
     {
         key:        'evaluacion',
-        label:      'Evaluación',
+        label:      'Evaluación Local',
         number:     '03',
         desc:       'Periodo de Revisión.',
         color:      '#C9A800',
@@ -52,13 +52,35 @@ const phases = [
     },
     {
         key:        'resultados',
-        label:      'Resultados',
+        label:      'Resultados Local',
         number:     '04',
         desc:       'Publicación de Resultados.',
         color:      '#2B6CB0',
         colorLight: '#dbeafe',
         startKey:   'results_start',
         endKey:     'results_end',
+        iconName:   'Award'
+    },
+    {
+        key:        'evaluacion-nacional',
+        label:      'Evaluación Nacional',
+        number:     '05',
+        desc:       'Periodo de revisión nacional.',
+        color:      '#6D28A8',
+        colorLight: '#f3e8ff',
+        startKey:   'national_evaluation_start',
+        endKey:     'national_evaluation_end',
+        iconName:   'ClipboardCheck'
+    },
+    {
+        key:        'resultados-nacionales',
+        label:      'Resultados Nacionales',
+        number:     '06',
+        desc:       'Publicación de resultados nacionales.',
+        color:      '#0F766E',
+        colorLight: '#ccfbf1',
+        startKey:   'national_results_start',
+        endKey:     'national_results_end',
         iconName:   'Award'
     }
 ];
@@ -89,6 +111,8 @@ const unlockedPhases = computed(() => {
     if (dates.value.publication_start) list.push('registro');
     if (dates.value.registration_start && dates.value.registration_end) list.push('evaluacion');
     if (dates.value.evaluation_start && dates.value.evaluation_end) list.push('resultados');
+    if (dates.value.results_start && dates.value.results_end) list.push('evaluacion-nacional');
+    if (dates.value.national_evaluation_start && dates.value.national_evaluation_end) list.push('resultados-nacionales');
     
     return list;
 });
@@ -266,12 +290,11 @@ const validateDates = (newDates) => {
     errMessage.value = '';
     
     // Order of sequences to check
-    const order = [
-        { name: 'Publicación', start: 'publication_start', end: 'publication_start' },
-        { name: 'Registro', start: 'registration_start', end: 'registration_end' },
-        { name: 'Evaluación', start: 'evaluation_start', end: 'evaluation_end' },
-        { name: 'Resultados', start: 'results_start', end: 'results_end' }
-    ];
+    const order = phases.map(phase => ({
+        name: phase.label,
+        start: phase.startKey,
+        end: phase.endKey ?? phase.startKey,
+    }));
 
     for (let i = 0; i < order.length; i++) {
         const current = order[i];
@@ -471,7 +494,7 @@ const dayLabel = (day) => {
     <div class="space-y-6 select-none">
 
         <!-- Phase selector cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
             <button
                 v-for="phase in phases"
                 :key="phase.key"
@@ -520,7 +543,7 @@ const dayLabel = (day) => {
                         v-if="phaseConfigured(phase)"
                         class="flex items-center justify-between gap-1"
                     >
-                        <p class="text-xs font-semibold truncate" :style="{ color: phase.color }">
+                        <p class="text-xs font-semibold" :style="{ color: phase.color }">
                             {{ formatRange(phase) }}
                         </p>
                         <button

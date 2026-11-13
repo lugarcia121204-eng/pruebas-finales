@@ -1,5 +1,5 @@
-﻿<script setup>
-import SuperAdminLayout from '@/layouts/SuperAdminLayout.vue';
+<script setup>
+import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue';
 import Pagination from '@/Shared/Pagination.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -18,37 +18,121 @@ const open = (message) => {
 const date = (value) => new Date(value).toLocaleString('es-MX');
 </script>
 <template>
-<Head title="Mensajes de contacto" />
-<SuperAdminLayout>
-<div class="contact-page">
-    <header class="page-heading"><h1>Mensajes de contacto</h1><p><Mail :size="18" /> Mensajes de contacto <span class="unread-count">{{ unreadCount }} sin leer</span></p></header>
-    <form @submit.prevent="filter" class="filter-card">
-        <div class="filter-heading"><h2><Filter :size="21" /> Filtro de Búsqueda</h2><button type="button" class="clear-button" @click="clearFilters"><ListChecks :size="18" /> Limpiar Filtros</button></div>
-        <p class="filter-description">Buscar por remitente, correo, institución o contenido del mensaje</p>
-        <div class="filter-fields">
-            <label class="search-field">BUSCAR<div class="search-input"><Search :size="20" /><input v-model="search" placeholder="Buscar mensajes..." /><button type="submit" aria-label="Buscar mensajes">Buscar</button></div></label>
-            <label>FILTRAR POR ESTADO<select v-model="status" @change="filter"><option value="">Todos los mensajes</option><option value="unread">Sin leer</option><option value="read">Leídos</option></select></label>
-            <label>REGISTROS<select v-model="rows" @change="filter"><option v-for="count in [5, 10, 25, 50]" :key="count" :value="count">{{ count }} Registros</option></select></label>
+    <LayoutAuthenticated>
+        <Head title="Mensajes de contacto" />
+
+        <div class="space-y-6">
+            <header>
+                <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Mensajes de contacto</h1>
+                <div class="mt-2 flex items-center gap-2 text-sm">
+                    <Mail :size="16" class="text-[var(--institutional-primary)]" aria-hidden="true" />
+                    <span class="rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-700">{{ unreadCount }} sin leer</span>
+                </div>
+            </header>
+
+            <form class="rounded-lg border border-gray-200 bg-white p-4 shadow-md" @submit.prevent="filter">
+                <div class="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-800">
+                        <Filter :size="20" aria-hidden="true" />
+                        Filtro de Búsqueda
+                    </h2>
+                    <button type="button" class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50" @click="clearFilters">
+                        <ListChecks :size="16" aria-hidden="true" />
+                        Limpiar Filtros
+                    </button>
+                </div>
+                <p class="mb-4 text-sm text-gray-500">Buscar por remitente, correo, institución o contenido del mensaje</p>
+                <div class="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div class="min-w-0 flex-1">
+                        <label for="contact-search" class="mb-1 block text-sm font-medium text-gray-700">Buscar</label>
+                        <div class="flex gap-2">
+                            <div class="relative min-w-0 flex-1">
+                                <Search :size="20" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[var(--institutional-primary)]" aria-hidden="true" />
+                                <input id="contact-search" v-model="search" type="search" placeholder="Buscar mensajes..." class="h-[45px] w-full rounded-lg border border-gray-300 pr-3 pl-10 text-sm text-gray-700 transition focus:ring-2 focus:ring-[var(--institutional-primary)]" />
+                            </div>
+                            <button type="submit" class="cursor-pointer rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50">Buscar</button>
+                        </div>
+                    </div>
+                    <div class="md:w-52">
+                        <label for="contact-status" class="mb-1 block text-sm font-medium text-gray-700">Estado</label>
+                        <select id="contact-status" v-model="status" class="h-[45px] w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-700 transition focus:ring-2 focus:ring-[var(--institutional-primary)]" @change="filter">
+                            <option value="">Todos los mensajes</option>
+                            <option value="unread">Sin leer</option>
+                            <option value="read">Leídos</option>
+                        </select>
+                    </div>
+                    <div class="md:w-52">
+                        <label for="contact-rows" class="mb-1 block text-sm font-medium text-gray-700">Registros</label>
+                        <select id="contact-rows" v-model="rows" class="h-[45px] w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-700 transition focus:ring-2 focus:ring-[var(--institutional-primary)]" @change="filter">
+                            <option v-for="count in [5, 10, 25, 50]" :key="count" :value="count">{{ count }} Registros</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+
+            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-[var(--institutional-primary)] text-xs font-semibold text-white uppercase">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 tracking-wider">Remitente</th>
+                                <th scope="col" class="px-6 py-4 tracking-wider">Institución</th>
+                                <th scope="col" class="px-6 py-4 tracking-wider">Fecha</th>
+                                <th scope="col" class="px-6 py-4 tracking-wider">Estado</th>
+                                <th scope="col" class="px-6 py-4 text-center tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr v-for="message in messages.data" :key="message.id" class="transition hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <div class="font-semibold text-gray-800">{{ message.name }}</div>
+                                    <div class="mt-1 text-gray-500 [overflow-wrap:anywhere]">{{ message.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-gray-600">{{ message.institution_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ date(message.created_at) }}</td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+                                        :class="message.read_at ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'"
+                                    >
+                                        <span class="h-2 w-2 rounded-full bg-current" aria-hidden="true"></span>
+                                        {{ message.read_at ? 'Leído' : 'Sin leer' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <button
+                                        type="button"
+                                        class="inline-flex cursor-pointer items-center justify-center rounded-full border border-current p-2 text-[var(--institutional-primary)] transition hover:bg-[var(--institutional-primary)] hover:text-white"
+                                        title="Ver mensaje"
+                                        :aria-label="`Ver mensaje de ${message.name}`"
+                                        @click="open(message)"
+                                    >
+                                        <Eye :size="20" aria-hidden="true" />
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="!messages.data.length">
+                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">No hay mensajes para mostrar.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="overflow-x-auto border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+                    <Pagination :links="messages.links" :total="messages.total" :from="messages.from" :to="messages.to" />
+                </div>
+            </div>
+
+            <section v-if="selected" class="rounded-lg border border-gray-200 bg-white p-4 shadow-md" aria-labelledby="message-title">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 id="message-title" class="text-xl font-semibold text-gray-800">Mensaje de {{ selected.name }}</h2>
+                    <button type="button" class="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50" @click="selected = null">
+                        <X :size="16" aria-hidden="true" />
+                        Cerrar
+                    </button>
+                </div>
+                <p class="mt-2 text-sm text-gray-500 [overflow-wrap:anywhere]">{{ selected.email }} · {{ selected.institution_name }} · {{ date(selected.created_at) }}</p>
+                <p class="mt-4 leading-relaxed whitespace-pre-wrap text-gray-800 [overflow-wrap:anywhere]">{{ selected.message }}</p>
+            </section>
         </div>
-    </form>
-    <div class="table-card"><div class="table-scroll">
-        <table><thead><tr><th>REMITENTE</th><th>INSTITUCIÓN</th><th>FECHA</th><th>ESTADO</th><th class="actions">ACCIONES</th></tr></thead>
-        <tbody><tr v-for="message in messages.data" :key="message.id"><td><strong>{{ message.name }}</strong><div class="email">{{ message.email }}</div></td><td>{{ message.institution_name }}</td><td class="date">{{ date(message.created_at) }}</td><td><span class="status-badge" :class="{ unread: !message.read_at }"><i></i>{{ message.read_at ? 'Leído' : 'Sin leer' }}</span></td><td class="actions"><button type="button" @click="open(message)" class="view-button"><Eye :size="18" /> Ver mensaje</button></td></tr>
-        <tr v-if="!messages.data.length"><td colspan="5" class="empty">No hay mensajes para mostrar.</td></tr></tbody></table>
-    </div><div class="table-footer"><Pagination :links="messages.links" :total="messages.total" /></div></div>
-    <section v-if="selected" class="message-card" aria-labelledby="message-title">
-        <div class="message-heading"><h2 id="message-title">Mensaje de {{ selected.name }}</h2><button type="button" @click="selected = null" aria-label="Cerrar mensaje"><X :size="20" /> Cerrar</button></div>
-        <p class="message-meta">{{ selected.email }} · {{ selected.institution_name }} · {{ date(selected.created_at) }}</p>
-        <p class="message-content">{{ selected.message }}</p>
-    </section>
-</div>
-</SuperAdminLayout>
+    </LayoutAuthenticated>
 </template>
-<style scoped>
-.contact-page{padding:24px;display:flex;flex-direction:column;gap:24px;color:#111827}
-.page-heading h1{font-size:30px;line-height:1.25;font-weight:700;margin:0 0 12px}.page-heading>p{display:flex;align-items:center;gap:10px;font-weight:600}.page-heading svg{color:#1b396a}.unread-count{margin-left:8px;padding:4px 10px;background:#eaf1fb;color:#1b396a;border-radius:6px;font-size:13px}
-.filter-card,.table-card,.message-card{background:white;border:1px solid #e0e4eb;border-radius:9px;box-shadow:0 3px 5px #00000018}.filter-card,.message-card{padding:20px}.filter-heading,.message-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.filter-heading h2{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700}.clear-button{display:flex;align-items:center;gap:8px;padding:11px 16px;border:1px solid #cbd5e1;border-radius:8px;color:#1b396a;background:white;cursor:pointer}.filter-description{color:#64748b;margin:10px 0 20px;font-size:14px}.filter-fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px}.filter-fields label{font-size:12px;font-weight:600;color:#64748b;display:flex;flex-direction:column;gap:6px}.filter-fields select,.search-input{height:46px;border:1px solid #cbd5e1;border-radius:8px;background:#fafbfc;color:#1b396a;font-size:15px;font-weight:400}.filter-fields select{padding:0 14px}.search-input{display:flex;align-items:center;padding:0 12px;gap:10px;background:white}.search-input input{min-width:0;flex:1;outline:none;background:transparent;color:#111827}.search-input button{font-size:13px;font-weight:600;cursor:pointer}.search-input:focus-within,.filter-fields select:focus{outline:2px solid #93b4e0;outline-offset:1px}
-.table-card{overflow:hidden}.table-scroll{overflow-x:auto}table{width:100%;text-align:left;font-size:14px}thead{background:#1b396a;color:white}th{padding:18px 24px;font-size:12px;font-weight:700}td{padding:18px 24px;border-bottom:1px solid #e2e8f0}tbody tr:hover{background:#f1f6fd}.email{margin-top:4px;color:#64748b;overflow-wrap:anywhere}.date{white-space:nowrap}.actions{text-align:center}.status-badge{display:inline-flex;align-items:center;gap:7px;border:1px solid #e2e8f0;background:white;padding:6px 11px;border-radius:7px;font-size:12px;color:#64748b;white-space:nowrap}.status-badge i{width:8px;height:8px;border-radius:50%;background:#94a3b8}.status-badge.unread{color:#9a6700;font-weight:600}.status-badge.unread i{background:#eab308}.view-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #1b396a;border-radius:8px;padding:9px 13px;color:#1b396a;font-weight:600;white-space:nowrap;cursor:pointer}.view-button:hover{background:#1b396a;color:white}.empty{height:145px;text-align:center;color:#64748b}.table-footer{padding:18px 24px;background:#f8f9fb}.message-heading h2{font-size:20px;font-weight:700}.message-heading button{display:flex;align-items:center;gap:6px;cursor:pointer;color:#64748b}.message-meta{font-size:13px;color:#64748b;margin-top:10px;overflow-wrap:anywhere}.message-content{margin-top:22px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
-@media(max-width:900px){.filter-fields{grid-template-columns:1fr 1fr}.search-field{grid-column:1/-1}.contact-page{padding:16px}.page-heading h1{font-size:25px}}
-@media(max-width:540px){.filter-heading{align-items:flex-start;flex-direction:column}.filter-fields{grid-template-columns:1fr}.search-field{grid-column:auto}.table-footer{padding:14px 8px;overflow-x:auto}th,td{padding:14px 16px}}
-</style>

@@ -11,6 +11,13 @@ use App\Services\NotificationService;
 
 class AnnouncementService
 {
+    private const NATIONAL_CALENDAR_FIELDS = [
+        'national_evaluation_start',
+        'national_evaluation_end',
+        'national_results_start',
+        'national_results_end',
+    ];
+
     protected NotificationService $notificationService;
 
     public function __construct(NotificationService $notificationService)
@@ -70,7 +77,7 @@ class AnnouncementService
                 'evaluation_end' => $request->evaluation_end,
                 'results_start' => $request->results_start,
                 'results_end' => $request->results_end,
-            ]);
+            ] + $request->only(self::NATIONAL_CALENDAR_FIELDS));
 
             // Bind documents
             $this->syncDocuments($announcement, $request->documents);
@@ -145,7 +152,7 @@ class AnnouncementService
                 'evaluation_end' => $request->evaluation_end,
                 'results_start' => $request->results_start,
                 'results_end' => $request->results_end,
-            ];
+            ] + $request->only(self::NATIONAL_CALENDAR_FIELDS);
 
             $dateLabels = [
                 'publication_start' => 'Inicio de Publicación',
@@ -155,13 +162,17 @@ class AnnouncementService
                 'evaluation_end' => 'Fin de Evaluación',
                 'results_start' => 'Inicio de Resultados',
                 'results_end' => 'Fin de Resultados',
+                'national_evaluation_start' => 'Inicio de Evaluación Nacional',
+                'national_evaluation_end' => 'Fin de Evaluación Nacional',
+                'national_results_start' => 'Inicio de Resultados Nacionales',
+                'national_results_end' => 'Fin de Resultados Nacionales',
             ];
 
             $changes = [];
             if ($calendar) {
                 foreach ($newDates as $key => $value) {
                     $oldValue = $calendar->$key instanceof \Carbon\Carbon ? $calendar->$key->toDateString() : $calendar->$key;
-                    if ($value && $oldValue != $value) {
+                    if ($oldValue != $value) {
                         $changes[] = [
                             'label' => $dateLabels[$key],
                             'old' => $oldValue,

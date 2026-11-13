@@ -54,7 +54,14 @@ const getFase = (convocatoria) => {
         const resInicio    = parseDateLocal(convocatoria.calendar.results_start);
         const resFin       = parseDateLocal(convocatoria.calendar.results_end);
 
-        if (resInicio && today >= resInicio) {
+        const nationalEvaluationStart = parseDateLocal(convocatoria.calendar.national_evaluation_start);
+        const nationalResultsStart = parseDateLocal(convocatoria.calendar.national_results_start);
+
+        if (nationalResultsStart && today >= nationalResultsStart) {
+            etapaLabel = 'En etapa de Resultados Nacionales';
+        } else if (nationalEvaluationStart && today >= nationalEvaluationStart) {
+            etapaLabel = 'En etapa de Evaluación Nacional';
+        } else if (resInicio && today >= resInicio) {
             etapaLabel = 'En etapa de Resultados';
         } else if (evalInicio && today >= evalInicio) {
             etapaLabel = 'En etapa de Evaluación';
@@ -120,6 +127,26 @@ const etapas = computed(() => {
             dateStartKey: 'results_start',
             dateEndKey: 'results_end',
             color: '#2B6CB0'
+        },
+        {
+            id: 5,
+            numero: '05',
+            titulo: 'Evaluación Nacional',
+            descripcion: 'Periodo de revisión nacional.',
+            icono: 'ClipboardCheck',
+            dateStartKey: 'national_evaluation_start',
+            dateEndKey: 'national_evaluation_end',
+            color: '#7C3AED'
+        },
+        {
+            id: 6,
+            numero: '06',
+            titulo: 'Resultados Nacional',
+            descripcion: 'Publicación de resultados nacionales.',
+            icono: 'Award',
+            dateStartKey: 'national_results_start',
+            dateEndKey: 'national_results_end',
+            color: '#0F766E'
         }
     ];
 
@@ -133,8 +160,7 @@ const etapas = computed(() => {
     }
 
     return stages.map(stage => {
-        // Usar parseDateLocal y acceder a calendar (inglés)
-        const start = parseDateLocal(convocatoria.calendar[stage.dateStartKey]);
+        const start = stage.dateStartKey ? parseDateLocal(convocatoria.calendar[stage.dateStartKey]) : null;
 
         const isPastOrCurrent = start ? today >= start : false;
 
@@ -590,8 +616,7 @@ onMounted(() => {
 .stages-heading h2 { color:#fff; font-size:clamp(28px,3vw,40px); line-height:1.2; font-weight:750; letter-spacing:-.035em; }
 .stages-heading h2 span { color:#f59e0b; }
 .stages-heading p { max-width:720px; margin:16px auto 0; color:#c9d9ee; font-size:16px; line-height:1.7; }
-.stages-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:22px; position:relative; list-style:none; padding:0; margin:0; }
-.stages-grid::before { content:''; position:absolute; top:0; left:10%; right:10%; height:2px; background:#ffffff25; }
+.stages-grid { display:grid; grid-template-columns:repeat(6,minmax(176px,1fr)); gap:12px; overflow-x:auto; list-style:none; padding:22px 2px 8px; margin:0; }
 .stage-card { position:relative; display:flex; flex-direction:column; padding:42px 20px 24px; background:#fff; border-radius:16px; border-left:5px solid var(--stage-color); box-shadow:0 12px 30px #07182e20; }
 .stage-icon { position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--stage-color); color:#fff; border:4px solid #ffffff30; box-shadow:0 8px 16px #0002; }
 .stage-number { color:#c4d1e3; font-size:26px; line-height:1.3; font-weight:750; }
@@ -599,28 +624,25 @@ onMounted(() => {
 .stage-description { color:#637894; font-size:14px; line-height:1.65; margin:12px 0 24px; }
 .stage-date { display:flex; align-items:flex-start; gap:8px; margin-top:auto; font-size:12px; line-height:1.7; font-weight:600; color:#173761; }
 .stage-date svg { flex-shrink:0; margin-top:2px; color:var(--stage-color); }
-@media(max-width:1023px) { .stages-grid { grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:54px; } .stages-grid::before { display:none; } }
-@media(max-width:575px) { .stages-section { padding:40px 18px; } .stages-grid { grid-template-columns:1fr; gap:48px; } .stages-heading { margin-bottom:58px; } .stages-heading p { font-size:14px; } }
+@media(max-width:575px) { .stages-section { padding:40px 18px; } .stages-heading { margin-bottom:58px; } .stages-heading p { font-size:14px; } }
 </style>
 
 <style scoped>
 .stages-section { padding:42px 24px; }
 .stages-container { max-width:1180px; }
-.stages-heading { margin-bottom:46px; }
+.stages-heading { margin-bottom:24px; }
 .stages-heading h2 { font-size:clamp(26px,2.7vw,34px); }
 .stages-heading p { margin-top:12px; font-size:14px; }
-.stages-grid { gap:18px; }
-.stage-card { min-height:175px; padding:30px 16px 18px; border-radius:12px; border-left-width:4px; }
-.stage-icon { top:-21px; width:42px; height:42px; border-width:3px; }
-.stage-icon svg { width:20px; height:20px; }
-.stage-title-row { display:flex; align-items:center; gap:10px; }
+.stage-card { min-height:132px; padding:25px 14px 12px; border-radius:12px; border-left-width:4px; }
+.stage-icon { top:-18px; width:36px; height:36px; border-width:3px; }
+.stage-icon svg { width:18px; height:18px; }
+.stage-title-row { display:flex; align-items:center; gap:8px; }
 .stage-number { font-size:21px; line-height:1.3; }
 .stage-card h3 { margin:0; font-size:17px; }
-.stage-description { font-size:13px; line-height:1.55; margin:10px 0 16px; }
-.stage-date { font-size:11px; line-height:1.6; gap:7px; padding-top:10px; border-top:1px solid #e8edf4; }
+.stage-description { font-size:13px; line-height:1.55; margin:7px 0 10px; }
+.stage-date { font-size:11px; line-height:1.6; gap:7px; padding-top:7px; border-top:1px solid #e8edf4; }
 .stage-date svg { width:15px; height:15px; }
-@media(max-width:1023px) { .stages-grid { row-gap:40px; } }
-@media(max-width:575px) { .stages-section { padding:32px 18px; } .stages-grid { gap:36px; } .stages-heading { margin-bottom:42px; } .stage-card { min-height:160px; } }
+@media(max-width:575px) { .stages-section { padding:32px 18px; } .stages-heading { margin-bottom:20px; } }
 </style>
 
 <style>

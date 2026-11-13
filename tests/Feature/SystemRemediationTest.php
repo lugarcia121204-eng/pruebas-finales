@@ -50,7 +50,14 @@ class SystemRemediationTest extends TestCase
 
     public function test_institutional_approval_does_not_publish_final_documents_but_national_approval_does(): void
     {
-        [$admin, $teacher, $application, $review, $recognition] = $this->reviewFixture();
+        [$admin, $teacher, $application, $review, $recognition, $calendar] = $this->reviewFixture();
+        $calendar->update([
+            'results_end' => today()->subDay(),
+            'national_evaluation_start' => today(),
+            'national_evaluation_end' => today(),
+            'national_results_start' => today()->addDay(),
+            'national_results_end' => today()->addDays(2),
+        ]);
         $this->assertFalse(Application::whereKey($application->id)->finallyApproved()->exists());
         $this->get(route('recognition.verify', $recognition->identifier))->assertNotFound();
         $this->get(route('recognitions.public-download', $recognition->identifier))->assertNotFound();
@@ -61,6 +68,8 @@ class SystemRemediationTest extends TestCase
         $this->assertTrue($recognition->fresh()->active);
         $this->assertTrue(Application::whereKey($application->id)->finallyApproved()->exists());
         $this->assertSame('approved', $application->fresh()->finalDecision());
+        $this->get(route('recognition.verify', $recognition->identifier))->assertNotFound();
+        $this->travel(1)->days();
         $this->get(route('recognition.verify', $recognition->identifier))->assertOk();
         $this->get(route('recognitions.search', ['folio' => $recognition->identifier]))->assertOk()->assertInertia(fn (Assert $page) => $page->has('recognitions', 1));
     }
@@ -104,7 +113,8 @@ class SystemRemediationTest extends TestCase
 
     public function test_approval_creates_teacher_recognition_and_national_list_is_scoped(): void
     {
-        [$admin, $teacher, $application, $review, $recognition] = $this->reviewFixture();
+        [$admin, $teacher, $application, $review, $recognition, $calendar] = $this->reviewFixture();
+        $calendar->update(['results_end' => today()->subDay(), 'national_evaluation_start' => today(), 'national_evaluation_end' => today()]);
         $recognition->delete();
         $this->actingAs($admin)->get(route('national-review.recognitions.index'))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('recognitions.data', 0));
@@ -168,7 +178,7 @@ class SystemRemediationTest extends TestCase
             $response = app(\App\Services\PdfGenerationService::class)->generateTeacherRecognitionPdf($certificate, $teacher);
             $this->assertStringStartsWith('%PDF-', $response->getContent());
             $stored = $certificate->fresh()->file_path;
-            $this->assertStringStartsWith('reconocimientos/', $stored);
+            $this->assertStringStartsWith('recognitions/', $stored);
             $this->assertStringContainsString('/GAGG041212MPLRRDA7/solicitud-'.$application->id.'/', $stored);
             $this->assertSame($response->getContent(), Storage::disk('local')->get($stored));
             $this->assertSame($response->getContent(), app(\App\Services\PdfGenerationService::class)->generateTeacherRecognitionPdf($certificate->fresh(), $teacher)->getContent());
@@ -231,7 +241,7 @@ class SystemRemediationTest extends TestCase
             $this->get(route('recognitions.public-download', $record->identifier))->assertNotFound();
         }
         $this->artisan('recognitions:archive-pdfs')->assertSuccessful();
-        $this->assertCount(1, Storage::disk('local')->allFiles('reconocimientos'));
+        $this->assertCount(1, Storage::disk('local')->allFiles('recognitions'));
         Mail::assertNothingQueued();
     }
 
@@ -242,6 +252,7 @@ class SystemRemediationTest extends TestCase
         $calendar->update(['results_start' => now()->addDays(2)]);
         $this->assertFalse(Recognition::whereKey($recognition->id)->publishable()->exists());
         $review->update(['status' => 'pending']);
+        $calendar->update(['results_start' => today()->subDay(), 'results_end' => today()->subDay(), 'national_evaluation_start' => today(), 'national_evaluation_end' => today()]);
         $this->actingAs($admin)->post(route('national-review.verdict', $review->id), ['status' => 'rejected', 'comment' => 'Does not satisfy national requirements.'])->assertSessionHasNoErrors();
         $this->assertFalse($recognition->fresh()->active);
         $this->assertSame('rejected', $application->fresh()->finalDecision());

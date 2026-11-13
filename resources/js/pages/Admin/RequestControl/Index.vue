@@ -48,27 +48,27 @@ const exportData = () => {
 <template>
     <DynamicLayout>
         <Head title="Control de solicitudes" />
-        <div class="space-y-5">
+        <div class="space-y-6">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h1 class="text-2xl font-bold">Control de solicitudes</h1>
+                <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Control de solicitudes</h1>
                 <button
                     @click="exportData"
-                    class="rounded bg-green-800 px-4 py-2 text-white"
+                    class="cursor-pointer rounded-lg bg-[#0D7239] px-4 py-2.5 font-medium text-white transition hover:bg-green-800"
                 >
                     Exportar Excel
                 </button>
             </div>
-            <form @submit.prevent="applyFilters" class="flex flex-wrap gap-2">
+            <form @submit.prevent="applyFilters" class="flex flex-wrap gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-md">
                 <input
                     v-model="search"
                     aria-label="Buscar sede"
                     placeholder="Buscar sede"
-                    class="rounded border p-2"
+                    class="h-[45px] w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-700 sm:w-auto"
                 />
                 <select
                     v-model="state"
                     aria-label="Estado"
-                    class="rounded border p-2"
+                    class="h-[45px] w-full rounded-lg border border-gray-300 px-3 text-sm text-gray-700 sm:w-auto"
                 >
                     <option value="">Todos los estados</option>
                     <option
@@ -79,13 +79,13 @@ const exportData = () => {
                         {{ item.name }}
                     </option>
                 </select>
-                <button class="rounded bg-blue-900 px-4 text-white">
+                <button class="cursor-pointer rounded-lg bg-[var(--institutional-primary)] px-4 py-2 text-sm font-medium text-white">
                     Filtrar
                 </button>
                 <button
                     type="button"
                     @click="cleanFilters"
-                    class="rounded border px-4"
+                    class="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                 >
                     Limpiar filtros
                 </button>
@@ -96,30 +96,30 @@ const exportData = () => {
                 :sub-areas="subAreas"
                 @change="applyFilters"
             />
-            <div class="overflow-x-auto rounded-lg border bg-white">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-md">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-[var(--institutional-primary)] text-xs font-semibold uppercase text-white">
                         <tr>
-                            <th class="p-3">Sede</th>
-                            <th class="p-3">Aprobadas</th>
-                            <th class="p-3">Rechazadas</th>
-                            <th class="p-3">Total filtrado</th>
-                            <th class="p-3">Acciones</th>
+                            <th scope="col" class="px-6 py-4 tracking-wider">Sede</th>
+                            <th scope="col" class="px-6 py-4 tracking-wider">Aprobadas</th>
+                            <th scope="col" class="px-6 py-4 tracking-wider">Rechazadas</th>
+                            <th scope="col" class="px-6 py-4 tracking-wider">Total filtrado</th>
+                            <th scope="col" class="px-6 py-4 tracking-wider">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-200">
                         <tr
                             v-for="item in institutions.data"
                             :key="item.id"
-                            class="border-t"
+                            class="transition hover:bg-gray-50"
                         >
-                            <td class="p-3">{{ item.name }}</td>
-                            <td class="p-3">{{ item.approved_count }}</td>
-                            <td class="p-3">{{ item.rejected_count }}</td>
-                            <td class="p-3">
+                            <td class="px-6 py-4 text-gray-700">{{ item.name }}</td>
+                            <td class="px-6 py-4 text-gray-700">{{ item.approved_count }}</td>
+                            <td class="px-6 py-4 text-gray-700">{{ item.rejected_count }}</td>
+                            <td class="px-6 py-4 text-gray-700">
                                 {{ item.filtered_applications_count }}
                             </td>
-                            <td class="p-3">
+                            <td class="px-6 py-4 text-gray-700">
                                 <Link
                                     :href="
                                         route('applications.control.show', {
@@ -127,7 +127,7 @@ const exportData = () => {
                                             ...getFilters(),
                                         })
                                     "
-                                    class="text-blue-800 underline"
+                                    class="font-medium text-[var(--institutional-primary)] underline-offset-4 hover:underline"
                                     >Ver solicitudes</Link
                                 >
                             </td>
@@ -144,7 +144,7 @@ const exportData = () => {
                     </tbody>
                 </table>
             </div>
-            <nav class="flex gap-2" aria-label="Paginación">
+            <nav class="flex gap-2 overflow-x-auto rounded-lg border border-gray-200 bg-white p-4" aria-label="Paginación">
                 <template
                     v-for="(link, index) in institutions.meta?.links ||
                     institutions.links"
@@ -152,8 +152,8 @@ const exportData = () => {
                     ><Link
                         v-if="link.url"
                         :href="link.url"
-                        class="rounded border px-3 py-1"
-                        :class="{ 'bg-blue-100': link.active }"
+                        class="shrink-0 rounded-full border border-gray-200 px-3 py-1 text-sm text-gray-700 transition hover:bg-gray-50"
+                        :class="{ 'bg-gray-100 font-semibold': link.active }"
                         ><span v-html="link.label" /></Link
                     ></template>
             </nav>

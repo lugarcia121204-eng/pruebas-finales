@@ -172,19 +172,40 @@ watch(search, (value) => {
     align-items: center;
     gap: 4px;
 }
+.dark .control-applications :deep(.vue-select-custom .vs__dropdown-toggle),
+.dark .control-applications :deep(.vue-select-custom .vs__dropdown-menu) {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+.dark .control-applications :deep(.vue-select-custom .vs__selected),
+.dark .control-applications :deep(.vue-select-custom .vs__search),
+.dark .control-applications :deep(.vue-select-custom .vs__dropdown-option) {
+    color: var(--foreground);
+}
+
+.dark .control-applications :deep(.vue-select-custom .vs__dropdown-option--highlight) {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.dark .control-applications :deep(.vue-select-custom .vs__clear),
+.dark .control-applications :deep(.vue-select-custom .vs__open-indicator) {
+    fill: var(--muted-foreground);
+}
 </style>
 
 <template>
     <LayoutAuthenticated>
         <Head title="Control de Solicitudes - SuperAdmin" />
 
-        <div class="space-y-6">
+        <div class="control-applications space-y-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Control de Solicitudes</h1>
+                    <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Control de Solicitudes</h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
-                        <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
+                        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 fill-current text-[var(--institutional-primary)]">
                             <path :d="mdiFileDocumentMultiple"/>
                         </svg>
                         <span class="text-gray-900 font-semibold">Control de Solicitudes</span>
@@ -206,7 +227,7 @@ watch(search, (value) => {
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#374151">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-gray-700">
                             <path d="M440-160q-17 0-28.5-11.5T400-200v-240L168-736q-15-20-4.5-42t36.5-22h560q26 0 36.5 22t-4.5 42L560-440v240q0 17-11.5 28.5T520-160h-80Zm40-308 198-252H282l198 252Zm0 0Z"/>
                         </svg>
                         <h2 class="text-xl font-semibold text-gray-800">Filtro de Búsqueda</h2>
@@ -219,17 +240,17 @@ watch(search, (value) => {
                     </button>
                 </div>
                 <div class="text-sm text-gray-500 mb-4">Buscar por nombre de campus o ID</div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div class="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
                     <!-- Búsqueda -->
                     <div class="relative">
-                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Buscar</label>
+                        <label for="control-application-search" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Buscar</label>
                         <div class="absolute bottom-0 left-0 pl-3 flex items-center pointer-events-none" style="height:45px">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#1B396A">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" class="text-[var(--institutional-primary)]">
                                 <path d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"/>
                             </svg>
                         </div>
                         <input 
-                            v-model="search" 
+                            id="control-application-search" v-model="search" 
                             type="text" 
                             placeholder="Buscar por ID, nombre, campus..." 
                             class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring focus:ring-[var(--institutional-primary)] focus:ring-opacity-20 hover:bg-gray-50 transition"
@@ -320,16 +341,16 @@ watch(search, (value) => {
                                 <td class="px-6 py-4 font-medium text-gray-900">{{ institution.state }}</td>
                                 <td class="px-6 py-4 font-semibold text-gray-800">{{ institution.name }}</td>
                                 <td class="px-6 py-4 text-center text-sm">
-                                    <span class="inline-flex items-center px-4 py-1.5 rounded-full h-10 w-10 bg-white text-[13px] font-bold text-green-700 shadow-sm whitespace-nowrap border border-gray-100">
+                                    <span class="inline-flex min-w-10 items-center justify-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-800 dark:bg-green-950 dark:text-green-200">
                                         {{ institution.approved_count }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-center text-sm">
-                                    <span class="inline-flex items-center px-4 py-1.5 rounded-full h-10 w-10 bg-white text-[13px] font-bold text-red-700 shadow-sm whitespace-nowrap border border-gray-100">
+                                    <span class="inline-flex min-w-10 items-center justify-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-800 dark:bg-red-950 dark:text-red-200">
                                         {{ institution.rejected_count }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-center">{{ institution.filtered_applications_count }}</td>
+                                <td class="px-6 py-4 text-center font-semibold text-gray-800">{{ institution.filtered_applications_count }}</td>
                             </tr>
                             <tr v-if="!institutions.data || institutions.data.length === 0">
                                 <td colspan="6" class="px-6 py-12 text-center text-gray-500">
@@ -341,7 +362,7 @@ watch(search, (value) => {
                 </div>
 
                 <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50" v-if="institutions.meta?.links">
+                <div class="overflow-x-auto border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6" v-if="institutions.meta?.links">
                      <Pagination :links="institutions.meta.links" :total="institutions.meta.total" :from="institutions.meta.from" :to="institutions.meta.to" />
                 </div>
             </div>

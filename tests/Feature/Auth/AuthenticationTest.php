@@ -80,7 +80,7 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->post(route('logout'));
 
         $this->assertGuest();
-        $response->assertRedirect(route('login'));
+        $response->assertRedirect(route('inicio'));
         $this->get(route('superadmin.dashboard'))->assertRedirect(route('login'));
         $this->get(route('login'))->assertHeader('Pragma', 'no-cache')
             ->assertHeader('Expires', '0');
