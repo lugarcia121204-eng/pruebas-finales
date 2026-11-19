@@ -10,6 +10,13 @@ import Pagination from '@/Shared/Pagination.vue';
 
 const props = defineProps({ reviews: Object, filters: { type: Object, default: () => ({}) } });
 const search = ref(props.filters.search ?? '');
+const searchField = ref(props.filters.search_field ?? '');
+const searchOptions = [
+    { label: 'Todos los campos', value: '' },
+    { label: 'Docente', value: 'teacher' },
+    { label: 'Institución', value: 'institution' },
+    { label: 'Convocatoria', value: 'announcement' },
+];
 const status = ref(props.filters.status ?? '');
 const rows = ref(Number(props.filters.rows ?? 10));
 const sortField = ref(props.filters.sort_field ?? '');
@@ -18,11 +25,11 @@ const rowOptions = [5, 10, 25, 50].map(value => ({ label: `${value} Registros`, 
 const statusOptions = [{ label: 'Todos los estados', value: '' }, { label: 'Pendiente', value: 'pending' }, { label: 'Aprobada', value: 'approved' }, { label: 'Rechazada', value: 'rejected' }];
 const applyFilters = () => {
     onSearch.cancel();
-    router.get(route('national-review.index'), { search: search.value || undefined, status: status.value || undefined, rows: rows.value, sort_field: sortField.value || undefined, sort_direction: sortField.value ? sortDirection.value : undefined }, { preserveState: true, replace: true, preserveScroll: true });
+    router.get(route('national-review.index'), { search: search.value || undefined, search_field: searchField.value || undefined, status: status.value || undefined, rows: rows.value, sort_field: sortField.value || undefined, sort_direction: sortField.value ? sortDirection.value : undefined }, { preserveState: true, replace: true, preserveScroll: true });
 };
 const onSearch = debounce(applyFilters, 500);
 onUnmounted(() => onSearch.cancel());
-const clearFilters = () => { search.value = ''; status.value = ''; rows.value = 10; sortField.value = ''; sortDirection.value = 'asc'; applyFilters(); };
+const clearFilters = () => { search.value = ''; searchField.value = ''; status.value = ''; rows.value = 10; sortField.value = ''; sortDirection.value = 'asc'; applyFilters(); };
 const sortBy = (field) => { sortDirection.value = sortField.value === field && sortDirection.value === 'asc' ? 'desc' : 'asc'; sortField.value = field; applyFilters(); };
 const statusLabel = (value) => ({ pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada' }[value] ?? value);
 </script>
@@ -41,10 +48,11 @@ const statusLabel = (value) => ({ pending: 'Pendiente', approved: 'Aprobada', re
                     <button type="button" @click="clearFilters" class="inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition"><ListFilter class="h-4 w-4" aria-hidden="true" />Limpiar Filtros</button>
                 </div>
                 <p class="text-sm text-gray-500 mb-4">Buscar y filtrar solicitudes asignadas para el segundo filtro de revisión.</p>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="relative w-full md:flex-1"><Search class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--institutional-primary)] pointer-events-none" aria-hidden="true" /><input v-model="search" @input="onSearch" type="search" aria-label="Buscar solicitudes nacionales" placeholder="Buscar por Docente, Institución..." class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring-[var(--institutional-primary)] hover:bg-gray-50 transition" /></div>
-                    <div class="w-full md:w-52 shrink-0"><VueSelect input-id="national-status" aria-label="Estado nacional" v-model="status" :options="statusOptions" :reduce="option => option.value" :searchable="false" :clearable="false" class="vue-select-custom" @update:modelValue="applyFilters" /></div>
-                    <div class="w-full md:w-44 shrink-0"><VueSelect input-id="national-rows" aria-label="Registros por página" v-model="rows" :options="rowOptions" :reduce="option => option.value" :searchable="false" :clearable="false" class="vue-select-custom" @update:modelValue="applyFilters" /></div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:flex">
+                    <div class="relative w-full xl:flex-1"><Search class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--institutional-primary)] pointer-events-none" aria-hidden="true" /><input v-model="search" @input="onSearch" type="search" aria-label="Buscar solicitudes nacionales" placeholder="Escribe para buscar…" class="pl-10 w-full h-[45px] rounded-lg border border-gray-300 text-gray-700 focus:border-[var(--institutional-primary)] focus:ring-[var(--institutional-primary)] hover:bg-gray-50 transition" /></div>
+                    <div class="w-full xl:w-48 shrink-0"><VueSelect input-id="national-search-field" aria-label="Campo de búsqueda" v-model="searchField" :options="searchOptions" :reduce="option => option.value" :searchable="false" :clearable="false" class="vue-select-custom" @update:modelValue="applyFilters" /></div>
+                    <div class="w-full xl:w-52 shrink-0"><VueSelect input-id="national-status" aria-label="Estado nacional" v-model="status" :options="statusOptions" :reduce="option => option.value" :searchable="false" :clearable="false" class="vue-select-custom" @update:modelValue="applyFilters" /></div>
+                    <div class="w-full xl:w-44 shrink-0"><VueSelect input-id="national-rows" aria-label="Registros por página" v-model="rows" :options="rowOptions" :reduce="option => option.value" :searchable="false" :clearable="false" class="vue-select-custom" @update:modelValue="applyFilters" /></div>
                 </div>
             </form>
             <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">

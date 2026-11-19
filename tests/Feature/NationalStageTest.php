@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Application, Announcement, Institution, User};
+use App\Models\{Application, Announcement, Institution, Rubric, User};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -40,18 +40,24 @@ class NationalStageTest extends TestCase
         $announcement = Announcement::create(['name' => 'Test']);
         $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
         $review = \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $national->id, 'assigned_by' => $national->id, 'status' => 'pending']);
-        $rubric = \App\Models\Rubric::create(['title' => 'Nacional', 'is_active' => true]);
-        $rubric->questions()->create(['text' => 'Criterio'])->options()->create(['text' => 'Cumple', 'score' => 10]);
+        $localRubric = Rubric::create(['title' => 'Local', 'stage' => Rubric::LOCAL, 'is_active' => true]);
+        $localRubric->questions()->create(['text' => 'Criterio'])->options()->create(['text' => 'Cumple', 'score' => 10]);
 
         $this->actingAs($national)->get(route('national-review.show', $review->id))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('evaluators', 1)->where('evaluators.0.id', $other->id));
         $url = route('national-review.assign-evaluators', $review->id);
         $this->post($url, ['evaluator_ids' => [$other->id]])->assertSessionHasErrors('evaluator_ids');
         $this->openNationalEvaluation($announcement);
+        $this->post($url, ['evaluator_ids' => [$other->id]])->assertSessionHasErrors('evaluator_ids');
+        $this->assertDatabaseCount('national_evaluations', 0);
+
+        $nationalRubric = Rubric::create(['title' => 'Nacional', 'stage' => Rubric::NATIONAL, 'is_active' => true]);
+        $nationalRubric->questions()->create(['text' => 'Criterio nacional'])->options()->create(['text' => 'Cumple', 'score' => 5]);
+
         $this->post($url, ['evaluator_ids' => [$other->id, $sameCampus->id]])->assertSessionHasErrors('evaluator_ids');
         $this->assertDatabaseCount('national_evaluations', 0);
         $this->post($url, ['evaluator_ids' => [$other->id]])->assertSessionHasNoErrors();
-        $this->assertDatabaseHas('national_evaluations', ['national_review_id' => $review->id, 'evaluator_id' => $other->id]);
+        $this->assertDatabaseHas('national_evaluations', ['national_review_id' => $review->id, 'evaluator_id' => $other->id, 'rubric_id' => $nationalRubric->id]);
     }
 
     public function test_national_dashboards_show_only_own_assignments_statistics_and_pending_work(): void
@@ -94,7 +100,7 @@ class NationalStageTest extends TestCase
         $announcement = Announcement::create(['name' => 'Test']);
         $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
         $review = \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $national->id, 'assigned_by' => $national->id, 'status' => 'pending']);
-        $rubric = \App\Models\Rubric::create(['title' => 'Rúbrica nacional', 'is_active' => true]);
+        $rubric = Rubric::create(['title' => 'Rúbrica nacional', 'stage' => Rubric::NATIONAL, 'is_active' => true]);
         $question = $rubric->questions()->create(['text' => 'Criterio']);
         $option = $question->options()->create(['text' => 'Cumple', 'score' => 10]);
         $this->openNationalEvaluation($announcement);
@@ -108,7 +114,10 @@ class NationalStageTest extends TestCase
         $submit = route('national-evaluations.submit', $evaluation->id);
         $this->actingAs($outsider)->get(route('national-evaluations.show', $evaluation->id))->assertNotFound();
         $this->post($submit, ['answers' => [$question->id => $option->id]])->assertNotFound();
-        $this->actingAs($evaluator)->get(route('national-evaluations.show', $evaluation->id))->assertOk();
+        $this->actingAs($evaluator)->get(route('national-evaluations.show', $evaluation->id))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('NationalEvaluation/Show')
+                ->where('rubric.stage', Rubric::NATIONAL)
+                ->where('rubric.questions.0.id', $question->id));
         $this->travel(1)->days();
         $this->post($submit, ['answers' => [$question->id => $option->id]])->assertSessionHasErrors('answers');
         $this->assertSame('pending', $evaluation->fresh()->status);
@@ -116,6 +125,12 @@ class NationalStageTest extends TestCase
         $this->post($submit, ['answers' => [$question->id => 999999]])->assertSessionHasErrors('answers');
         $this->post($submit, ['answers' => [$question->id => $option->id], 'score' => 99999])->assertSessionHasNoErrors();
         $this->assertEquals(10, $evaluation->fresh()->score);
+        $rubric->delete();
+
+        $this->get(route('national-evaluations.show', $evaluation->id))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('NationalEvaluation/Show')
+                ->where('rubric.id', $rubric->id)
+                ->where('rubric.questions.0.options.0.id', $option->id));
         $this->get(route('national-evaluations.index', ['status' => 'completed', 'rows' => 5]))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('NationalEvaluation/Index')
                 ->where('stats.completed', 1)->where('stats.pending', 0)->where('stats.total', 1)
@@ -126,7 +141,22 @@ class NationalStageTest extends TestCase
         $this->get(route('national-evaluations.index', ['status' => 'pending']))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('applications.total', 0));
         $this->post($submit, ['answers' => [$question->id => $option->id]])->assertStatus(409);
-        $this->actingAs($national)->post(route('national-review.verdict', $review->id), ['status' => 'rejected'])->assertSessionHasErrors('comment');
+        $option->delete();
+        $question->delete();
+        $responsesUrl = route('national-review.responses', [$review->id, $evaluation->id]);
+        $this->actingAs($national)->get($responsesUrl)->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('NationalReview/Responses')
+                ->where('evaluation.evaluator', $evaluator->name)
+                ->where('review.teacher', $teacher->name)
+                ->has('responses', 1)
+                ->where('responses.0.question', 'Criterio')
+                ->where('responses.0.answer', 'Cumple')
+                ->where('responses.0.score', 10));
+        $otherAdmin = User::factory()->create();
+        $otherAdmin->assignRole('Admin Nacional');
+        $this->actingAs($otherAdmin)->get($responsesUrl)->assertNotFound();
+        $this->actingAs($national);
+        $this->post(route('national-review.verdict', $review->id), ['status' => 'rejected'])->assertSessionHasErrors('comment');
         $this->post(route('national-review.verdict', $review->id), ['status' => 'rejected', 'comment' => 'No cumple el segundo filtro.'])->assertSessionHasNoErrors();
         $this->assertSame('rejected', $review->fresh()->status);
         $this->assertSame('approved', $application->fresh()->status);

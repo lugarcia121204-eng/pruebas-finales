@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\App;
 use App\Http\Controllers\CurpController;
 
 // API para buscar CURP (usado por Register.vue)
-Route::post('/buscar-curp', [CurpController::class , 'search']);
+Route::post('/buscar-curp', [CurpController::class , 'search'])->middleware('throttle:30,1');
 
 // Ruta de prueba: obtener el código de verificación por email (solo local/testing)
 Route::post('/testing/verification-code', function (Request $request) {
-	if (!App::environment(['local', 'testing'])) {
+	if (!App::environment('testing')) {
 		return response()->json(['message' => 'Not allowed'], 403);
 	}
 

@@ -47,9 +47,6 @@ onUnmounted(clearPreview);
 const formatDate = (value) => value ? new Date(value).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Mexico_City' }) : 'No registrada';
 const assignment = useForm({ evaluator_ids: [] });
 const closing = ref(false);
-const selectedEvaluation = ref(null);
-const responsesOpen = ref(false);
-const showResponses = (evaluation) => { selectedEvaluation.value = evaluation; responsesOpen.value = true; };
 const decision = useForm({ status: '', comment: '' });
 const finishReview = () => decision.post(route('national-review.verdict', props.review.id), {
     preserveScroll: true,
@@ -113,7 +110,7 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                     <div class="flex justify-end"><button type="button" @click="previewOpen = false" class="rounded-lg border border-gray-300 px-5 py-2 font-medium">Cerrar</button></div>
                 </DialogContent>
             </Dialog>
-            <div class="rounded-lg border bg-white p-6 space-y-4">
+            <div v-if="review.status === 'pending'" class="rounded-lg border bg-white p-6 space-y-4">
                 <h2 class="text-lg font-semibold">Evaluaciones nacionales</h2>
                 <p v-if="review.status === 'pending' && !evaluationPeriodOpen" class="text-sm text-amber-800">La convocatoria está fuera del periodo de evaluación nacional.</p>
                 <form v-if="review.status === 'pending' && evaluationPeriodOpen" @submit.prevent="assign" class="space-y-3">
@@ -141,32 +138,31 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                                     <span class="inline-flex items-center gap-1.5 rounded-md border border-gray-100 bg-white px-2.5 py-1 text-xs font-bold shadow-sm" :class="evaluation.status === 'completed' ? 'text-green-700' : 'text-yellow-700'"><span class="h-2 w-2 rounded-full" :class="evaluation.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'"></span>{{ evaluation.status === 'completed' ? 'Completada' : 'Pendiente' }}</span>
                                     <p v-if="evaluation.status === 'completed'" class="mt-1 text-xs text-gray-500">Puntaje: {{ evaluation.score }}</p>
                                 </td>
-                                <td class="px-6 py-4 text-center"><button type="button" @click="showResponses(evaluation)" :disabled="evaluation.status !== 'completed'" class="inline-flex items-center gap-2 rounded-lg border border-[var(--institutional-primary)] px-3 py-2 text-xs font-bold text-[var(--institutional-primary)] shadow-sm hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"><Eye class="h-4 w-4" aria-hidden="true" />Respuestas</button></td>
+                                <td class="px-6 py-4 text-center">
+                                    <Link v-if="evaluation.status === 'completed'" :href="route('national-review.responses', [review.id, evaluation.id])" class="inline-flex items-center gap-2 rounded-lg border border-[var(--institutional-primary)] px-3 py-2 text-xs font-bold text-[var(--institutional-primary)] shadow-sm hover:bg-blue-50">
+                                        <Eye class="h-4 w-4" aria-hidden="true" />Respuestas
+                                    </Link>
+                                    <button v-else type="button" disabled class="inline-flex items-center gap-2 rounded-lg border border-[var(--institutional-primary)] px-3 py-2 text-xs font-bold text-[var(--institutional-primary)] shadow-sm cursor-not-allowed opacity-40">
+                                        <Eye class="h-4 w-4" aria-hidden="true" />Respuestas
+                                    </button>
+                                </td>
                             </tr>
                             <tr v-if="!review.evaluations.length"><td colspan="5" class="px-6 py-8 text-center text-gray-500">A?n no se han asignado evaluadores para el segundo filtro.</td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
+            <div v-if="review.status === 'approved'" class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center">
+                <p class="font-medium text-gray-600">
+                    Esta solicitud ya ha sido completada con estado: <strong class="font-bold text-green-600">Aprobado en Etapa Nacional</strong>
+                </p>
+            </div>
             <div class="space-y-4">
                 <div v-if="evaluationPeriodOpen && review.status === 'pending' && review.evaluations.length && review.evaluations.every(evaluation => evaluation.status === 'completed')" class="border-t border-gray-200 pt-4 flex flex-wrap items-center justify-between gap-4">
                     <p class="text-sm text-gray-600">Todas las evaluaciones están completas. Puedes finalizar la revisión nacional.</p>
                     <button type="button" @click="closing = true" class="rounded-lg bg-[var(--institutional-primary)] px-5 py-2.5 font-medium text-white">Finalizar revisión</button>
                 </div>
             </div>
-            <Dialog v-model:open="responsesOpen">
-                <DialogContent class="sm:max-w-2xl max-h-[85dvh] overflow-y-auto">
-                    <DialogTitle>Respuestas de la evaluaci?n nacional</DialogTitle>
-                    <DialogDescription>{{ selectedEvaluation?.evaluator }} ? Puntaje: {{ selectedEvaluation?.score }}</DialogDescription>
-                    <div v-for="response in selectedEvaluation?.responses || []" :key="response.id" class="rounded-lg border border-gray-200 p-4 space-y-2">
-                        <h3 class="font-semibold text-gray-900">{{ response.question }}</h3>
-                        <p class="text-gray-700">{{ response.answer || 'Respuesta no disponible' }}<span v-if="response.answer"> ({{ response.score }} puntos)</span></p>
-                    </div>
-                    <p v-if="!selectedEvaluation?.responses?.length" class="text-gray-500">No hay respuestas disponibles.</p>
-                    <div><h3 class="font-semibold">Observaciones</h3><p class="mt-1 whitespace-pre-line break-words text-gray-600">{{ selectedEvaluation?.comment || 'Sin comentarios' }}</p></div>
-                    <div class="flex justify-end"><button type="button" @click="responsesOpen = false" class="rounded-lg border border-gray-300 px-4 py-2">Cerrar</button></div>
-                </DialogContent>
-            </Dialog>
             <Dialog v-model:open="closing">
                 <DialogContent>
                     <DialogTitle>Finalizar revisión nacional</DialogTitle>

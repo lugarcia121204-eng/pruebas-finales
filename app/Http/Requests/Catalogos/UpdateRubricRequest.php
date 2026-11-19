@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Catalogos;
 
+use App\Models\Rubric;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateRubricRequest extends FormRequest
 {
@@ -23,6 +25,7 @@ class UpdateRubricRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'stage' => ['sometimes', 'required', Rule::in(Rubric::STAGES)],
             'is_active' => ['boolean'],
             'questions' => ['nullable', 'array'],
             'questions.*.id' => ['nullable', 'integer', 'exists:rubric_questions,id'],
@@ -30,7 +33,7 @@ class UpdateRubricRequest extends FormRequest
             'questions.*.options' => ['nullable', 'array'],
             'questions.*.options.*.id' => ['nullable', 'integer', 'exists:rubric_question_options,id'],
             'questions.*.options.*.text' => ['required', 'string'],
-            'questions.*.options.*.score' => ['required', 'integer', 'min:1', 'max:5'],
+            'questions.*.options.*.score' => ['required', 'integer', $this->input('stage', $this->route('rubric')?->stage) === Rubric::NATIONAL ? 'min:0' : 'min:1', 'max:5'],
         ];
     }
 }

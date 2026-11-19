@@ -80,12 +80,12 @@ Route::get('/api/sub-areas/{priority_area_id}', [SubAreaController::class, 'getB
 // Custom Register Routes (override Fortify)
 Route::get('/register', [RegisterController::class, 'create'])->name('register');
 Route::get('/register/evaluator', [RegisterController::class, 'createEvaluador'])->name('register.evaluator'); // evaluator
-Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:6,1')->name('register.store');
 
 // Email Verification Routes
 Route::get('/email/verify', [HomeController::class, 'verifyEmailNotice'])->name('verification.notice');
 
-Route::post('/email/verify/code', [CurpController::class, 'verifyCode'])->name('verification.verify.code');
+Route::post('/email/verify/code', [CurpController::class, 'verifyCode'])->middleware('throttle:6,1')->name('verification.verify.code');
 Route::post('/email/verify/resend', [CurpController::class, 'resendCode'])->name('verification.resend');
 
 
@@ -110,6 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/recognitions/{id}/active', [\App\Http\Controllers\NationalRecognitionController::class, 'toggle'])->name('recognitions.toggle');
         Route::get('/recognitions/{id}/download', [\App\Http\Controllers\NationalRecognitionController::class, 'download'])->name('recognitions.download');
         Route::get('/{id}', [\App\Http\Controllers\NationalReviewController::class, 'show'])->name('show');
+        Route::get('/{id}/evaluations/{evaluation}/responses', [\App\Http\Controllers\NationalReviewController::class, 'responses'])->name('responses');
         Route::post('/{id}/evaluators', [\App\Http\Controllers\NationalReviewController::class, 'assignEvaluators'])->name('assign-evaluators');
         Route::post('/{id}/verdict', [\App\Http\Controllers\NationalReviewController::class, 'verdict'])->name('verdict');
         Route::get('/{id}/documents/{document}', [\App\Http\Controllers\NationalReviewController::class, 'document'])->name('document');
@@ -151,6 +152,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('dashboard', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
             Route::get('national-stage', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'index'])->name('national-stage.index');
             Route::post('national-stage/{id}/assign', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'assign'])->name('national-stage.assign');
+            Route::post('national-stage/assign-many', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'assignMany'])->name('national-stage.assign-many');
             Route::get('dashboard/export', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'export'])->name('dashboard.export');
             Route::get('control-applications', [\App\Http\Controllers\SuperAdmin\RequestControlController::class, 'index'])->name('control-applications'); // control-solicitudes
             Route::get('control-applications/export', [\App\Http\Controllers\SuperAdmin\RequestControlController::class, 'export'])->name('control-applications.export');

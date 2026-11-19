@@ -21,7 +21,7 @@ class StoreAnnouncementRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:500'],
             'status' => ['sometimes', 'in:activa,cerrada,pendiente'],
             'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:30720'],
-            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:4096'],
 
             'publication_start' => ['required', 'date', 'after_or_equal:today'],
             'registration_start' => ['required', 'date', 'after_or_equal:publication_start'],
@@ -60,7 +60,7 @@ class StoreAnnouncementRequest extends FormRequest
             'file.max' => 'El archivo no puede exceder 30MB.',
             'image.image' => 'El archivo debe ser una imagen.',
             'image.mimes' => 'La imagen debe ser de tipo: JPEG, PNG, JPG o GIF.',
-            'image.max' => 'La imagen no puede exceder 2MB.',
+            'image.max' => 'La imagen no puede exceder 4 MB.',
 
             'publication_start.required' => 'La fecha de inicio de publicación es obligatoria.',
             'publication_start.date' => 'La fecha de inicio de publicación debe ser una fecha válida.',

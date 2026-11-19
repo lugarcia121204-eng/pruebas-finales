@@ -4,13 +4,22 @@
  */
 
 // Ziggy route helper
-declare function route(name?: string, params?: any, absolute?: boolean): string;
+declare global {
+    const route: typeof import('ziggy-js').route;
+}
+
+declare module 'vue' {
+    interface ComponentCustomProperties {
+        route: typeof import('ziggy-js').route;
+    }
+}
 
 // Inertia types
-declare module '@inertiajs/vue3' {
+declare module '@inertiajs/core' {
     export interface PageProps {
+        sidebarOpen: boolean;
         auth: {
-            user: User;
+            user: User | null;
             layoutName: string;
             role: string;
             permissions: Record<string, boolean>;
@@ -32,7 +41,8 @@ interface User {
     id: number;
     name: string;
     email: string;
-    email_verified_at?: string;
+    email_verified_at?: string | null;
+    avatar?: string;
     curp?: string;
     institution_id?: number;
     priority_area_id?: number;
@@ -227,4 +237,25 @@ interface PaginationLink {
     active: boolean;
 }
 
-export {};
+export interface BreadcrumbItem {
+    title: string;
+    href: string;
+}
+
+export interface NavItem {
+    title: string;
+    href: NonNullable<import('@inertiajs/vue3').InertiaLinkProps['href']>;
+    icon?: import('vue').Component;
+}
+
+export interface ReportFilters {
+    date_from?: string | null;
+    date_to?: string | null;
+    priority_area_id?: number | string | null;
+    sub_area_id?: number | string | null;
+    status?: string | null;
+}
+
+export { User, Institution, State, PriorityArea, SubArea, Role, Permission,
+    Announcement, Calendar, Application, Evaluation, Document, CatalogDocument,
+    Rubric, RubricQuestion, RubricQuestionOption, Recognition, Module, Pagination, PaginationLink };

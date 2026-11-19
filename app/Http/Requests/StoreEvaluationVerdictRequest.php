@@ -23,8 +23,9 @@ class StoreEvaluationVerdictRequest extends FormRequest
     {
         return [
             'status' => 'required|in:approved,rejected',
-            'score' => 'required|numeric|min:0',
+            'score' => 'sometimes|numeric|min:0',
             'answers' => 'required|array',
+            'answers.*.option_id' => 'required|integer',
             'comment' => 'required_if:status,rejected|nullable|string|max:1000',
         ];
     }
@@ -52,7 +53,7 @@ class StoreEvaluationVerdictRequest extends FormRequest
                 $evaluation = \App\Models\Evaluation::with('application.announcement.calendar')->find($evaluationId);
                 
                 if ($evaluation && $evaluation->application && $evaluation->application->announcement) {
-                    if ($evaluation->application->announcement->current_stage !== 'evaluacion') {
+                    if (!$evaluation->application->announcement->calendar?->localEvaluationIsOpen()) {
                         $validator->errors()->add('status', 'Solo se pueden emitir evaluaciones durante la etapa estricta de Evaluación de la convocatoria.');
                     }
                 }

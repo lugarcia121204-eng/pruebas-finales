@@ -44,6 +44,11 @@ class Evaluation extends Model
         return $this->belongsTo(Application::class);
     }
 
+    public function scopeWithAvailableApplication($query)
+    {
+        return $query->whereHas('application.announcement');
+    }
+
     public function evaluator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'evaluator_id');

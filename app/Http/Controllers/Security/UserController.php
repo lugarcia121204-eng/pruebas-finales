@@ -59,8 +59,9 @@ class UserController extends SecurityController
             ->when($filters->withTrashed, fn($q) => $q->withTrashed());
 
         // Ordenamiento dinámico
-        $sortField = $filters->sort_field ?: 'id';
-        $sortDirection = $filters->sort_direction ?: 'desc';
+        $allowedFields = ['id', 'name', 'email', 'curp', 'created_at', 'updated_at'];
+        $sortField = in_array($filters->sort_field, $allowedFields, true) ? $filters->sort_field : 'id';
+        $sortDirection = in_array($filters->sort_direction, ['asc', 'desc'], true) ? $filters->sort_direction : 'desc';
 
         $users = $query->orderBy($sortField, $sortDirection)
             ->paginate($filters->rows)

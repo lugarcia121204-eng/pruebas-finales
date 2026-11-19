@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             CatalogDocumentSeeder::class,
             //AnnouncementSeeder::class,
             PositionTypeSeeder::class,
+            NationalRubricSeeder::class,
             \Database\Seeders\TemplateSeeder::class,
             UserSeeder::class,
         ]);

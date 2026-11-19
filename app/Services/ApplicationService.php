@@ -17,6 +17,13 @@ class ApplicationService
      */
     public function checkApplicationEligibility(int $userId, int $announcementId): ?string
     {
+        $announcement = Announcement::with('calendar')->find($announcementId);
+        $calendar = $announcement?->calendar;
+        if (!$announcement || $announcement->status !== 'activa' || !$calendar?->registration_start
+            || !$calendar->registration_end || !today()->betweenIncluded($calendar->registration_start, $calendar->registration_end)) {
+            return 'La convocatoria está fuera del periodo de registro.';
+        }
+
         // 1. Validar si ya aplicó a esta misma convocatoria
         $alreadyApplied = Application::where('user_id', $userId)
             ->where('announcement_id', $announcementId)
@@ -28,7 +35,7 @@ class ApplicationService
 
         // 2. Validar si tiene una solicitud "pending" global de cualquier otra
         $hasPending = Application::where('user_id', $userId)
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'in_review'])
             ->exists();
 
         if ($hasPending) {

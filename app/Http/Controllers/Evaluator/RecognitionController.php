@@ -29,10 +29,8 @@ class RecognitionController extends Controller
             ->where('user_id', $user->id)
             ->where('type', 'evaluator')
             ->where('active', true)
-            ->when($search, function ($query, $search) {
-                $query->whereHas('announcement', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
+            ->whereHas('announcement', function ($query) use ($search) {
+                $query->when($search, fn ($announcement, $term) => $announcement->where('name', 'like', "%{$term}%"));
             })
             ->orderBy('sent_at', 'desc')
             ->paginate($rows)
@@ -59,6 +57,7 @@ class RecognitionController extends Controller
         $user = Auth::user();
         
         $recognition = Recognition::with('announcement')
+            ->whereHas('announcement')
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->where('type', 'evaluator')

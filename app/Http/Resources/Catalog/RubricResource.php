@@ -17,6 +17,7 @@ class RubricResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'stage' => $this->stage,
             'is_active' => (bool) $this->is_active,
             'questions' => RubricQuestionResource::collection($this->whenLoaded('questions')),
             'created_at' => $this->created_at->toDateTimeString(),

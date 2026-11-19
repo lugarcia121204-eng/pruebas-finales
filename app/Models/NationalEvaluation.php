@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NationalEvaluation extends Model
 {
@@ -10,5 +11,9 @@ class NationalEvaluation extends Model
     protected $casts = ['answers' => 'array', 'score' => 'decimal:2'];
     public function review() { return $this->belongsTo(NationalReview::class, 'national_review_id'); }
     public function evaluator() { return $this->belongsTo(User::class, 'evaluator_id'); }
-    public function rubric() { return $this->belongsTo(Rubric::class); }
+
+    public function rubric(): BelongsTo
+    {
+        return $this->belongsTo(Rubric::class)->withTrashed();
+    }
 }

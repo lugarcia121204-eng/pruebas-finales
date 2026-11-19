@@ -109,10 +109,14 @@ class TeacherController extends Controller
                 }
             ])
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
 
         return Inertia::render('Teacher/Announcements/Index', [
             'announcements' => \App\Http\Resources\Catalog\AnnouncementResource::collection($announcements),
+            'closedAnnouncements' => fn () => \App\Http\Resources\Catalog\AnnouncementResource::collection(
+                \App\Models\Announcement::cerrada()->get()
+            ),
             'has_active_application' => \App\Models\Application::forCurrentUser()
                 ->pending()
                 ->exists(),
@@ -121,7 +125,7 @@ class TeacherController extends Controller
 
     public function previewAnnouncement($id): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        $announcement = \App\Models\Announcement::activa()->findOrFail($id);
+        $announcement = \App\Models\Announcement::whereIn('status', ['activa', 'cerrada'])->findOrFail($id);
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
         $path = $announcement->file_path;
 
@@ -180,17 +184,26 @@ class TeacherController extends Controller
     public function storeApplication(\App\Http\Requests\StoreApplicationRequest $request)
     {
         try {
-            $this->applicationService->createApplication(
-                auth()->id(),
-                $request->announcement_id,
-                $request->position_type_id,
-                $request->file('files'),
-                $request->file_types,
-                $request->reused_documents,
-                $request->via
-            );
+            \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+                \App\Models\User::whereKey(auth()->id())->lockForUpdate()->firstOrFail();
+                $error = $this->applicationService->checkApplicationEligibility(auth()->id(), $request->announcement_id);
+                if ($error) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['announcement_id' => $error]);
+                }
+                $this->applicationService->createApplication(
+                    auth()->id(),
+                    $request->announcement_id,
+                    $request->position_type_id,
+                    $request->file('files'),
+                    $request->file_types,
+                    $request->reused_documents,
+                    $request->via
+                );
+            });
 
             return redirect()->route('teacher.dashboard')->with('success', 'Solicitud enviada correctamente.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return back()->withErrors(['files' => $e->getMessage()]);
         }

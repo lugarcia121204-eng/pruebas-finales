@@ -24,7 +24,16 @@ class NationalStageController extends Controller
 
         $applications = Application::approved()
             ->with(['user.institution', 'announcement', 'nationalReview.administrator'])
-            ->buscarGlobal($filters['search'] ?? null)
+            ->when($filters['search'] ?? null, function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('applications.id', 'LIKE', "%{$search}%")
+                        ->orWhereHas('user', function ($user) use ($search) {
+                            $user->where('name', 'LIKE', "%{$search}%")
+                                ->orWhereHas('institution', fn ($institution) =>
+                                    $institution->where('name', 'LIKE', "%{$search}%"));
+                        });
+                });
+            })
             ->when($filters['institution_id'] ?? null, fn ($query, $id) =>
                 $query->whereHas('user', fn ($user) => $user->where('institution_id', $id)))
             ->orderByDesc('updated_at')->orderByDesc('id')
@@ -68,5 +77,62 @@ class NationalStageController extends Controller
             $review->fill(['administrator_id' => $administrator->id, 'assigned_by' => $request->user()->id, 'status' => 'pending'])->save();
         });
         return back()->with('success', 'Solicitud asignada a Admin Nacional para su segunda revisión.');
+    }
+
+    public function assignMany(Request $request)
+    {
+        $data = $request->validate([
+            'administrator_id' => ['required', 'integer', 'exists:users,id'],
+            'application_ids' => ['required', 'array', 'min:1', 'max:500'],
+            'application_ids.*' => ['required', 'integer', 'distinct', 'exists:applications,id'],
+        ]);
+
+        $administrator = User::role('Admin Nacional')->find($data['administrator_id']);
+        if (!$administrator) {
+            throw ValidationException::withMessages([
+                'administrator_id' => 'Selecciona un administrador nacional válido.',
+            ]);
+        }
+
+        DB::transaction(function () use ($request, $data, $administrator) {
+            $applications = Application::approved()
+                ->whereIn('id', $data['application_ids'])
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            if ($applications->count() !== count($data['application_ids'])) {
+                throw ValidationException::withMessages([
+                    'application_ids' => 'Una o más solicitudes ya no están aprobadas para la etapa nacional.',
+                ]);
+            }
+
+            if ($applications->contains('user_id', $administrator->id)) {
+                throw ValidationException::withMessages([
+                    'administrator_id' => 'El administrador nacional seleccionado no puede ser el solicitante.',
+                ]);
+            }
+
+            $assignedIds = NationalReview::whereIn('application_id', $data['application_ids'])
+                ->lockForUpdate()
+                ->pluck('application_id');
+
+            if ($assignedIds->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'application_ids' => 'Una o más solicitudes ya tienen una revisión nacional asignada. Actualiza la lista antes de continuar.',
+                ]);
+            }
+
+            foreach ($applications as $application) {
+                NationalReview::create([
+                    'application_id' => $application->id,
+                    'administrator_id' => $administrator->id,
+                    'assigned_by' => $request->user()->id,
+                    'status' => 'pending',
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Las solicitudes seleccionadas se asignaron al administrador nacional.');
     }
 }

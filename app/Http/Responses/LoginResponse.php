@@ -49,7 +49,7 @@ class LoginResponse implements LoginResponseContract
                     $message = 'Por favor verifica tu correo electrónico. Te hemos enviado un código de verificación.';
                 } catch (\Exception $e) {
                     Log::error('❌ Error al enviar correo de verificación en login: ' . $e->getMessage());
-                    $message = 'Por favor verifica tu correo electrónico. Revisa tu bandeja de entrada.';
+                    $message = 'No se pudo enviar el código de verificación. Usa la opción de reenviar código para intentarlo de nuevo.';
                 }
             } else {
                 Log::info('📧 Ya existe código válido para: ' . $user->email);

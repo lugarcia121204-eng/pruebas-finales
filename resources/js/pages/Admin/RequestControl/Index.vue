@@ -3,16 +3,30 @@ import ApplicationReportFilters from '@/components/ApplicationReportFilters.vue'
 import DynamicLayout from '@/layouts/DynamicLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
-const props = defineProps({
-    institutions: Object,
-    states: Array,
-    filters: Object,
-    priorityAreas: Array,
-    subAreas: Array,
+import { route } from 'ziggy-js';
+import type { State, PriorityArea, SubArea, ReportFilters, PaginationLink } from '@/types';
+interface InstitutionSummary {
+    id: number;
+    name: string;
+    approved_count: number;
+    rejected_count: number;
+    filtered_applications_count: number;
+}
+const props = withDefaults(defineProps<{
+    institutions: { data: InstitutionSummary[]; links: PaginationLink[]; meta?: { links?: PaginationLink[] } };
+    states?: State[];
+    filters?: ReportFilters & { search?: string; state?: string };
+    priorityAreas?: PriorityArea[];
+    subAreas?: SubArea[];
+}>(), {
+    states: () => [],
+    filters: () => ({}),
+    priorityAreas: () => [],
+    subAreas: () => [],
 });
 const search = ref(props.filters?.search || '');
 const state = ref(props.filters?.state || '');
-const reportFilters = ref({
+const reportFilters = ref<ReportFilters>({
     date_from: props.filters?.date_from,
     date_to: props.filters?.date_to,
     priority_area_id: props.filters?.priority_area_id,
@@ -39,7 +53,7 @@ const cleanFilters = () => {
 const exportData = () => {
     const params = new URLSearchParams();
     Object.entries(getFilters()).forEach(([key, value]) => {
-        if (value) params.append(key, value);
+        if (value) params.append(key, String(value));
     });
     window.location.href =
         route('applications.control.export') + '?' + params.toString();

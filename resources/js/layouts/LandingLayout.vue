@@ -104,11 +104,13 @@ onBeforeUnmount(() => {
 .brand-logo { height:48px; width:34px; object-fit:contain; flex-shrink:0; }
 .brand-copy { border-left:1px solid #ffffff40; padding-left:16px; }
 .brand-title { font-size:18px; font-weight:700; line-height:1.3; white-space:nowrap; }
-.brand-title span,.institution-name { color:var(--institutional-gold); }
+.brand-title span { color:#fff; }
+.institution-name { color:var(--institutional-gold); }
 .brand-subtitle { font-size:12px; margin-top:2px; white-space:nowrap; }
 .desktop-navigation { display:flex; align-items:center; gap:32px; margin-left:auto; }
-.desktop-navigation a { font-weight:650; font-size:14px; white-space:nowrap; }
-.desktop-navigation a:hover { color:var(--institutional-gold); }
+.desktop-navigation a { position:relative; z-index:0; font-weight:650; font-size:14px; white-space:nowrap; }
+.desktop-navigation a::before { content:""; position:absolute; z-index:-1; inset:-10px -12px; border-radius:8px; background:#ffffff20; opacity:0; transition:opacity .2s ease; }
+.desktop-navigation a:hover::before { opacity:1; }
 .header-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .login-button,.register-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:7px 12px; border-radius:8px; font-size:14px; font-weight:700; white-space:nowrap; }
 .login-button { background:#ffffff18; border:1px solid #ffffff80; }

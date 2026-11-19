@@ -6,17 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import LandingLayout from '@/layouts/LandingLayout.vue';
 import { store } from '@/routes/password/confirm';
-import { Form, Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { alertaExito, alertaError, alertaCargando, cerrarAlerta } from '@/utils/alerts.js';
 
 const form = useForm({
     password: '',
 });
 
-const clearError = (field: string) => {
-    if (form.errors[field]) {
-        delete form.errors[field];
-    }
+const clearError = (field: 'password') => {
+    form.clearErrors(field);
 };
 
 const submit = () => {
@@ -31,7 +29,7 @@ const submit = () => {
     
     alertaCargando('Confirmando contraseña', 'Por favor espera...');
     
-    form.post(route('password.confirm'), {
+    form.post(store.url(), {
         onSuccess: () => {
             cerrarAlerta();
             alertaExito('¡Confirmado!', 'Contraseña confirmada correctamente');

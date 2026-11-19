@@ -172,10 +172,10 @@ class ApplicationController extends Controller
             ->findOrFail($evaluation_id);
 
         // Fetch active rubric — fallback to most recent if none is marked active
-        $rubric = \App\Models\Rubric::with(['questions.options'])
+        $rubric = \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->with(['questions.options'])
             ->where('is_active', true)
             ->first()
-            ?? \App\Models\Rubric::with(['questions.options'])
+            ?? \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->with(['questions.options'])
                 ->latest()
                 ->first();
 

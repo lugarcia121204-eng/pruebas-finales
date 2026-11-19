@@ -108,8 +108,8 @@ const sortBy = (field) => {
 
 const deleteAnnouncement = async (id) => {
     const confirmed = await alertaPregunta(
-        '¿Eliminar convocatoria?',
-        'Esta acción no se puede deshacer'
+        '¿Estás seguro de eliminar esta convocatoria?',
+        'Esta acción no se puede deshacer.'
     );
     if (confirmed) {
         router.delete(route(`${props.routeName}destroy`, { announcement: id }), {

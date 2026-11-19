@@ -20,6 +20,8 @@ class EvaluatorController extends Controller
         $rows = $request->input('rows', 10);
         $sortField = $request->input('sort_field', 'created_at');
         $sortDirection = $request->input('sort_direction', 'desc');
+        $sortField = in_array($sortField, ['id', 'name', 'email', 'curp', 'created_at', 'updated_at'], true) ? $sortField : 'created_at';
+        $sortDirection = in_array($sortDirection, ['asc', 'desc'], true) ? $sortDirection : 'desc';
 
         // Get Evaluador role
         $evaluadorRole = Role::where('name', 'Evaluador')->first();

@@ -21,6 +21,8 @@ class SingleEvaluatorFlowTest extends TestCase {
   $announcement=Announcement::create(['name'=>'Prueba']);
   Calendar::create(['announcement_id'=>$announcement->id,'publication_start'=>now()->subDays(5),'registration_start'=>now()->subDays(4),'registration_end'=>now()->subDays(2),'evaluation_start'=>now()->subDay(),'evaluation_end'=>now()->addDays(3),'results_start'=>now()->addDays(4),'results_end'=>now()->addDays(5)]);
   $application=Application::create(['user_id'=>$teacher->id,'announcement_id'=>$announcement->id]);
+  $rubric=\App\Models\Rubric::firstOrCreate(['stage'=>'local','is_active'=>true],['title'=>'Rúbrica local']);
+  if (!$rubric->questions()->exists()) $rubric->questions()->create(['text'=>'Criterio'])->options()->create(['text'=>'Cumple','score'=>10]);
   app(AssignmentService::class)->assignEvaluators($application->id,[$evaluator->id]);
   return [$evaluator,$admin,$application,Evaluation::where('application_id',$application->id)->firstOrFail()];
  }

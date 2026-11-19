@@ -221,7 +221,7 @@ export const menuConfigs = {
             { label: "Respaldos", route: "superadmin.backup.index", iconName: "Database", icon: mdiDatabase, permission: "backup.index" },
         ] },
         { label: "Seguridad", icon: mdiSecurity, iconName: "Shield", adminGroup: true, items: [
-            { label: "Usuarios", route: "admin.evaluators.index", iconName: "Users", icon: mdiAccount, permission: "users.index" },
+            { label: "Evaluadores", route: "admin.evaluators.index", iconName: "Users", icon: mdiAccount, permission: "users.index" },
         ] },
     ],
     teacher: [

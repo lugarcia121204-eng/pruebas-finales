@@ -42,115 +42,72 @@ class RegisterController extends Controller
      */
     public function store(RegisterUserRequest $request)
     {
-        Log::info('📝 RegisterController::store - Inicio del registro');
-
-        $validated = $request->validated();
-        $protectedEmails = ['admin@gmail.com', 'superadmin@gmail.com'];
-        $requestEmail = strtolower(trim((string) $request->email));
-
-        if (in_array($requestEmail, $protectedEmails, true)) {
-            throw ValidationException::withMessages([
-                'email' => ['Este correo esta reservado para la administracion del sistema y no puede usarse en registro publico.'],
-            ]);
-        }
-
-        // Generar código de verificación de 6 dígitos
+        $data = $request->validated();
+        $targetRole = ($data['role_type'] ?? 'docente') === 'evaluador' ? 'Evaluador' : 'Docente';
         $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
+        try {
+            $user = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $targetRole, $verificationCode) {
+                $matches = User::where('email', $data['email'])->orWhere('curp', $data['curp'])
+                    ->lockForUpdate()->get();
+                $user = $matches->first();
 
-        // Verificar si el usuario ya existe por email o CURP
-        $user = User::where('email', $request->email)
-            ->orWhere('curp', strtoupper($request->curp))
-            ->first();
+                if ($user) {
+                    if ($matches->count() !== 1 || strtolower(trim($user->email)) !== $data['email'] || strtoupper(trim($user->curp ?? '')) !== $data['curp']
+                        || $user->roles()->whereNotIn('name', ['Docente', 'Evaluador'])->exists()
+                        || !Hash::check($data['password'], $user->password)) {
+                        throw ValidationException::withMessages([
+                            'email' => 'Los datos no coinciden con una cuenta habilitada para este registro. Usa el correo, CURP y contraseña de tu cuenta.',
+                        ]);
+                    }
+                    if ($user->hasRole($targetRole)) {
+                        throw ValidationException::withMessages([
+                            'curp' => "Ya existe una cuenta registrada como {$targetRole} con este CURP.",
+                        ]);
+                    }
+                    $requiresTwoFactor = $user->two_factor_secret
+                        && (!\Laravel\Fortify\Fortify::confirmsTwoFactorAuthentication() || $user->two_factor_confirmed_at);
+                    if ($requiresTwoFactor && (auth()->id() !== $user->id || !$user->hasVerifiedEmail())) {
+                        throw ValidationException::withMessages([
+                            'email' => 'Inicia sesión con tu verificación de dos factores antes de agregar otro rol.',
+                        ]);
+                    }
+                } else {
+                    $user = User::create([
+                        'curp' => $data['curp'],
+                        'name' => $data['name'],
+                        'email' => $data['email'],
+                        'password' => Hash::make($data['password']),
+                        'institution_id' => $data['institution_id'],
+                        'priority_area_id' => $data['priority_area_id'],
+                        'sub_area_id' => $data['sub_area_id'],
+                    ]);
+                }
 
-        $roleType = $request->input('role_type', 'docente');
-        $targetRole = $roleType === 'evaluador' ? 'Evaluador' : 'Docente';
+                $user->assignRole($targetRole);
+                $user->forceFill([
+                    'email_verified_at' => null,
+                    'email_verification_code' => $verificationCode,
+                    'email_verification_code_expires_at' => now()->addHours(24),
+                ])->save();
 
-        if ($user) {
-            $existingUserEmail = strtolower(trim((string) $user->email));
-
-            if (in_array($existingUserEmail, $protectedEmails, true)) {
-                throw ValidationException::withMessages([
-                    'email' => ['Esta cuenta pertenece a la administracion del sistema y no puede modificarse desde registro.'],
-                ]);
-            }
-
-            // Seguridad: impedir re-registro del mismo rol para evitar sobrescrituras no autorizadas.
-            if ($user->hasRole($targetRole)) {
-                throw ValidationException::withMessages([
-                    'curp' => ["Ya existe una cuenta registrada como {$targetRole} con este CURP."],
-                ]);
-            }
-
-            Log::info('🔄 Usuario existente encontrado: ' . $user->email . '. Intentando fusionar roles.');
-
-            // Actualizar created_at para que actúe como cuenta nueva (sin notificaciones previas)
-            $user->created_at = now();
-
-            // Actualizar datos básicos si es necesario (el nombre viene de RENAPO, así que debería ser igual)
-            $user->update([
-                'institution_id' => $request->institution_id,
-                'priority_area_id' => $request->priority_area_id,
-                'sub_area_id' => $request->sub_area_id,
-                'email_verification_code' => $verificationCode,
-                'email_verification_code_expires_at' => now()->addHours(24),
-                // Opcional: Podríamos actualizar la contraseña si queremos permitir "sobrescribirla" en este paso, 
-                // pero por seguridad es mejor mantener la existente o pedirle que use la misma.
-            ]);
-
-            // Eliminar la marca de verificación para forzar que valide el nuevo acceso
-            $user->email_verified_at = null;
-            $user->save();
-        } else {
-            // Crear el usuario si no existe
-            $user = User::create([
-                'curp' => strtoupper($request->curp),
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'institution_id' => $request->institution_id,
-                'priority_area_id' => $request->priority_area_id,
-                'sub_area_id' => $request->sub_area_id,
-                'email_verification_code' => $verificationCode,
-                'email_verification_code_expires_at' => now()->addHours(24),
-            ]);
-            Log::info('👤 Nuevo usuario creado: ' . $user->email);
+                return $user;
+            });
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $error) {
+            throw ValidationException::withMessages(['email' => 'Ya existe una cuenta con ese correo o CURP. Inicia sesión para continuar.']);
         }
 
-        // Asignar rol según el tipo de registro
-        if ($roleType === 'evaluador') {
-            if (!$user->hasRole('Evaluador')) {
-                $user->assignRole('Evaluador');
-                Log::info('👨‍🏫 Rol asignado: Evaluador');
-            } else {
-                Log::info('ℹ️ El usuario ya tenía el rol de Evaluador');
-            }
-        } else {
-            if (!$user->hasRole('Docente')) {
-                $user->assignRole('Docente');
-                Log::info('👨‍🏫 Rol asignado: Docente');
-            } else {
-                Log::info('ℹ️ El usuario ya tenía el rol de Docente');
-            }
-        }
-
-        // Enviar correo de verificación
         try {
             Mail::to($user->email)->queue(new VerificationCode($user, $verificationCode));
-            Log::info('📧 Correo enviado exitosamente a: ' . $user->email);
             $mailStatus = 'Código de verificación enviado a tu correo electrónico.';
-        } catch (\Exception $e) {
-            Log::error('❌ Error al enviar correo de verificación: ' . $e->getMessage());
-            $mailStatus = 'Registro exitoso. Revisa tu correo (puede tardar unos minutos).';
+        } catch (\Throwable $error) {
+            Log::error('No se pudo enviar el correo de verificación.', ['exception' => get_class($error)]);
+            $mailStatus = 'Tu cuenta fue creada, pero no se pudo enviar el código. Solicita reenviarlo desde esta pantalla.';
         }
 
-        Log::info('🔄 Redirigiendo a verification.notice con email: ' . $user->email);
-
-        // Iniciar sesión para mantener el contexto del usuario
         \Illuminate\Support\Facades\Auth::login($user);
+        $request->session()->regenerate();
 
-        // Redirigir a verificación
-        return redirect()->route('verification.notice')
-            ->with('status', $mailStatus);
+        return redirect()->route('verification.notice')->with('status', $mailStatus);
     }
 }

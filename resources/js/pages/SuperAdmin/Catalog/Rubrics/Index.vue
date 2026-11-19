@@ -2,9 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue';
 import Pagination from '@/Shared/Pagination.vue';
-import { ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { mdiBookOpenPageVariant, mdiClipboardTextOutline } from '@mdi/js';
-import { useCan } from '@/composables/usePermissions';
 import _ from 'lodash';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
@@ -19,16 +18,26 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    stage: {
+        type: String,
+        required: true,
+    },
+    hasActiveRubric: Boolean,
     evaluacionEnCurso: {
         type: Boolean,
         default: false,
     },
 });
 
+const stages = [
+    { value: 'local', label: 'Etapa local' },
+    { value: 'national', label: 'Etapa nacional' },
+];
+
 const search = ref(props.filters.search);
 const rows = ref(props.filters.rows || 10);
-const sortField = ref(props.filters.order || 'title');
-const sortDirection = ref(props.filters.direction || 'asc');
+const sortField = ref(props.filters.order || 'id');
+const sortDirection = ref(props.filters.direction || 'desc');
 
 const rowOptions = [
     { label: '5 Registros', value: 5 },
@@ -39,6 +48,7 @@ const rowOptions = [
 
 const onSearch = _.debounce((value) => {
     router.get(route('catalog.rubrics.index'), {
+        stage: props.stage,
         search: value,
         rows: rows.value,
         order: sortField.value,
@@ -48,6 +58,7 @@ const onSearch = _.debounce((value) => {
 
 const onRowsChange = () => {
     router.get(route('catalog.rubrics.index'), {
+        stage: props.stage,
         search: search.value,
         rows: rows.value,
         order: sortField.value,
@@ -55,16 +66,20 @@ const onRowsChange = () => {
     }, { preserveState: true, replace: true });
 };
 
+onBeforeUnmount(() => onSearch.cancel());
+
 watch(search, (value) => {
     onSearch(value);
 });
 
-const cleanFilters = () => {
+const cleanFilters = async () => {
     search.value = '';
     rows.value = 10;
-    sortField.value = 'title';
-    sortDirection.value = 'asc';
-    router.get(route('catalog.rubrics.index'), {}, { preserveState: true, replace: true });
+    sortField.value = 'id';
+    sortDirection.value = 'desc';
+    await nextTick();
+    onSearch.cancel();
+    router.get(route('catalog.rubrics.index'), { stage: props.stage }, { preserveState: true, replace: true });
 };
 
 const sortBy = (field) => {
@@ -75,6 +90,7 @@ const sortBy = (field) => {
         sortDirection.value = 'asc';
     }
     router.get(route('catalog.rubrics.index'), {
+        stage: props.stage,
         search: search.value,
         rows: rows.value,
         order: sortField.value,
@@ -83,16 +99,16 @@ const sortBy = (field) => {
 };
 
 const canToggle = (rubric) => {
-    const anyActive = props.rubrics.data.some(r => r.is_active);
+    const anyActive = props.hasActiveRubric;
     if (props.evaluacionEnCurso && anyActive) return false;
     if (rubric.is_active) return true;
     return !anyActive;
 };
 
 const toggleReasonBlocked = (rubric) => {
-    const anyActive = props.rubrics.data.some(r => r.is_active);
+    const anyActive = props.hasActiveRubric;
     if (props.evaluacionEnCurso && anyActive) return 'Hay una convocatoria en etapa de Evaluación. No se puede cambiar la rúbrica activa.';
-    if (!rubric.is_active) return 'Ya existe una rúbrica activa. Desactívala primero.';
+    if (!rubric.is_active) return 'Ya existe una rúbrica activa en esta etapa. Desactívala primero.';
     return '';
 };
 
@@ -103,10 +119,7 @@ const toggleActive = (rubric) => {
     }
     router.post(route('catalog.rubrics.toggle-active', rubric.id), {}, {
         preserveScroll: true,
-        onSuccess: () => {},
-        onError: () => {
-            alertaError('Error', 'No se pudo actualizar el estado de la rúbrica');
-        }
+        onError: (errors) => alertaError('Error', errors.error || 'No se pudo actualizar el estado de la rúbrica')
     });
 };
 
@@ -120,7 +133,7 @@ const deleteItem = async (id) => {
         router.delete(route('catalog.rubrics.destroy', id), {
             preserveScroll: true,
             onSuccess: () => alertaExito('¡Eliminado!', 'La rúbrica ha sido eliminada exitosamente'),
-            onError: () => alertaError('Error', 'No se pudo eliminar la rúbrica')
+            onError: (errors) => alertaError('Error', errors.error || 'No se pudo eliminar la rúbrica')
         });
     }
 };
@@ -149,13 +162,28 @@ const deleteItem = async (id) => {
                         <span class="text-gray-900 font-semibold">Rúbricas</span>
                     </div>
                 </div>
-                <Link :href="route('catalog.rubrics.create')" class="w-full sm:w-auto justify-center px-4 py-2.5 bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition flex items-center gap-2 font-medium cursor-pointer">
+                <Link :href="route('catalog.rubrics.create', { stage })" class="w-full sm:w-auto justify-center px-4 py-2.5 bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition flex items-center gap-2 font-medium cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                         <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/>
                     </svg>
                     Agregar
                 </Link>
             </div>
+
+            <nav aria-label="Etapas de las rúbricas" class="flex flex-wrap gap-2 border-b border-gray-200">
+                <Link
+                    v-for="item in stages"
+                    :key="item.value"
+                    :href="route('catalog.rubrics.index', { stage: item.value })"
+                    :aria-current="stage === item.value ? 'page' : undefined"
+                    class="border-b-2 px-4 py-2 font-semibold transition"
+                    :class="stage === item.value
+                        ? 'border-[var(--institutional-primary)] text-[var(--institutional-primary)]'
+                        : 'border-transparent text-gray-700 hover:bg-gray-100'"
+                >
+                    {{ item.label }}
+                </Link>
+            </nav>
 
             <!-- Filter Card -->
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
@@ -256,7 +284,7 @@ const deleteItem = async (id) => {
                                 </td>
                             </tr>
                             <tr v-if="rubrics.data.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                <td colspan="4" class="px-6 py-12 text-center text-gray-500">
                                     No se encontraron registros
                                 </td>
                             </tr>

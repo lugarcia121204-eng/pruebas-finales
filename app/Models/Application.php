@@ -124,10 +124,13 @@ class Application extends Model
 
     public function scopeOrdenado($query, $sortField = 'id', $sortDirection = 'desc')
     {
-        if (empty($sortField)) {
+        $allowedFields = ['id', 'created_at', 'updated_at', 'status', 'identifier', 'via', 'user_name', 'campus'];
+        if (!in_array($sortField, $allowedFields, true)) {
             $sortField = 'created_at';
             $sortDirection = 'desc';
         }
+
+        $sortDirection = in_array($sortDirection, ['asc', 'desc'], true) ? $sortDirection : 'desc';
 
         return match ($sortField) {
             'user_name' => $query->join('users', 'users.id', '=', 'applications.user_id')

@@ -32,7 +32,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { index as dashboard } from '@/routes/dashboard';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import type { InertiaLinkProps } from '@inertiajs/vue3';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -234,7 +234,7 @@ const rightNavItems: NavItem[] = [
                         </div>
                     </div>
 
-                    <DropdownMenu>
+                    <DropdownMenu v-if="auth.user">
                         <DropdownMenuTrigger :as-child="true">
                             <Button
                                 variant="ghost"

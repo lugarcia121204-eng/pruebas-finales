@@ -78,13 +78,13 @@ const getStatusLabel = (status) => {
 
 <template>
     <EvaluatorLayout>
-        <Head title="Historial de Evaluaciones" />
+        <Head title="Evaluaciones locales" />
 
         <div class="space-y-6">
             <!-- Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Historial de Evaluaciones</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Evaluaciones locales</h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
                         <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
                             <path :d="mdiSchool"/>

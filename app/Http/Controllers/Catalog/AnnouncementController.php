@@ -54,7 +54,8 @@ class AnnouncementController extends Controller
             ->with('calendar')
             ->buscarGlobal($filters->search);
 
-        // Ordenamiento dinámico
+        $filters->order = in_array($filters->order, ['id', 'name', 'status', 'created_at', 'updated_at'], true) ? $filters->order : 'id';
+        $filters->direction = in_array($filters->direction, ['asc', 'desc'], true) ? $filters->direction : 'desc';
         $announcements = $query->orderBy($filters->order, $filters->direction ?? 'desc')
             ->paginate($filters->rows)
             ->withQueryString();

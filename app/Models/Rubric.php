@@ -12,7 +12,13 @@ class Rubric extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['title', 'is_active'];
+    public const LOCAL = 'local';
+    public const NATIONAL = 'national';
+    public const STAGES = [self::LOCAL, self::NATIONAL];
+
+    protected $fillable = ['title', 'stage', 'is_active'];
+
+    protected $hidden = ['active_stage'];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -21,6 +27,11 @@ class Rubric extends Model
     public function questions(): HasMany
     {
         return $this->hasMany(RubricQuestion::class);
+    }
+
+    public function scopeForStage($query, string $stage)
+    {
+        return $query->where('stage', $stage);
     }
 
     public function scopeActive($query)

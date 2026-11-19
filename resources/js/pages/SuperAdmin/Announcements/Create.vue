@@ -281,7 +281,7 @@ const submit = () => {
                                         <p class="mb-2 text-sm text-gray-500">
                                             <span class="font-semibold text-[var(--institutional-primary)]">Sube una imagen</span> o arrastra aquí
                                         </p>
-                                        <p class="text-xs text-gray-500">PNG, JPG o GIF up to 2MB</p>
+                                        <p class="text-xs text-gray-500">PNG, JPG o GIF de hasta 4 MB</p>
                                     </div>
                                     <input id="imagen-convocatoria" type="file" class="hidden" @change="handleImageChange" accept="image/*" />
                                 </label>

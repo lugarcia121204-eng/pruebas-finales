@@ -238,8 +238,8 @@ onUnmounted(() => {
 .supreme-sidebar.supreme-collapsed { width:80px; }
 .supreme-brand { display:flex; align-items:center; gap:12px; min-height:80px; padding:16px 20px; border-bottom:1px solid #ffffff16; flex-shrink:0; }
 .supreme-brand img { width:34px; height:46px; object-fit:contain; flex-shrink:0; }
-.supreme-brand strong { display:block; font-size:14px; font-weight:700; line-height:1.3; }
-.supreme-brand span { display:block; font-size:11px; line-height:1.4; color:#dbeafe; }
+.supreme-brand strong { display:block; font-size:14px; font-weight:700; line-height:1.3; color:#fff; }
+.supreme-brand span { display:block; font-size:11px; line-height:1.4; color:#fff; }
 .supreme-sidebar .sidebar-profile { border-color:#ffffff16; padding:12px 16px; }
 .supreme-sidebar .sidebar-avatar { background:#f8fafc; color:#102344; border-radius:10px; font-weight:400; }
 .supreme-sidebar .sidebar-profile-button p { font-size:16px; }

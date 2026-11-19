@@ -8,7 +8,9 @@ use App\Http\Requests\Catalogos\UpdateRubricRequest;
 use App\Http\Resources\Catalog\RubricResource;
 use App\Models\Announcement;
 use App\Models\Rubric;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
@@ -30,12 +32,13 @@ class RubricController extends Controller
 
     public function index(Request $request)
     {
+        $stage = $this->catalogStage($request);
         $search = $request->input('search');
         $rows = $request->input('rows', 10);
         $order = $request->input('order', 'id');
         $direction = $request->input('direction', 'desc');
 
-        $rubrics = Rubric::withCount('questions')
+        $rubrics = Rubric::forStage($stage)->withCount('questions')
             ->when($search, function ($query, $search) {
                 $query->where('title', 'like', "%{$search}%");
             })
@@ -43,47 +46,36 @@ class RubricController extends Controller
             ->paginate($rows)
             ->withQueryString();
 
-        $today = now()->startOfDay();
-        $evaluacionEnCurso = Announcement::whereHas('calendar', function ($q) use ($today) {
-            $q->whereDate('evaluation_start', '<=', $today)
-              ->where(function ($q2) use ($today) {
-                  $q2->whereNull('results_start')
-                     ->orWhereDate('results_start', '>', $today);
-              })
-              ->where(function ($q3) use ($today) {
-                  $q3->whereNull('results_end')
-                     ->orWhereDate('results_end', '>=', $today);
-              });
-        })->exists();
-
         return Inertia::render('SuperAdmin/Catalog/Rubrics/Index', [
             'rubrics' => $rubrics,
             'filters' => $request->all(['search', 'rows', 'order', 'direction']),
-            'evaluacionEnCurso' => $evaluacionEnCurso,
+            'stage' => $stage,
+            'hasActiveRubric' => Rubric::forStage($stage)->active()->exists(),
+            'evaluacionEnCurso' => $stage === Rubric::LOCAL && $this->localEvaluationInProgress(),
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         return Inertia::render('SuperAdmin/Catalog/Rubrics/Create', [
             'title' => 'Agregar Rúbrica',
+            'stage' => $this->catalogStage($request),
             'routeName' => 'catalog.rubrics.',
         ]);
     }
 
     public function store(StoreRubricRequest $request)
     {
-        // Check for active rubric if trying to activate this one
-        if ($request->is_active) {
-            if (Rubric::where('is_active', true)->exists()) {
-                // Return error if one is already active
-                return back()->withErrors(['is_active' => 'Ya existe una rúbrica activa. Desactívala primero.']);
-            }
+        $stage = $request->validated('stage', Rubric::LOCAL);
+
+        if ($request->boolean('is_active') && Rubric::forStage($stage)->active()->exists()) {
+            return back()->withErrors(['is_active' => 'Ya existe una rúbrica activa en esta etapa. Desactívala primero.']);
         }
 
-        DB::transaction(function () use ($request) {
+        $this->saveRubric(function () use ($request, $stage) {
             $rubric = Rubric::create([
                 'title' => $request->title,
+                'stage' => $stage,
                 'is_active' => $request->is_active ?? false,
             ]);
 
@@ -102,7 +94,7 @@ class RubricController extends Controller
             }
         });
 
-        return redirect()->route('catalog.rubrics.index')->with('success', 'Rúbrica creada correctamente.');
+        return redirect()->route('catalog.rubrics.index', ['stage' => $stage])->with('success', 'Rúbrica creada correctamente.');
     }
 
     public function edit(Rubric $rubric)
@@ -118,17 +110,23 @@ class RubricController extends Controller
 
     public function update(UpdateRubricRequest $request, Rubric $rubric)
     {
-        // Check for active rubric if trying to activate this one AND it wasn't already active
-        if ($request->is_active && !$rubric->is_active) {
-            if (Rubric::where('is_active', true)->where('id', '!=', $rubric->id)->exists()) {
-                 return back()->withErrors(['is_active' => 'Ya existe una rúbrica activa. Desactívala primero.']);
-            }
+        $stage = $request->validated('stage', $rubric->stage);
+        $isActive = $request->boolean('is_active', $rubric->is_active);
+
+        if ($rubric->stage === Rubric::LOCAL && $rubric->is_active
+            && ($stage !== $rubric->stage || !$isActive) && $this->localEvaluationInProgress()) {
+            return back()->withErrors(['is_active' => 'No se puede cambiar la rúbrica activa durante la evaluación local.']);
         }
 
-        DB::transaction(function () use ($request, $rubric) {
+        if ($isActive && Rubric::forStage($stage)->active()->whereKeyNot($rubric->id)->exists()) {
+            return back()->withErrors(['is_active' => 'Ya existe una rúbrica activa en esta etapa. Desactívala primero.']);
+        }
+
+        $this->saveRubric(function () use ($request, $rubric, $stage, $isActive) {
             $rubric->update([
                 'title' => $request->title,
-                'is_active' => $request->is_active,
+                'stage' => $stage,
+                'is_active' => $isActive,
             ]);
 
             // Sync Questions (Simple approach: Delete all and recreate. 
@@ -195,48 +193,60 @@ class RubricController extends Controller
             $rubric->questions()->whereNotIn('id', $incomingQuestionIds)->delete();
         });
 
-        return redirect()->route('catalog.rubrics.index')->with('success', 'Rúbrica actualizada correctamente.');
+        return redirect()->route('catalog.rubrics.index', ['stage' => $stage])->with('success', 'Rúbrica actualizada correctamente.');
     }
 
     public function destroy(Rubric $rubric)
     {
+        if ($rubric->stage === Rubric::LOCAL && $rubric->is_active && $this->localEvaluationInProgress()) {
+            return back()->withErrors(['error' => 'No se puede eliminar la rúbrica activa durante la evaluación local.']);
+        }
+
         $rubric->delete();
-        return redirect()->route('catalog.rubrics.index')->with('success', 'Rúbrica eliminada correctamente.');
+        return redirect()->route('catalog.rubrics.index', ['stage' => $rubric->stage])->with('success', 'Rúbrica eliminada correctamente.');
     }
 
     public function toggleActive(Rubric $rubric)
     {
-        // Block any rubric switch while an announcement is in evaluation stage
-        $today = now()->startOfDay();
-        $evaluacionEnCurso = Announcement::whereHas('calendar', function ($q) use ($today) {
-            $q->whereDate('evaluation_start', '<=', $today)
-              ->where(function ($q2) use ($today) {
-                  $q2->whereNull('results_start')
-                     ->orWhereDate('results_start', '>', $today);
-              })
-              ->where(function ($q3) use ($today) {
-                  $q3->whereNull('results_end')
-                     ->orWhereDate('results_end', '>=', $today);
-              });
-        })->exists();
-
-        if ($evaluacionEnCurso) {
-            // Only block if there's already an active rubric — switching is not allowed mid-evaluation.
-            // Activating one when none is active is still permitted.
-            if (Rubric::where('is_active', true)->exists()) {
-                return back()->withErrors(['error' => 'No se puede cambiar la rúbrica activa mientras hay una convocatoria en etapa de Evaluación. Espera a que concluya la evaluación.']);
-            }
+        if ($rubric->is_active && $rubric->stage === Rubric::LOCAL && $this->localEvaluationInProgress()) {
+            return back()->withErrors(['error' => 'No se puede cambiar la rúbrica activa durante la evaluación local.']);
         }
 
-        if (!$rubric->is_active) {
-            if (Rubric::where('is_active', true)->exists()) {
-                return back()->withErrors(['error' => 'Ya existe una rúbrica activa. Desactívala primero para activar esta.']);
-            }
-            $rubric->update(['is_active' => true]);
-        } else {
-            $rubric->update(['is_active' => false]);
+        if (!$rubric->is_active && Rubric::forStage($rubric->stage)->active()->exists()) {
+            return back()->withErrors(['error' => 'Ya existe una rúbrica activa en esta etapa. Desactívala primero.']);
         }
+
+        $this->saveRubric(fn () => $rubric->update(['is_active' => !$rubric->is_active]), 'error');
 
         return back();
+    }
+
+    private function saveRubric(callable $save, string $errorField = 'is_active'): void
+    {
+        try {
+            DB::transaction($save);
+        } catch (UniqueConstraintViolationException $exception) {
+            if (!str_contains($exception->getMessage(), 'active_stage')) {
+                throw $exception;
+            }
+
+            throw ValidationException::withMessages([
+                $errorField => 'Ya existe una rúbrica activa en esta etapa. Desactívala primero.',
+            ]);
+        }
+    }
+
+    private function catalogStage(Request $request): string
+    {
+        $stage = $request->query('stage');
+
+        return in_array($stage, Rubric::STAGES, true) ? $stage : Rubric::LOCAL;
+    }
+
+    private function localEvaluationInProgress(): bool
+    {
+        return Announcement::activa()
+            ->whereHas('calendar', fn ($calendar) => $calendar->withOpenLocalEvaluation())
+            ->exists();
     }
 }

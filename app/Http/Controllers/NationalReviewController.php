@@ -23,6 +23,7 @@ class NationalReviewController extends Controller
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
+            'search_field' => ['nullable', 'in:teacher,institution,announcement'],
             'status' => ['nullable', 'in:pending,approved,rejected'],
             'rows' => ['nullable', 'integer', 'in:5,10,25,50'],
             'sort_field' => ['nullable', 'in:teacher,institution,status'],
@@ -36,8 +37,15 @@ class NationalReviewController extends Controller
                 ->leftJoin('institutions', 'institutions.id', '=', 'users.institution_id')
                 ->select('national_reviews.*')->withCount('evaluations')
                 ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('national_reviews.status', $status))
-                ->when($filters['search'] ?? null, fn ($query, $search) => $query->whereHas('application', fn ($app) => $app->where(fn ($match) => $match
-                    ->buscarGlobal($search)->orWhereHas('announcement', fn ($announcement) => $announcement->where('name', 'like', "%{$search}%")))))
+                ->when($filters['search'] ?? null, function ($query, $search) use ($filters) {
+                    return match ($filters['search_field'] ?? null) {
+                        'teacher' => $query->where('users.name', 'like', "%{$search}%"),
+                        'institution' => $query->whereHas('application.user.institution', fn ($institution) => $institution->where('name', 'like', "%{$search}%")),
+                        'announcement' => $query->whereHas('application.announcement', fn ($announcement) => $announcement->where('name', 'like', "%{$search}%")),
+                        default => $query->whereHas('application', fn ($application) => $application->where(fn ($match) => $match
+                            ->buscarGlobal($search)->orWhereHas('announcement', fn ($announcement) => $announcement->where('name', 'like', "%{$search}%")))),
+                    };
+                })
                 ->orderBy($sortColumns[$filters['sort_field'] ?? ''] ?? 'national_reviews.created_at', $filters['sort_direction'] ?? 'desc')
                 ->orderByDesc('national_reviews.id')->paginate($filters['rows'] ?? 10)->withQueryString()->through(fn ($review) => [
                     'id' => $review->id,
@@ -54,7 +62,7 @@ class NationalReviewController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $review = $this->assigned($request)->with(['application.user.institution.state', 'application.user.priorityArea', 'application.user.subArea', 'application.positionType', 'application.announcement.calendar', 'application.documents', 'evaluations.evaluator', 'evaluations.rubric.questions.options'])->findOrFail($id);
+        $review = $this->assigned($request)->with(['application.user.institution.state', 'application.user.priorityArea', 'application.user.subArea', 'application.positionType', 'application.announcement.calendar', 'application.documents', 'evaluations.evaluator'])->findOrFail($id);
         return Inertia::render('NationalReview/Show', [
             'review' => [
                 'id' => $review->id,
@@ -73,10 +81,7 @@ class NationalReviewController extends Controller
                 'institution' => $review->application->user?->institution?->name,
                 'announcement' => $review->application->announcement?->name,
                 'documents' => $review->application->documents->map(fn ($document) => ['id' => $document->id, 'name' => $document->name]),
-                'evaluations' => $review->evaluations->map(fn ($evaluation) => ['id' => $evaluation->id, 'evaluator_id' => $evaluation->evaluator_id, 'evaluator' => $evaluation->evaluator?->name, 'status' => $evaluation->status, 'score' => $evaluation->score, 'comment' => $evaluation->comment, 'responses' => $evaluation->rubric?->questions->map(function ($question) use ($evaluation) {
-                    $option = $question->options->firstWhere('id', $evaluation->answers[$question->id] ?? null);
-                    return ['id' => $question->id, 'question' => $question->text, 'answer' => $option?->text, 'score' => $option?->score];
-                })->values() ?? []]),
+                'evaluations' => $review->evaluations->map(fn ($evaluation) => ['id' => $evaluation->id, 'evaluator_id' => $evaluation->evaluator_id, 'evaluator' => $evaluation->evaluator?->name, 'status' => $evaluation->status, 'score' => $evaluation->score, 'comment' => $evaluation->comment]),
             ],
             'evaluationPeriodOpen' => $review->application->announcement?->calendar?->nationalEvaluationIsOpen() ?? false,
             'evaluators' => User::whereHas('roles', fn ($query) => $query->where('name', 'Evaluador'))
@@ -91,6 +96,47 @@ class NationalReviewController extends Controller
         ]);
     }
 
+    public function responses(Request $request, int $id, int $evaluation)
+    {
+        $review = $this->assigned($request)->with(['application.user.institution', 'application.positionType'])->findOrFail($id);
+        $evaluation = $review->evaluations()->where('status', 'completed')->with([
+            'evaluator',
+            'rubric.questions' => fn ($questions) => $questions->withTrashed()->with([
+                'options' => fn ($options) => $options->withTrashed(),
+            ]),
+        ])->findOrFail($evaluation);
+        $application = $review->application;
+        $answers = $evaluation->answers ?? [];
+        $responses = $evaluation->rubric?->questions
+            ->filter(fn ($question) => isset($answers[$question->id]))
+            ->map(function ($question) use ($answers) {
+                $option = $question->options->firstWhere('id', $answers[$question->id]);
+
+                return [
+                    'id' => $question->id,
+                    'question' => $question->text,
+                    'answer' => $option?->text,
+                    'score' => $option?->score,
+                ];
+            })->values() ?? [];
+
+        return Inertia::render('NationalReview/Responses', [
+            'review' => [
+                'id' => $review->id,
+                'status' => $review->status,
+                'teacher' => $application->user?->name,
+                'institution' => $application->user?->institution?->name,
+                'position_type' => $application->position_full_type,
+            ],
+            'evaluation' => [
+                'evaluator' => $evaluation->evaluator?->name,
+                'score' => $evaluation->score,
+                'comment' => $evaluation->comment,
+            ],
+            'responses' => $responses,
+        ]);
+    }
+
     public function assignEvaluators(Request $request, int $id)
     {
         $data = $request->validate(['evaluator_ids' => ['required', 'array', 'min:1'], 'evaluator_ids.*' => ['required', 'integer', 'distinct', 'exists:users,id']]);
@@ -100,9 +146,9 @@ class NationalReviewController extends Controller
             if (!$review->application->announcement?->calendar?->nationalEvaluationIsOpen()) {
                 throw ValidationException::withMessages(['evaluator_ids' => 'La convocatoria está fuera del periodo de evaluación nacional.']);
             }
-            $rubric = Rubric::active()->with('questions.options')->latest('id')->first();
+            $rubric = Rubric::forStage(Rubric::NATIONAL)->active()->with('questions.options')->latest('id')->first();
             if (!$rubric || !$rubric->questions->count() || $rubric->questions->contains(fn ($question) => !$question->options->count())) {
-                throw ValidationException::withMessages(['evaluator_ids' => 'Configura una rúbrica activa con preguntas y opciones antes de asignar evaluadores.']);
+                throw ValidationException::withMessages(['evaluator_ids' => 'Configura una rúbrica activa de etapa nacional con preguntas y opciones antes de asignar evaluadores.']);
             }
             foreach ($data['evaluator_ids'] as $evaluatorId) {
                 $evaluator = User::whereHas('roles', fn ($query) => $query->where('name', 'Evaluador'))->find($evaluatorId);

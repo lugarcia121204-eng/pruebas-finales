@@ -42,6 +42,18 @@ class Calendar extends Model
         'national_results_end' => 'date',
     ];
 
+    public function localEvaluationIsOpen(): bool
+    {
+        return $this->evaluation_start && $this->evaluation_end
+            && today()->betweenIncluded($this->evaluation_start, $this->evaluation_end);
+    }
+
+    public function scopeWithOpenLocalEvaluation($query)
+    {
+        return $query->whereDate('evaluation_start', '<=', today())
+            ->whereDate('evaluation_end', '>=', today());
+    }
+
     public function nationalEvaluationIsOpen(): bool
     {
         $today = today();

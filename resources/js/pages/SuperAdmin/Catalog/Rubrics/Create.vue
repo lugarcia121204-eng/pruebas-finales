@@ -1,18 +1,30 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue';
 import { mdiBookOpenPageVariant, mdiClipboardTextOutline } from '@mdi/js';
 import { alertaExito, alertaError, alertaCargando, cerrarAlerta } from '@/utils/alerts.js';
 
 const props = defineProps({
     title: String,
+    stage: String,
     routeName: String,
 });
 
 const form = useForm({
+    stage: props.stage,
     title: '',
     is_active: false,
     questions: [],
+});
+
+const minimumScore = computed(() => form.stage === 'national' ? 0 : 1);
+
+const saveError = computed(() => {
+    const [field, message] = Object.entries(form.errors)[0] ?? [];
+    const question = field?.match(/^questions\.(\d+)\./);
+
+    return question ? `Pregunta ${Number(question[1]) + 1}: ${message}` : message;
 });
 
 const clearError = (field) => {
@@ -38,7 +50,7 @@ const addOption = (qIndex) => {
         alertaError('Límite alcanzado', 'Máximo 5 respuestas por pregunta.');
         return;
     }
-    question.options.push({ text: '', score: 0 });
+    question.options.push({ text: '', score: '' });
 };
 
 const removeOption = (qIndex, oIndex) => {
@@ -53,8 +65,8 @@ const validateScore = (qIndex, oIndex) => {
     // Limpiar error previo
     delete form.errors[`questions.${qIndex}.options.${oIndex}.score`];
     
-    if (currentScore < 1 || currentScore > 5) {
-        form.errors[`questions.${qIndex}.options.${oIndex}.score`] = 'Puntaje: 1-5';
+    if (!Number.isInteger(currentScore) || currentScore < minimumScore.value || currentScore > 5) {
+        form.errors[`questions.${qIndex}.options.${oIndex}.score`] = `Ingresa un puntaje entero del ${minimumScore.value} al 5`;
         return;
     }
 
@@ -90,7 +102,7 @@ const submit = () => {
         }
         
         if (q.options.length < 2) {
-            form.errors[`questions.${i}.text`] = 'Debe tener al menos 2 opciones de respuesta';
+            form.errors[`questions.${i}.text`] = 'Agrega al menos dos opciones de respuesta';
             return;
         }
         
@@ -101,8 +113,8 @@ const submit = () => {
                 form.errors[`questions.${i}.options.${j}.text`] = 'El texto de la respuesta es obligatorio';
                 return;
             }
-            if (!opt.score || opt.score < 1 || opt.score > 5) {
-                form.errors[`questions.${i}.options.${j}.score`] = 'Puntaje: 1-5';
+            if (!Number.isInteger(opt.score) || opt.score < minimumScore.value || opt.score > 5) {
+                form.errors[`questions.${i}.options.${j}.score`] = `Ingresa un puntaje entero del ${minimumScore.value} al 5`;
                 return;
             }
         }
@@ -131,9 +143,9 @@ const submit = () => {
             cerrarAlerta();
             alertaExito('¡Éxito!', 'Rúbrica creada correctamente');
         },
-        onError: () => {
+        onError: (errors) => {
             cerrarAlerta();
-            alertaError('Error', 'Hubo un problema al guardar la rúbrica');
+            alertaError('Revisa la rúbrica', saveError.value || Object.values(errors)[0] || 'No se pudo guardar la rúbrica');
         }
     });
 };
@@ -156,7 +168,7 @@ const submit = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="#9CA3AF">
                             <path d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"/>
                         </svg>
-                        <Link :href="route('catalog.rubrics.index')" class="text-gray-700 font-medium hover:text-[var(--institutional-primary)] transition flex items-center gap-1.5">
+                        <Link :href="route('catalog.rubrics.index', { stage })" class="text-gray-700 font-medium hover:text-[var(--institutional-primary)] transition flex items-center gap-1.5">
                             <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #6B7280;">
                                 <path :d="mdiClipboardTextOutline"/>
                             </svg>
@@ -168,7 +180,7 @@ const submit = () => {
                         <span class="text-gray-900 font-semibold">Agregar Rúbrica</span>
                     </div>
                 </div>
-                <Link :href="route('catalog.rubrics.index')" class="w-full sm:w-auto justify-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2 font-medium cursor-pointer">
+                <Link :href="route('catalog.rubrics.index', { stage })" class="w-full sm:w-auto justify-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2 font-medium cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                         <path d="m313-440 224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/>
                     </svg>
@@ -178,11 +190,11 @@ const submit = () => {
 
             <!-- Form -->
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 sm:p-6 md:p-8">
-                <form @submit.prevent="submit" class="space-y-6">
+                <form novalidate @submit.prevent="submit" class="space-y-6">
                     <!-- Título -->
                     <div>
                         <label class="block mb-2 text-base text-[var(--institutional-primary)] font-medium text-gray-900">Título de la Rúbrica: <span class="text-red-500">*</span></label>
-                        <input v-model="form.title" type="text" class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]" :class="{ 'border-b-red-500': form.errors.title }" placeholder="Escribe el titulo..." @input="clearError('title')">
+                        <input v-model="form.title" type="text" maxlength="255" class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]" :class="{ 'border-b-red-500': form.errors.title }" placeholder="Escribe el titulo..." @input="clearError('title')">
                         <div v-if="!form.errors.title" class="flex items-center gap-1 mt-1 text-xs text-gray-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -191,6 +203,16 @@ const submit = () => {
                         </div>
                         <p v-if="form.errors.title" class="mt-1 text-sm text-red-600">{{ form.errors.title }}</p>
                     </div>
+
+                    <div class="col-span-12 mb-4">
+                        <label for="rubric-stage" class="mb-1 block text-sm font-semibold text-gray-800">Etapa</label>
+                        <select id="rubric-stage" v-model="form.stage" class="w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 sm:w-64" @change="clearError('stage')">
+                            <option value="local">Etapa local</option>
+                            <option value="national">Etapa nacional</option>
+                        </select>
+                        <p v-if="form.errors.stage" class="mt-1 text-sm text-red-600">{{ form.errors.stage }}</p>
+                    </div>
+
 
                     <!-- Preguntas -->
                     <div v-for="(question, qIndex) in form.questions" :key="qIndex" class="border border-gray-200 p-4 rounded-lg bg-gray-50 relative">
@@ -221,8 +243,8 @@ const submit = () => {
                                 </div>
                                 <div class="w-full md:w-32 flex gap-2 items-end">
                                     <div class="flex-1">
-                                        <label class="block text-xs font-medium text-gray-500 mb-1">Puntaje (1-5):</label>
-                                         <input v-model="option.score" type="number" class="bg-white border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]" :class="{ 'border-b-red-500': form.errors[`questions.${qIndex}.options.${oIndex}.score`] }" @input="validateScore(qIndex, oIndex)">
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Puntaje ({{ minimumScore }}-5):</label>
+                                         <input v-model="option.score" type="number" :min="minimumScore" max="5" step="1" placeholder="1–5" class="bg-white border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full ps-3 p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)]" :class="{ 'border-b-red-500': form.errors[`questions.${qIndex}.options.${oIndex}.score`] }" @input="validateScore(qIndex, oIndex)">
                                     </div>
                                     <button type="button" @click="removeOption(qIndex, oIndex)" class="p-2 mb-[1px] text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition cursor-pointer" title="Eliminar respuesta">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
@@ -246,11 +268,11 @@ const submit = () => {
                     </div>
 
                     <!-- Footer Buttons -->
-                    <div v-if="form.errors.is_active" class="col-span-12 text-red-600 text-sm mb-4 text-right">
-                        {{ form.errors.is_active }}
-                    </div>
+                    <p v-if="saveError" role="alert" class="text-sm font-medium text-red-600">
+                        {{ saveError }}
+                    </p>
                     <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-6 border-t border-gray-200">
-                        <Link :href="route('catalog.rubrics.index')" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition cursor-pointer">
+                        <Link :href="route('catalog.rubrics.index', { stage })" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition cursor-pointer">
                             Cancelar
                         </Link>
                         <button type="submit" :disabled="form.processing" class="px-6 py-2 bg-[var(--institutional-primary)] text-white rounded-lg hover:bg-[#0f2347] transition shadow-lg hover:shadow-xl disabled:opacity-75 flex items-center gap-2 font-medium cursor-pointer">

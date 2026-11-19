@@ -65,28 +65,18 @@ class CurpController extends Controller
             ]);
         }
 
-        if ($usuarioExistente && in_array(strtolower(trim((string) $usuarioExistente->email)), $protectedEmails, true)) {
+        if ($usuarioExistente && (in_array(strtolower(trim((string) $usuarioExistente->email)), $protectedEmails, true)
+            || $usuarioExistente->roles()->whereNotIn('name', ['Docente', 'Evaluador'])->exists())) {
             throw ValidationException::withMessages([
                 'email' => ['Esta cuenta pertenece a la administracion del sistema y no puede modificarse desde registro.'],
             ]);
-        }
-
-        $datosUsuario = null;
-        if ($usuarioExistente) {
-            $datosUsuario = [
-                'name'             => $usuarioExistente->name,
-                'email'            => $usuarioExistente->email,
-                'institution_id'   => $usuarioExistente->institution_id,
-                'priority_area_id' => $usuarioExistente->priority_area_id,
-                'sub_area_id'      => $usuarioExistente->sub_area_id,
-            ];
         }
 
         return response()->json([
             'success'          => true,
             'data'             => $datos,
             'existing_user'    => $usuarioExistente !== null,
-            'existing_data'    => $datosUsuario,
+            'existing_data'    => null,
             'target_role'      => $targetRole,
         ]);
     }

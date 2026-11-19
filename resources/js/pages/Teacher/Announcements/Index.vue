@@ -1,13 +1,35 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import TeacherLayout from '@/layouts/TeacherLayout.vue';
-import { mdiBullhorn } from '@mdi/js';
+import { mdiBullhorn, mdiChevronLeft, mdiChevronRight, mdiHistory } from '@mdi/js';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
     announcements: Object,
+    closedAnnouncements: Object,
     has_active_application: Boolean,
 });
+
+const showHistory = ref(false);
+const historyTrack = ref(null);
+const historyAnnouncements = computed(() => {
+    const active = props.announcements?.data ?? [];
+    const closed = props.closedAnnouncements?.data ?? [];
+
+    const newestFirst =
+        (first, second) => second.created_at.localeCompare(first.created_at) || second.id - first.id;
+    return [...active].sort(newestFirst).concat([...closed].sort(newestFirst));
+});
+
+const moveHistory = (direction) => {
+    const track = historyTrack.value;
+    if (track) {
+        const [first, second] = track.children;
+        const step = second ? second.offsetLeft - first.offsetLeft : track.clientWidth;
+        const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+        track.scrollBy({ left: direction * step, behavior });
+    }
+};
 
 const expandedDescriptions = ref({});
 const DESCRIPTION_LIMIT = 220;
@@ -96,11 +118,13 @@ const getFase = (announcement) => {
 
 <template>
     <TeacherLayout>
-        <Head title="Convocatorias" />
+        <Head :title="showHistory ? 'Historial de Convocatorias' : 'Convocatorias'" />
         <div class="space-y-6">
-             <div class="flex items-center justify-between">
+             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Convocatoria Disponible</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                        {{ showHistory ? 'Historial de Convocatorias' : 'Convocatoria Disponible' }}
+                    </h1>
                     <div class="flex items-center gap-2 mt-2 text-sm">
                         <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
                             <path :d="mdiBullhorn"/>
@@ -108,12 +132,19 @@ const getFase = (announcement) => {
                          <span class="text-gray-900 font-semibold">Convocatorias</span>
                     </div>
                 </div>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-lg bg-[var(--institutional-primary)] px-4 py-2.5 font-semibold text-white hover:bg-[var(--institutional-primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--institutional-primary)]"
+                    @click="showHistory = !showHistory"
+                >
+                    <svg viewBox="0 0 24 24" class="size-5 fill-current" aria-hidden="true"><path :d="showHistory ? mdiChevronLeft : mdiHistory" /></svg>
+                    {{ showHistory ? 'Volver a convocatorias' : 'Historial de Convocatorias' }}
+                </button>
             </div>
 
-            <!-- Diseño "Featured Card" para convocatoria única/principal -->
-            <div v-if="announcements.data && announcements.data.length > 0" class="max-w-5xl mx-auto space-y-8">
+            <div v-if="!showHistory && announcements?.data?.length" class="mx-auto max-w-5xl space-y-8">
                 <div 
-                    v-for="announcement in announcements.data" 
+                    v-for="announcement in announcements.data"
                     :key="announcement.id"
                     :class="[
                         'rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col md:flex-row',
@@ -129,7 +160,7 @@ const getFase = (announcement) => {
                         
                         <img 
                             :src="announcement.image_url || 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80'" 
-                            alt="Imagen de convocatoria" 
+                            alt="Imagen de convocatoria"
                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         
@@ -227,7 +258,7 @@ const getFase = (announcement) => {
                                 </div>
                                 
                                 <!-- Estado 2: Tiene revisión global pendiente (no puede aplicar a OTRAS) -->
-                                <div v-else-if="has_active_application" class="w-full text-center py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 font-medium px-4">
+                                <div v-else-if="announcement.status === 'activa' && has_active_application" class="w-full text-center py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500 font-medium px-4">
                                     <span class="flex items-center justify-center gap-2 text-sm">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd" />
@@ -256,7 +287,7 @@ const getFase = (announcement) => {
                                     <template v-if="announcement.status === 'activa'">
                                         {{ getFase(announcement).registrationStatus === 'upcoming' ? 'Registro Próximamente' : 'Fuera de Periodo' }}
                                     </template>
-                                    <template v-else>Convocatoria Inactiva</template>
+                                    <template v-else>Convocatoria cerrada</template>
                                 </button>
                              </div>
                         </div>
@@ -265,7 +296,7 @@ const getFase = (announcement) => {
             </div>
 
             <!-- Empty State -->
-             <div v-else class="max-w-3xl mx-auto py-16 flex flex-col items-center justify-center text-gray-400 bg-white rounded-3xl border border-gray-100 shadow-sm">
+             <div v-else-if="!showHistory" class="max-w-3xl mx-auto py-16 flex flex-col items-center justify-center text-gray-400 bg-white rounded-3xl border border-gray-100 shadow-sm">
                 <div class="bg-gray-50 p-6 rounded-full mb-4">
                      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -274,6 +305,65 @@ const getFase = (announcement) => {
                 <p class="text-xl font-bold text-gray-600">No hay convocatorias activas</p>
                 <p class="text-gray-500 mt-2">Mantente al pendiente para futuras oportunidades.</p>
             </div>
+            <section v-else aria-label="Historial de Convocatorias" class="min-w-0 rounded-2xl border border-gray-200 bg-white">
+                <div v-if="historyAnnouncements.length" class="p-5 sm:p-7">
+                    <div v-if="historyAnnouncements.length > 1" class="mb-3 flex justify-end gap-2">
+                        <button
+                            type="button"
+                            aria-label="Desplazar tarjetas hacia la izquierda"
+                            class="rounded-lg border border-gray-200 p-2 text-[var(--institutional-primary)] hover:bg-gray-100"
+                            @click="moveHistory(-1)"
+                        >
+                            <svg viewBox="0 0 24 24" class="size-5 fill-current" aria-hidden="true"><path :d="mdiChevronLeft" /></svg>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Desplazar tarjetas hacia la derecha"
+                            class="rounded-lg border border-gray-200 p-2 text-[var(--institutional-primary)] hover:bg-gray-100"
+                            @click="moveHistory(1)"
+                        >
+                            <svg viewBox="0 0 24 24" class="size-5 fill-current" aria-hidden="true"><path :d="mdiChevronRight" /></svg>
+                        </button>
+                    </div>
+                    <ul ref="historyTrack" class="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4" tabindex="0" aria-label="Convocatorias activas y cerradas">
+                        <li
+                            v-for="announcement in historyAnnouncements"
+                            :key="announcement.id"
+                            class="flex w-[min(85%,18rem)] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-gray-200 bg-white"
+                        >
+                            <img
+                                v-if="announcement.image_url"
+                                :src="announcement.image_url"
+                                alt=""
+                                loading="lazy"
+                                class="h-32 w-full object-cover"
+                            />
+                            <div v-else class="flex h-32 items-center justify-center bg-gray-100 text-[var(--institutional-primary)]" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" class="size-9 fill-current"><path :d="mdiBullhorn" /></svg>
+                            </div>
+                            <div class="flex flex-1 flex-col gap-3 p-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="text-sm text-gray-600">{{ parseDateLocal(announcement.created_at)?.toLocaleDateString('es-MX') }}</span>
+                                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="getFase(announcement).color">
+                                        {{ getFase(announcement).nombre }}
+                                    </span>
+                                </div>
+                                <h3 class="break-words text-lg font-bold">{{ announcement.name }}</h3>
+                                <p v-if="announcement.description" class="line-clamp-3 break-words text-sm text-gray-600">{{ announcement.description }}</p>
+                                <button
+                                    v-if="announcement.file_url"
+                                    type="button"
+                                    class="mt-auto self-start pt-2 text-sm font-semibold text-[var(--institutional-primary)] hover:underline"
+                                    @click="openDocumentModal(route('teacher.announcements.preview', announcement.id), announcement.name, announcement.file_url)"
+                                >
+                                    Ver documento
+                                </button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <p v-else class="px-7 py-10 text-center text-gray-600">El historial está vacío.</p>
+            </section>
         </div>
 
         <Teleport to="body">

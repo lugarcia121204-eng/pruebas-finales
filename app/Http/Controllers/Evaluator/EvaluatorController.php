@@ -18,23 +18,23 @@ class EvaluatorController extends Controller
 
         // Statistics using advanced Eloquent relationship scopes (1 Query)
         $user->loadCount([
-            'evaluations as total',
-            'evaluations as pendientes' => fn($q) => $q->pending()->whereHas('application', fn($q2) => $q2->where('status', 'pending'))
+            'evaluations as total' => fn ($query) => $query->withAvailableApplication(),
+            'evaluations as pendientes' => fn($q) => $q->withAvailableApplication()->pending()->whereHas('application', fn($q2) => $q2->where('status', 'pending'))
         ]);
-        
+
         $totalAsignadas = $user->total;
         $pendientes = $user->pendientes;
         $evaluadas = $totalAsignadas - $pendientes;
 
         // Pending Applications
-        $applications = \App\Models\Evaluation::where('evaluator_id', $user->id)
+        $applications = \App\Models\Evaluation::withAvailableApplication()->where('evaluator_id', $user->id)
             ->pending()
             ->whereHas('application', function ($q) {
                 $q->where('status', 'pending');
             })
             ->with([
                 'application.announcement',
-                'application.user.subArea', 
+                'application.user.subArea',
                 'application' => function ($query) {
                     $query->withCount('documents');
                 }
@@ -56,7 +56,7 @@ class EvaluatorController extends Controller
                 'teacher_degree' => $evaluation->application->user->subArea?->name ?? 'N/A',
                 'application_date' => $evaluation->application->created_at->isoFormat('D [de] MMMM [de] YYYY'),
                 'documents_count' => $evaluation->application->documents_count ?? 0,
-                'status' => 'Pendiente', 
+                'status' => 'Pendiente',
             ];
         });
 
@@ -73,7 +73,7 @@ class EvaluatorController extends Controller
 
     public function show($id)
     {
-        $evaluation = \App\Models\Evaluation::where('id', $id)
+        $evaluation = \App\Models\Evaluation::withAvailableApplication()->where('id', $id)
             ->where('evaluator_id', Auth::id())
             ->where('status', 'pending')
             ->whereHas('application', function ($q) {
@@ -90,10 +90,10 @@ class EvaluatorController extends Controller
             ->firstOrFail();
 
         // Get Active Rubric — fallback to most recent if none is marked active
-        $rubric = \App\Models\Rubric::where('is_active', true)
+        $rubric = \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->where('is_active', true)
             ->with(['questions.options'])
             ->first()
-            ?? \App\Models\Rubric::with(['questions.options'])
+            ?? \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->with(['questions.options'])
                 ->latest()
                 ->first();
 
@@ -106,26 +106,46 @@ class EvaluatorController extends Controller
             'application' => $application,
             'rubric' => $rubric,
             'teacher' => $application->user,
+            'evaluationPeriodOpen' => $application->announcement?->calendar?->localEvaluationIsOpen() ?? false,
         ]);
     }
 
     public function evaluar(\App\Http\Requests\StoreEvaluationVerdictRequest $request, $id)
     {
 
-        $evaluation = \App\Models\Evaluation::where('id', $id)
-            ->where('evaluator_id', Auth::id())
-            ->where('status', 'pending')
-            ->whereHas('application', function ($q) {
-                $q->where('status', 'pending');
-            })
-            ->firstOrFail();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $id) {
+            $evaluation = \App\Models\Evaluation::withAvailableApplication()->where('id', $id)
+                ->where('evaluator_id', Auth::id())
+                ->where('status', 'pending')
+                ->whereHas('application', function ($q) {
+                    $q->where('status', 'pending');
+                })
+                ->lockForUpdate()->firstOrFail();
 
-        $evaluation->update([
-            'status' => $request->status,
-            'score' => $request->score,
-            'answers' => $request->answers,
-            'comment' => $request->comment,
-        ]);
+            $rubric = \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->active()->with('questions.options')->first();
+            $submittedAnswers = $request->validated('answers');
+            if (!$rubric || $rubric->questions->isEmpty() || count($submittedAnswers) !== $rubric->questions->count()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['answers' => 'Responde todas las preguntas de la rúbrica local activa.']);
+            }
+            $score = 0;
+            $answers = [];
+            foreach ($rubric->questions as $question) {
+                $optionId = $submittedAnswers[$question->id]['option_id'] ?? null;
+                $option = $question->options->firstWhere('id', $optionId);
+                if (!$option) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['answers' => 'Selecciona una opción válida para cada pregunta de la rúbrica.']);
+                }
+                $score += (float) $option->score;
+                $answers[$question->id] = ['option_id' => $option->id, 'score' => (float) $option->score];
+            }
+
+            $evaluation->update([
+                'status' => $request->status,
+                'score' => $score,
+                'answers' => $answers,
+                'comment' => $request->comment,
+            ]);
+        });
 
         return redirect()->route('evaluator.dashboard')->with('success', 'Solicitud evaluada exitosamente.');
     }
@@ -133,12 +153,12 @@ class EvaluatorController extends Controller
     public function streamDocument($id)
     {
         $document = \App\Models\Document::findOrFail($id);
-        
+
         // Authorization: Check if the evaluator is assigned to the application this document belongs to
-        $hasAccess = \App\Models\Evaluation::where('evaluator_id', Auth::id())
+        $hasAccess = \App\Models\Evaluation::withAvailableApplication()->where('evaluator_id', Auth::id())
             ->where('application_id', $document->application_id)
             ->exists();
-            
+
         if (!$hasAccess) {
             abort(403, 'No tienes permiso para ver este documento.');
         }
@@ -155,10 +175,10 @@ class EvaluatorController extends Controller
 
         // Statistics using loadCount (1 Query instead of 4)
         $user->loadCount([
-            'evaluations as total',
-            'evaluations as pendientes' => fn($q) => $q->pending()->whereHas('application', fn($q2) => $q2->where('status', 'pending')),
-            'evaluations as aprobadas' => fn($q) => $q->approved(),
-            'evaluations as rechazadas' => fn($q) => $q->rejected(),
+            'evaluations as total' => fn ($query) => $query->withAvailableApplication(),
+            'evaluations as pendientes' => fn($q) => $q->withAvailableApplication()->pending()->whereHas('application', fn($q2) => $q2->where('status', 'pending')),
+            'evaluations as aprobadas' => fn($q) => $q->withAvailableApplication()->approved(),
+            'evaluations as rechazadas' => fn($q) => $q->withAvailableApplication()->rejected(),
         ]);
 
         $totalAsignadas = $user->total;
@@ -168,7 +188,7 @@ class EvaluatorController extends Controller
         $rechazadas = $user->rechazadas;
 
         // Completed Applications (History)
-        $query = \App\Models\Evaluation::where('evaluator_id', $user->id)
+        $query = \App\Models\Evaluation::withAvailableApplication()->where('evaluator_id', $user->id)
             ->where(function ($q) {
                 $q->where('status', '!=', 'pending')
                   ->orWhereHas('application', function ($q2) {
@@ -177,7 +197,7 @@ class EvaluatorController extends Controller
             })
             ->with([
                 'application.announcement',
-                'application.user.subArea', 
+                'application.user.subArea',
                 'application' => function ($query) {
                     $query->withCount('documents');
                 }
@@ -237,7 +257,7 @@ class EvaluatorController extends Controller
 
     public function showHistory($id)
     {
-        $evaluation = \App\Models\Evaluation::where('id', $id)
+        $evaluation = \App\Models\Evaluation::withAvailableApplication()->where('id', $id)
             ->where('evaluator_id', Auth::id())
             ->with([
                 'application.announcement',
@@ -250,10 +270,10 @@ class EvaluatorController extends Controller
             ->firstOrFail();
 
         // Get Active Rubric — fallback to most recent if none is marked active
-        $rubric = \App\Models\Rubric::where('is_active', true)
+        $rubric = \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->where('is_active', true)
             ->with(['questions.options'])
             ->first()
-            ?? \App\Models\Rubric::with(['questions.options'])
+            ?? \App\Models\Rubric::forStage(\App\Models\Rubric::LOCAL)->with(['questions.options'])
                 ->latest()
                 ->first();
 

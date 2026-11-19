@@ -14,6 +14,7 @@ import {
     X,
 } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { alertaPregunta } from '@/utils/alerts.js';
 const props = defineProps({ documents: Object, filters: Object });
 const search = ref(props.filters.search || '');
 const rows = ref(props.filters.rows || 10);
@@ -67,14 +68,13 @@ const save = () => {
             options,
         );
 };
-const remove = (document) => {
-    if (
-        window.confirm(
-            'Eliminar "' +
-                document.title +
-                '"? El archivo dejará de estar disponible en la página pública.',
-        )
-    )
+const remove = async (document) => {
+    const confirmed = await alertaPregunta(
+        '¿Estás seguro de eliminar este documento?',
+        `"${document.title}" dejará de estar disponible en la página pública. Esta acción no se puede deshacer.`,
+    );
+
+    if (confirmed)
         router.delete(route('superadmin.work-documents.destroy', document.id), {
             preserveScroll: true,
         });

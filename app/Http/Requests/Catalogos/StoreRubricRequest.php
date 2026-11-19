@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Catalogos;
 
+use App\Models\Rubric;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreRubricRequest extends FormRequest
 {
@@ -23,12 +25,13 @@ class StoreRubricRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'stage' => ['sometimes', 'required', Rule::in(Rubric::STAGES)],
             'is_active' => ['boolean'],
             'questions' => ['nullable', 'array'],
             'questions.*.text' => ['required', 'string'],
             'questions.*.options' => ['nullable', 'array'],
             'questions.*.options.*.text' => ['required', 'string'],
-            'questions.*.options.*.score' => ['required', 'integer', 'min:1', 'max:5'],
+            'questions.*.options.*.score' => ['required', 'integer', $this->input('stage', Rubric::LOCAL) === Rubric::NATIONAL ? 'min:0' : 'min:1', 'max:5'],
         ];
     }
 }

@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import type { PriorityArea, SubArea, ReportFilters } from '@/types';
 
-const props = defineProps({
-    modelValue: { type: Object, default: () => ({}) },
-    priorityAreas: { type: Array, default: () => [] },
-    subAreas: { type: Array, default: () => [] },
-    national: Boolean,
+const props = withDefaults(defineProps<{
+    modelValue?: ReportFilters;
+    priorityAreas?: PriorityArea[];
+    subAreas?: SubArea[];
+    national?: boolean;
+}>(), {
+    modelValue: () => ({}),
+    priorityAreas: () => [],
+    subAreas: () => [],
 });
 const emit = defineEmits(['update:modelValue', 'change']);
 const page = usePage();
@@ -29,7 +34,8 @@ const errors = computed(() =>
         ].includes(key),
     ),
 );
-const update = (key: string, value: string) => {
+const update = (key: keyof ReportFilters, event: Event) => {
+    const value = (event.target as HTMLInputElement | HTMLSelectElement).value;
     const next = { ...props.modelValue, [key]: value || null };
     if (key === 'priority_area_id') next.sub_area_id = null;
     emit('update:modelValue', next);
@@ -52,7 +58,7 @@ const inputClass =
                     :class="inputClass"
                     :value="modelValue.date_from || ''"
                     :max="modelValue.date_to || undefined"
-                    @change="update('date_from', $event.target.value)"
+                    @change="update('date_from', $event)"
                 />
             </label>
             <label class="block text-sm text-gray-700"
@@ -62,7 +68,7 @@ const inputClass =
                     :class="inputClass"
                     :value="modelValue.date_to || ''"
                     :min="modelValue.date_from || undefined"
-                    @change="update('date_to', $event.target.value)"
+                    @change="update('date_to', $event)"
                 />
             </label>
             <label class="block text-sm text-gray-700"
@@ -70,7 +76,7 @@ const inputClass =
                 <select
                     :class="inputClass"
                     :value="modelValue.priority_area_id || ''"
-                    @change="update('priority_area_id', $event.target.value)"
+                    @change="update('priority_area_id', $event)"
                 >
                     <option value="">Todas las áreas</option>
                     <option
@@ -87,7 +93,7 @@ const inputClass =
                 <select
                     :class="inputClass"
                     :value="modelValue.sub_area_id || ''"
-                    @change="update('sub_area_id', $event.target.value)"
+                    @change="update('sub_area_id', $event)"
                 >
                     <option value="">Todas las subáreas</option>
                     <option
@@ -104,7 +110,7 @@ const inputClass =
                 <select
                     :class="inputClass"
                     :value="modelValue.status || ''"
-                    @change="update('status', $event.target.value)"
+                    @change="update('status', $event)"
                 >
                     <option value="">Aprobadas y rechazadas</option>
                     <option value="pending">Pendiente</option>

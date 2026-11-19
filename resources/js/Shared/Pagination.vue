@@ -17,6 +17,7 @@
                         @click="firstPageUrl && (isLoading = true)"
                         :disabled="!firstPageUrl || (links.length > 1 && links[1]?.active)"
                         :preserve-scroll="true"
+                        :preserve-state="preserveState"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                             <path d="M440-240 200-480l240-240 56 56-183 184 183 184-56 56Zm264 0L464-480l240-240 56 56-183 184 183 184-56 56Z"/>
@@ -37,6 +38,7 @@
                         @click="links[0]?.url && (isLoading = true)"
                         :disabled="!links[0]?.url"
                         :preserve-scroll="true"
+                        :preserve-state="preserveState"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                             <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z"/>
@@ -56,6 +58,7 @@
                         :href="link.url || '#'" 
                         @click="link.url && (isLoading = true)"
                         :preserve-scroll="true"
+                        :preserve-state="preserveState"
                     >
                         {{ link.label }}
                     </Link>
@@ -74,6 +77,7 @@
                         @click="links[links.length - 1]?.url && (isLoading = true)"
                         :disabled="!links[links.length - 1]?.url"
                         :preserve-scroll="true"
+                        :preserve-state="preserveState"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                             <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
@@ -94,6 +98,7 @@
                         @click="lastPageUrl && (isLoading = true)"
                         :disabled="!lastPageUrl || (links.length > 2 && links[links.length - 2]?.active)"
                         :preserve-scroll="true"
+                        :preserve-state="preserveState"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
                             <path d="M383-480 200-664l56-56 240 240-240 240-56-56 183-184Zm264 0L464-664l56-56 240 240-240 240-56-56 183-184Z"/>
@@ -138,6 +143,10 @@ export default {
         showTotal: {
             type: Boolean,
             default: true
+        },
+        preserveState: {
+            type: Boolean,
+            default: false
         }
     },
     components: {

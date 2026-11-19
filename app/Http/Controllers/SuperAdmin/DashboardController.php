@@ -92,10 +92,9 @@ class DashboardController extends Controller
         }
 
         // Only retrieve institutions that actually have any applications matching the filters
-        $chartData = $institutionsQuery->having('aprobadas', '>', 0)
-                                     ->orHaving('rechazadas', '>', 0)
-                                     ->orderBy('name')
-                                     ->get();
+        $chartData = $institutionsQuery->orderBy('name')->get()
+            ->filter(fn ($institution) => $institution->aprobadas > 0 || $institution->rechazadas > 0)
+            ->values();
 
         // Format for Chart.js
         $labels = $chartData->pluck('name');

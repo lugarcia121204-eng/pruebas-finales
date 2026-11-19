@@ -22,6 +22,7 @@ const props = defineProps({
     application: Object,
     rubric: Object,
     teacher: Object,
+    evaluationPeriodOpen: Boolean,
 });
 
 const form = useForm({
@@ -89,7 +90,7 @@ const currentScore = computed(() => {
     let total = 0;
     for (const key in form.answers) {
         if (form.answers[key]) {
-            total += form.answers[key].score;
+            total += Number(form.answers[key].score);
         }
     }
     return total;
@@ -103,13 +104,13 @@ const updateFormScore = () => {
 const handleOptionSelect = (questionId, option) => {
     form.answers[questionId] = {
         option_id: option.id,
-        score: option.score
+        score: Number(option.score)
     };
     updateFormScore();
 };
 
 const isStageEvaluacion = computed(() => {
-    return props.application?.announcement?.current_stage === 'evaluacion';
+    return props.evaluationPeriodOpen;
 });
 
 const isReadOnly = computed(() => {

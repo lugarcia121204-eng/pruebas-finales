@@ -11,7 +11,7 @@ import { mdiSchool, mdiCheckCircle, mdiClockOutline, mdiFileDocumentMultiple } f
 const props = defineProps({
     stats: {
         type: Object,
-        default: () => ({ approved: 0, rejected: 0, evaluadas: 0, total: 0, pendientes: 0 })
+        default: () => ({ completed: 0, pending: 0, total: 0 })
     },
     applications: Object,
     filters: Object,
@@ -91,14 +91,14 @@ const getStatusLabel = (status) => {
                         <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" style="fill: #1B396A;">
                             <path :d="mdiSchool"/>
                         </svg>
-                        <span class="text-gray-900 font-semibold">Evaluaciones nacionales</span>
+                        <span class="text-gray-900 font-semibold">Evaluación Nacional</span>
                     </div>
                 </div>
             </div>
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                <!-- Aprobadas -->
+                <!-- Completadas -->
                 <div class="bg-white rounded-lg shadow-md border-l-4 border-[#10B981] p-4 hover:shadow-lg transition-shadow">
                     <div class="flex items-center justify-between">
                         <div>
@@ -111,7 +111,7 @@ const getStatusLabel = (status) => {
                     </div>
                 </div>
 
-                <!-- Rechazadas -->
+                <!-- Pendientes -->
                 <div class="bg-white rounded-lg shadow-md border-l-4 border-[#F59E0B] p-4 hover:shadow-lg transition-shadow">
                     <div class="flex items-center justify-between">
                         <div>
@@ -124,7 +124,7 @@ const getStatusLabel = (status) => {
                     </div>
                 </div>
 
-                <!-- Total Evaluadas -->
+                <!-- Total Asignadas -->
                 <div class="bg-white rounded-lg shadow-md border-l-4 border-[var(--institutional-primary)] p-4 hover:shadow-lg transition-shadow">
                     <div class="flex items-center justify-between">
                         <div>
@@ -202,7 +202,7 @@ const getStatusLabel = (status) => {
                 </div>
             </div>
 
-            <!-- Listado de Solicitudes Completadas -->
+            <!-- Listado de Evaluaciones Asignadas -->
             <div class="bg-white rounded-lg shadow-md border border-gray-200">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-bold text-gray-900">Evaluaciones asignadas</h3>
