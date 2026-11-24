@@ -41,8 +41,8 @@ const archivoTipo = ref(documentData.file_type || null);
 
 const viasSolicitudOptions = [
     { id: 'ambas', name: 'Ambas Vías' },
-    { id: 'larga', name: 'Vía Larga (Evaluación Docente)' },
-    { id: 'corta', name: 'Vía Corta (Promoción Docente)' },
+    { id: 'larga', name: 'Modalidad productividad (Evaluación Docente)' },
+    { id: 'corta', name: 'Diferenciado (Promoción Docente)' },
 ];
 
 const clearError = (field) => {

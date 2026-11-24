@@ -2,6 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import type { PriorityArea, SubArea, ReportFilters } from '@/types';
+import SearchableFilterSelect from '@/components/SearchableFilterSelect.vue';
 
 const props = withDefaults(defineProps<{
     modelValue?: ReportFilters;
@@ -36,6 +37,9 @@ const errors = computed(() =>
 );
 const update = (key: keyof ReportFilters, event: Event) => {
     const value = (event.target as HTMLInputElement | HTMLSelectElement).value;
+    updateValue(key, value);
+};
+const updateValue = (key: keyof ReportFilters, value: string | number | null) => {
     const next = { ...props.modelValue, [key]: value || null };
     if (key === 'priority_area_id') next.sub_area_id = null;
     emit('update:modelValue', next);
@@ -73,37 +77,11 @@ const inputClass =
             </label>
             <label class="block text-sm text-gray-700"
                 >Área
-                <select
-                    :class="inputClass"
-                    :value="modelValue.priority_area_id || ''"
-                    @change="update('priority_area_id', $event)"
-                >
-                    <option value="">Todas las áreas</option>
-                    <option
-                        v-for="item in priorityAreas"
-                        :key="item.id"
-                        :value="item.id"
-                    >
-                        {{ item.name }}
-                    </option>
-                </select>
+                <SearchableFilterSelect :model-value="modelValue.priority_area_id" :options="priorityAreas" empty-label="Todas las áreas" @update:model-value="updateValue('priority_area_id', $event)" />
             </label>
             <label class="block text-sm text-gray-700"
                 >Subárea
-                <select
-                    :class="inputClass"
-                    :value="modelValue.sub_area_id || ''"
-                    @change="update('sub_area_id', $event)"
-                >
-                    <option value="">Todas las subáreas</option>
-                    <option
-                        v-for="item in availableSubAreas"
-                        :key="item.id"
-                        :value="item.id"
-                    >
-                        {{ item.name }}
-                    </option>
-                </select>
+                <SearchableFilterSelect :model-value="modelValue.sub_area_id" :options="availableSubAreas" empty-label="Todas las subáreas" @update:model-value="updateValue('sub_area_id', $event)" />
             </label>
             <label class="block text-sm text-gray-700"
                 >Estatus {{ national ? 'nacional' : 'local' }}

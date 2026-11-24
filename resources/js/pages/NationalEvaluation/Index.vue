@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePoll } from '@inertiajs/vue3';
 import EvaluatorLayout from '@/layouts/EvaluatorLayout.vue';
 import Pagination from '@/Shared/Pagination.vue';
 import { ref, watch, onUnmounted } from 'vue';
@@ -16,6 +16,7 @@ const props = defineProps({
     applications: Object,
     filters: Object,
 });
+usePoll(15000, { only: ['applications', 'stats'] });
 
 const search = ref(props.filters?.search || '');
 const rows = ref(props.filters?.rows || 10);
@@ -214,11 +215,12 @@ const getStatusLabel = (status) => {
                             No hay evaluaciones nacionales que coincidan con los filtros.
                         </div>
 
-                        <div v-for="application in applications.data" :key="application.evaluation_id" class="border border-gray-300 rounded-lg p-4 sm:p-5 hover:shadow-md transition-shadow bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div v-for="application in applications.data" :key="application.evaluation_id" class="border rounded-lg p-4 sm:p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row justify-between items-start md:items-center gap-4" :class="application.is_latest ? 'border-sky-400 border-l-4 bg-sky-50 shadow-sm' : 'border-gray-300 bg-white'">
                             
                             <!-- Columna Izquierda: Datos Principales -->
                             <div class="flex-1">
-                                <h4 class="text-lg font-semibold text-gray-700 mb-1">{{ application.announcement_name }}</h4>
+                                <span v-if="application.is_latest" class="mb-2 inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-800">Más reciente</span>
+                                <h4 class="mb-2"><span class="inline-flex max-w-full break-words rounded-lg border border-[var(--institutional-primary)]/20 bg-slate-100 px-3 py-1.5 text-sm font-semibold text-[var(--institutional-primary)]">{{ application.announcement_name }}</span></h4>
                                 <p class="text-gray-600">
                                     {{ application.teacher_name }}
                                 </p>

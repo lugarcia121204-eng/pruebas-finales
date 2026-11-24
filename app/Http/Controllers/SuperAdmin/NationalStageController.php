@@ -7,6 +7,7 @@ use App\Models\Application;
 use App\Models\Institution;
 use App\Models\User;
 use App\Models\NationalReview;
+use App\Models\Announcement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
@@ -20,9 +21,11 @@ class NationalStageController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'institution_id' => ['nullable', 'integer', 'exists:institutions,id'],
+            'administrator_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         $applications = Application::approved()
+            ->whereHas('announcement', fn ($announcement) => $announcement->activa())
             ->with(['user.institution', 'announcement', 'nationalReview.administrator'])
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($query) use ($search) {
@@ -36,7 +39,11 @@ class NationalStageController extends Controller
             })
             ->when($filters['institution_id'] ?? null, fn ($query, $id) =>
                 $query->whereHas('user', fn ($user) => $user->where('institution_id', $id)))
-            ->orderByDesc('updated_at')->orderByDesc('id')
+            ->when($filters['administrator_id'] ?? null, fn ($query, $id) =>
+                $query->whereHas('nationalReview', fn ($review) => $review->where('administrator_id', $id)),
+                fn ($query) => $query->whereDoesntHave('nationalReview'))
+            ->orderBy(User::select('name')->whereColumn('users.id', 'applications.user_id')->limit(1))
+            ->orderBy('applications.id')
             ->paginate(15)->withQueryString()
             ->through(fn ($application) => [
                 'id' => $application->id,
@@ -51,10 +58,53 @@ class NationalStageController extends Controller
 
         return Inertia::render('SuperAdmin/NationalStage/Index', [
             'applications' => $applications,
-            'institutions' => Institution::whereHas('applications', fn ($query) => $query->approved())
+            'institutions' => Institution::whereHas('applications', fn ($query) => $query->approved()
+                ->whereHas('announcement', fn ($announcement) => $announcement->activa()))
                 ->orderBy('name')->get(['id', 'name']),
             'filters' => $filters,
             'nationalAdministrators' => User::whereHas('roles', fn ($query) => $query->where('name', 'Admin Nacional'))->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function assignments(Request $request): Response
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'announcement_id' => ['nullable', 'integer', 'exists:announcements,id'],
+            'institution_id' => ['nullable', 'integer', 'exists:institutions,id'],
+            'administrator_id' => ['nullable', 'integer', 'exists:users,id'],
+            'rows' => ['nullable', 'integer', 'in:5,10,25,50'],
+        ]);
+        $reviews = NationalReview::whereHas('application', fn ($query) => $query->approved())
+            ->with(['application.user.institution', 'application.announcement', 'administrator'])
+            ->when($filters['search'] ?? null, fn ($query, $search) => $query
+                ->whereHas('application.user', fn ($teacher) => $teacher->where('name', 'like', "%{$search}%")))
+            ->when($filters['announcement_id'] ?? null, fn ($query, $id) => $query
+                ->whereHas('application', fn ($application) => $application->where('announcement_id', $id)))
+            ->when($filters['institution_id'] ?? null, fn ($query, $id) => $query
+                ->whereHas('application.user', fn ($teacher) => $teacher->where('institution_id', $id)))
+            ->when($filters['administrator_id'] ?? null, fn ($query, $id) => $query->where('administrator_id', $id))
+            ->orderBy(User::select('name')->join('applications', 'applications.user_id', '=', 'users.id')
+                ->whereColumn('applications.id', 'national_reviews.application_id')->limit(1))
+            ->orderBy('national_reviews.id')
+            ->paginate($filters['rows'] ?? 10)->withQueryString()
+            ->through(fn ($review) => [
+                'id' => $review->id,
+                'teacher' => $review->application->user?->name ?? 'Usuario no disponible',
+                'announcement' => $review->application->announcement?->name ?? 'Convocatoria no disponible',
+                'institution' => $review->application->user?->institution?->name ?? 'Sin institución asignada',
+                'administrator' => $review->administrator?->name ?? 'Administrador no disponible',
+                'status' => $review->status,
+            ]);
+
+        return Inertia::render('SuperAdmin/NationalStage/Assignments', [
+            'reviews' => $reviews,
+            'filters' => $filters,
+            'announcements' => Announcement::whereHas('applications', fn ($query) => $query->approved()->has('nationalReview'))
+                ->orderBy('name')->get(['id', 'name']),
+            'institutions' => Institution::whereHas('applications', fn ($query) => $query->approved()->has('nationalReview'))
+                ->orderBy('name')->get(['id', 'name']),
+            'nationalAdministrators' => User::role('Admin Nacional')->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -75,6 +125,7 @@ class NationalStageController extends Controller
                 throw ValidationException::withMessages(['administrator_id' => 'La solicitud ya tiene un Admin Nacional asignado y no se puede cambiar.']);
             }
             $review->fill(['administrator_id' => $administrator->id, 'assigned_by' => $request->user()->id, 'status' => 'pending'])->save();
+            app(\App\Services\NotificationService::class)->notifyNationalReviewAssignment($review);
         });
         return back()->with('success', 'Solicitud asignada a Admin Nacional para su segunda revisión.');
     }
@@ -124,12 +175,13 @@ class NationalStageController extends Controller
             }
 
             foreach ($applications as $application) {
-                NationalReview::create([
+                $review = NationalReview::create([
                     'application_id' => $application->id,
                     'administrator_id' => $administrator->id,
                     'assigned_by' => $request->user()->id,
                     'status' => 'pending',
                 ]);
+                app(\App\Services\NotificationService::class)->notifyNationalReviewAssignment($review);
             }
         });
 

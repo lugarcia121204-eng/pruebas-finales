@@ -54,16 +54,18 @@ const getStatusLabel = (status) => {
         approved: 'Aprobado',
         rejected: 'Rechazado',
         expired: 'Expirada',
-        evaluated_by_admin: 'Evaluada por Admin',
     };
     return labels[status] || status;
 };
 
-const getEvaluatorStatus = (evStatus, appStatus) => {
-    if (evStatus === 'pending' && appStatus !== 'pending') {
-        return 'evaluated_by_admin';
+const formatEvaluationScore = (evaluation) => {
+    if (!['approved', 'rejected'].includes(evaluation.status) || evaluation.score == null) {
+        return '—';
     }
-    return evStatus;
+    const score = Number(evaluation.score);
+    return Number.isFinite(score)
+        ? score.toLocaleString('es-MX', { maximumFractionDigits: 2 })
+        : '—';
 };
 
 const isValidVerdictStage = computed(() => {
@@ -213,10 +215,10 @@ const getFileIcon = (type) => {
                         <p class="text-sm font-medium text-gray-600 mb-2">Vía de Solicitud</p>
                         <div class="inline-flex">
                             <span v-if="application.via === 'larga'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #1B396A; border: 1px solid #0f2347;">
-                                Vía Larga
+                                Modalidad productividad (Evaluación Docente)
                             </span>
-                            <span v-else-if="application.via === 'corta'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #10A558; border: 1px solid #0d8d47;">
-                                Vía Corta
+                            <span v-else-if="application.via === 'corta'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #1B396A; border: 1px solid #0f2347;">
+                                Diferenciado (Promoción Docente)
                             </span>
                             <span v-else class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-300">
                                 No Especificada
@@ -318,6 +320,7 @@ const getFileIcon = (type) => {
                                 <th class="px-6 py-3 text-xs uppercase font-semibold w-12 whitespace-nowrap">ID</th>
                                     <th class="px-6 py-3 text-xs uppercase font-semibold whitespace-nowrap">Nombre</th>
                                     <th class="px-6 py-3 text-xs uppercase font-semibold whitespace-nowrap">Comentarios</th>
+                                    <th class="px-6 py-3 text-xs uppercase font-semibold text-right whitespace-nowrap">Puntaje de rúbrica</th>
                                     <th class="px-6 py-3 text-xs uppercase font-semibold text-right whitespace-nowrap">Estado</th>
                                     <th class="px-6 py-3 text-xs uppercase font-semibold text-center whitespace-nowrap">Acciones</th>
                                 </tr>
@@ -345,28 +348,29 @@ const getFileIcon = (type) => {
                                         </div>
                                         <span v-else class="text-gray-400 italic">Sin comentarios</span>
                                     </td>
+                                    <td class="px-3 md:px-6 py-4 text-sm font-semibold text-gray-900 text-right tabular-nums whitespace-nowrap">
+                                        {{ formatEvaluationScore(ev) }}
+                                    </td>
                                     <td class="px-3 md:px-6 py-4 text-right whitespace-nowrap">
                                         <span 
                                             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white text-xs font-bold shadow-sm border border-gray-100"
                                             :class="{
-                                                'text-green-700': getEvaluatorStatus(ev.status, application.status) === 'approved',
-                                                'text-red-700': getEvaluatorStatus(ev.status, application.status) === 'rejected',
-                                                'text-yellow-700': getEvaluatorStatus(ev.status, application.status) === 'pending',
-                                                'text-gray-700': getEvaluatorStatus(ev.status, application.status) === 'expired',
-                                                'text-purple-700': getEvaluatorStatus(ev.status, application.status) === 'evaluated_by_admin',
+                                                'text-green-700': ev.status === 'approved',
+                                                'text-red-700': ev.status === 'rejected',
+                                                'text-yellow-700': ev.status === 'pending',
+                                                'text-gray-700': ev.status === 'expired',
                                             }"
                                         >
                                             <span 
                                                 class="w-2 h-2 rounded-full"
                                                 :class="{
-                                                    'bg-green-500': getEvaluatorStatus(ev.status, application.status) === 'approved',
-                                                    'bg-red-500': getEvaluatorStatus(ev.status, application.status) === 'rejected',
-                                                    'bg-yellow-500 animate-pulse': getEvaluatorStatus(ev.status, application.status) === 'pending',
-                                                    'bg-gray-500': getEvaluatorStatus(ev.status, application.status) === 'expired',
-                                                    'bg-purple-500': getEvaluatorStatus(ev.status, application.status) === 'evaluated_by_admin',
+                                                    'bg-green-500': ev.status === 'approved',
+                                                    'bg-red-500': ev.status === 'rejected',
+                                                    'bg-yellow-500 animate-pulse': ev.status === 'pending',
+                                                    'bg-gray-500': ev.status === 'expired',
                                                 }"
                                             ></span>
-                                            {{ getStatusLabel(getEvaluatorStatus(ev.status, application.status)) }}
+                                            {{ getStatusLabel(ev.status) }}
                                         </span>
                                     </td>
                                     <td class="px-3 md:px-6 py-4 text-center whitespace-nowrap">
@@ -380,7 +384,7 @@ const getFileIcon = (type) => {
                                     </td>
                                 </tr>
                                 <tr v-if="!application.evaluations || application.evaluations.length === 0">
-                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500 italic">
+                                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500 italic">
                                         No se han asignado evaluadores aún.
                                     </td>
                                 </tr>

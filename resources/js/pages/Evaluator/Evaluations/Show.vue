@@ -197,10 +197,10 @@ const isEvaluatedByAdmin = computed(() => {
                             <h3 class="text-xs uppercase text-gray-500 font-semibold mb-2">Vía de Solicitud</h3>
                             <div class="inline-flex">
                                 <span v-if="application.via === 'larga'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #1B396A; border: 1px solid #0f2347;">
-                                    Vía Larga
+                                    Modalidad productividad (Evaluación Docente)
                                 </span>
-                                <span v-else-if="application.via === 'corta'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #10A558; border: 1px solid #0d8d47;">
-                                    Vía Corta
+                                <span v-else-if="application.via === 'corta'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #1B396A; border: 1px solid #0f2347;">
+                                    Diferenciado (Promoción Docente)
                                 </span>
                                 <span v-else class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-300">
                                     No Especificada

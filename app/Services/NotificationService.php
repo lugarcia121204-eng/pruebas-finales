@@ -12,6 +12,9 @@ use App\Mail\NewAnnouncement;
 use App\Mail\RecognitionAvailable;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\Evaluation;
+use App\Models\NationalEvaluation;
+use App\Models\NationalReview;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -19,30 +22,67 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class NotificationService
 {
+    public function notifyNationalReviewAssignment(NationalReview $review): void
+    {
+        $review->loadMissing(['application.user', 'application.announcement']);
+        $application = $review->application;
+        Notification::create([
+            'user_id' => $review->administrator_id,
+            'title' => 'Nueva solicitud para revisión nacional',
+            'type' => 'national_review_assignment',
+            'data' => [
+                'message' => 'Recibiste la solicitud #'.$application->id.' de '.$application->user?->name
+                    .' para revisión nacional de la convocatoria «'.$application->announcement?->name.'».',
+                'review_id' => $review->id,
+                'application_id' => $application->id,
+                'announcement_id' => $application->announcement_id,
+                'stage' => 'national',
+            ],
+        ]);
+    }
+
     /**
      * Send notification when evaluations are assigned to an evaluator
      */
-    public function notifyEvaluatorAssignment($evaluatorId, $evaluationsCount)
+    public function notifyEvaluatorAssignment($evaluatorId, $evaluationsCount, Evaluation|NationalEvaluation|null $evaluation = null): void
     {
         $evaluator = User::findOrFail($evaluatorId);
+        $national = $evaluation instanceof NationalEvaluation;
+        $stage = $national ? 'national' : 'local';
+        $stageLabel = $national ? 'nacional' : 'local';
+        $application = $national ? $evaluation->review->application : $evaluation?->application;
+        $announcement = $application?->announcement;
+        $deadline = $national ? $announcement?->calendar?->national_evaluation_end : $evaluation?->deadline_at;
+        $evaluationUrl = $evaluation
+            ? route($national ? 'national-evaluations.show' : 'evaluator.evaluation.show', $evaluation->id)
+            : route('evaluator.dashboard');
 
         // Create notification
         Notification::create([
-            'title' => 'Nuevas Evaluaciones Asignadas',
+            'title' => 'Nueva evaluación '.$stageLabel.' asignada',
             'data' => [
-                'message' => 'Se te han asignado nuevas evaluaciones.',
+                'message' => $application
+                    ? 'Se te asignó la evaluación '.$stageLabel.' de la solicitud #'.$application->id.' de la convocatoria «'.$announcement?->name.'».'
+                    : 'Se te ha asignado una nueva evaluación local.',
                 'count' => $evaluationsCount,
+                'stage' => $stage,
+                'evaluation_id' => $evaluation?->id,
+                'application_id' => $application?->id,
+                'announcement_id' => $announcement?->id,
             ],
             'type' => 'evaluator_assignment',
             'user_id' => $evaluatorId,
         ]);
 
-        DB::afterCommit(function () use ($evaluator, $evaluationsCount) {
+        DB::afterCommit(function () use ($evaluator, $evaluationsCount, $stage, $national, $deadline, $evaluationUrl) {
             try {
                 Mail::to($evaluator->email)->queue(new EvaluatorAssigned(
                     $evaluator->name,
                     $evaluationsCount,
-                    7 // días hábiles límite
+                    $national ? null : 7,
+                    $stage,
+                    $deadline?->format('d/m/Y'),
+                    $evaluationUrl
                 ));
             } catch (TransportExceptionInterface $exception) {
                 Log::warning('No se pudo enviar el correo de asignación de evaluador.', [

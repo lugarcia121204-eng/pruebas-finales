@@ -12,7 +12,8 @@ import {
     mdiClockOutline, 
     mdiCheckCircle, 
     mdiCloseCircle,
-    mdiHome
+    mdiHome,
+    mdiStar
 } from '@mdi/js';
 
 const props = defineProps({
@@ -206,6 +207,10 @@ const getProgressWidth = (count) => {
                         <span class="text-gray-900 font-semibold">Inicio</span>
                     </div>
                 </div>
+                <Link :href="route('national-review.evaluator-recognitions.index')" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--institutional-primary)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--institutional-primary-dark)]">
+                    <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="currentColor" aria-hidden="true"><path :d="mdiStar" /></svg>
+                    Activar reconocimientos de evaluadores
+                </Link>
             </div>
 
             <!-- Summary Cards -->

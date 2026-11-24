@@ -462,13 +462,18 @@ const dayStyle = (day) => {
             borderRadius: '6px', 
             fontWeight: '700',
             cursor: disabled ? 'not-allowed' : (activePhase.value ? 'crosshair' : 'pointer'),
-            opacity: disabled && activePhase.value ? '0.6' : '1'
+            opacity: '1'
         };
     }
 
     // 3. Otherwise, if it's disabled (past or locked), show gray
     if (disabled) {
-        return { background: '#F9FAFB', color: '#D1D5DB', cursor: 'not-allowed', opacity: '0.6' };
+        return {
+            background: 'var(--announcement-calendar-disabled-bg, #F9FAFB)',
+            color: 'var(--announcement-calendar-disabled-text, #D1D5DB)',
+            cursor: 'not-allowed',
+            opacity: 'var(--announcement-calendar-disabled-opacity, 0.6)',
+        };
     }
 
     return {};
@@ -491,7 +496,7 @@ const dayLabel = (day) => {
 </script>
 
 <template>
-    <div class="space-y-6 select-none">
+    <div class="announcement-calendar space-y-6 select-none">
 
         <!-- Phase selector cards -->
         <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -731,5 +736,17 @@ const dayLabel = (day) => {
 .select-none {
     user-select: none;
     -webkit-user-select: none;
+}
+
+.announcement-calendar {
+    --announcement-calendar-disabled-bg: #f9fafb;
+    --announcement-calendar-disabled-text: #d1d5db;
+    --announcement-calendar-disabled-opacity: 0.6;
+}
+
+:global(.dark) .announcement-calendar {
+    --announcement-calendar-disabled-bg: #475569;
+    --announcement-calendar-disabled-text: #e2e8f0;
+    --announcement-calendar-disabled-opacity: 1;
 }
 </style>

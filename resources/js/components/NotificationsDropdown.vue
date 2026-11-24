@@ -83,6 +83,8 @@
                                     </p>
 
                                     <button v-if="notification.type === 'institution_chat' && notification.data?.contact_id" type="button" @click="openConversation(notification)" class="mb-2 text-xs font-semibold text-[var(--institutional-primary)] hover:underline">Abrir conversaci&oacute;n</button>
+                                    <button v-if="notification.type === 'evaluator_assignment' && notification.data?.evaluation_id" type="button" @click="openEvaluation(notification)" class="mb-2 text-xs font-semibold text-[var(--institutional-primary)] hover:underline">Ver evaluación</button>
+                                    <button v-if="notification.type === 'national_review_assignment' && notification.data?.review_id" type="button" @click="openNationalReview(notification)" class="mb-2 text-xs font-semibold text-[var(--institutional-primary)] hover:underline">Ver solicitud</button>
                                     <div class="flex items-center gap-2">
                                         <p class="text-[11px] text-gray-400 font-medium">
                                             {{ formatDate(notification.created_at) }}
@@ -153,7 +155,7 @@ const getNotificationRoute = () => {
     
     let prefix = 'admin';
     
-    if (primaryRole === 'Admin' || (userRoles && userRoles.includes && userRoles.includes('Admin'))) {
+    if (primaryRole === 'Admin' || primaryRole === 'Admin Nacional' || (userRoles && userRoles.includes && userRoles.includes('Admin'))) {
         prefix = 'admin';
     } else if (primaryRole === 'Evaluador' || (userRoles && userRoles.includes && userRoles.includes('Evaluador'))) {
         prefix = 'evaluator';
@@ -213,6 +215,21 @@ const openConversation = async (notification) => {
     await markAsRead(notification.id);
     isOpen.value = false;
     router.get(route('institution-chat.index', { contact: notification.data.contact_id }));
+};
+
+const openEvaluation = async (notification) => {
+    await markAsRead(notification.id);
+    isOpen.value = false;
+    const destination = notification.data.stage === 'national'
+        ? 'national-evaluations.show'
+        : 'evaluator.evaluation.show';
+    router.get(route(destination, notification.data.evaluation_id));
+};
+
+const openNationalReview = async (notification) => {
+    await markAsRead(notification.id);
+    isOpen.value = false;
+    router.get(route('national-review.show', notification.data.review_id));
 };
 
 // Mark all as read
@@ -289,7 +306,7 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
-    const supportedRole = ['Admin', 'Docente', 'Evaluador'].includes(page.props.auth?.primaryRole);
+    const supportedRole = ['Admin', 'Admin Nacional', 'Docente', 'Evaluador'].includes(page.props.auth?.primaryRole);
     if (supportedRole) {
         loadNotifications(false);
         notificationTimer = setInterval(() => { if (!document.hidden) loadNotifications(false); }, 10000);

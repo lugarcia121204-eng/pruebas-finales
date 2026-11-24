@@ -1,124 +1,85 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3';
-import AdminLayout from '@/layouts/AdminLayout.vue';
+import { Head, router } from '@inertiajs/vue3';
+import DynamicLayout from '@/layouts/DynamicLayout.vue';
 import Pagination from '@/Shared/Pagination.vue';
-import { ref, watch } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
 import { debounce } from 'lodash';
 import { useCan } from '@/composables/usePermissions';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import { mdiSecurity } from '@mdi/js';
-import { alertaExito, alertaPregunta } from '@/utils/alerts.js';
+import { alertaExito, alertaPregunta, alertaError } from '@/utils/alerts.js';
 
 const props = defineProps({
-    users: {
-        type: Object,
-        required: true,
-    },
-    filters: {
-        type: Object,
-        required: true,
-    },
-    registrationLink: {
-        type: String,
-        required: true,
-    }
+    users: { type: Object, required: true },
+    filters: { type: Object, required: true },
+    registrationLink: { type: String, required: true },
+    indexRoute: { type: String, default: 'admin.evaluators.index' },
+    canDelete: { type: Boolean, default: true },
+    listDescription: { type: String, default: '' },
 });
-
 const search = ref(props.filters.search || '');
-const rows = ref(props.filters.rows || 10);
+const rows = ref(Number(props.filters.rows || 10));
 const sortField = ref(props.filters.sort_field || '');
 const sortDirection = ref(props.filters.sort_direction || 'asc');
-
-const rowOptions = [
-    { label: '5 Registros', value: 5 },
-    { label: '10 Registros', value: 10 },
-    { label: '25 Registros', value: 25 },
-    { label: '50 Registros', value: 50 },
-];
-
-const copyRegistrationLink = () => {
-    const fullUrl = window.location.origin + '/register/evaluator';
-    
-    const tempInput = document.createElement('input');
-    tempInput.value = fullUrl;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    
-    try {
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
-        alertaExito('¡Enlace copiado!', 'El enlace de registro ha sido copiado al portapapeles');
-    } catch (err) {
-        document.body.removeChild(tempInput);
-        console.error('Error al copiar:', err);
+const rowOptions = [5, 10, 25, 50].map(value => ({ label: `${value} Registros`, value }));
+const copyRegistrationLink = async () => {
+    const fullUrl = new URL(props.registrationLink, window.location.origin).href;
+    let copied = false;
+    if (navigator.clipboard?.writeText) {
+        try { await navigator.clipboard.writeText(fullUrl); copied = true; } catch { /* Fallback for HTTP or denied clipboard access. */ }
     }
+    if (!copied) {
+        const input = document.createElement('textarea');
+        input.value = fullUrl;
+        input.readOnly = true;
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        input.select();
+        try { copied = document.execCommand('copy'); } catch { copied = false; }
+        finally { input.remove(); }
+    }
+    if (copied) alertaExito('¡Enlace copiado!', 'El enlace de registro ha sido copiado al portapapeles');
+    else alertaError('No se pudo copiar', `Copia este enlace de registro: ${fullUrl}`);
 };
-
-const onSearch = debounce((value) => {
-    router.get(route('admin.evaluators.index'), {
-        search: value, 
-        rows: rows.value,
-        sort_field: sortField.value,
-        sort_direction: sortDirection.value
-    }, { preserveState: true, replace: true });
-}, 500);
-
-const onRowsChange = () => {
-    router.get(route('admin.evaluators.index'), { 
-        search: search.value, 
-        rows: rows.value,
-        sort_field: sortField.value,
-        sort_direction: sortDirection.value
+const applyFilters = () => {
+    onSearch.cancel();
+    router.get(route(props.indexRoute), {
+        search: search.value, rows: rows.value,
+        sort_field: sortField.value || undefined,
+        sort_direction: sortField.value ? sortDirection.value : undefined,
     }, { preserveState: true, replace: true });
 };
-
-watch(search, (value) => {
-    onSearch(value);
-});
-
+const onSearch = debounce(applyFilters, 500);
+watch(search, () => onSearch(), { flush: 'sync' });
+onUnmounted(() => onSearch.cancel());
+const onRowsChange = () => applyFilters();
 const cleanFilters = () => {
     search.value = '';
     rows.value = 10;
     sortField.value = '';
     sortDirection.value = 'asc';
-    router.get(route('admin.evaluators.index'), {}, { preserveState: true, replace: true });
+    onSearch.cancel();
+    router.get(route(props.indexRoute), {}, { preserveState: true, replace: true });
 };
-
-const sortBy = (field) => {
-    if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortField.value = field;
-        sortDirection.value = 'asc';
-    }
-    router.get(route('admin.evaluators.index'), {
-        search: search.value,
-        rows: rows.value,
-        sort_field: sortField.value,
-        sort_direction: sortDirection.value
-    }, { preserveState: true, replace: true });
+const sortBy = field => {
+    sortDirection.value = sortField.value === field && sortDirection.value === 'asc' ? 'desc' : 'asc';
+    sortField.value = field;
+    applyFilters();
 };
-
 const deleteUser = async (id, name) => {
-    const confirmed = await alertaPregunta(
-        '¿Eliminar evaluador?',
-        `Se eliminará a ${name}`
-    );
-    
-    if (confirmed) {
-        router.delete(route('admin.evaluators.destroy', id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                alertaExito('¡Eliminado!', 'Evaluador eliminado correctamente');
-            }
-        });
-    }
+    if (!props.canDelete) return;
+    const confirmed = await alertaPregunta('¿Eliminar evaluador?', `Se eliminará a ${name}`);
+    if (confirmed) router.delete(route('admin.evaluators.destroy', id), {
+        preserveScroll: true,
+        onSuccess: () => alertaExito('¡Eliminado!', 'Evaluador eliminado correctamente'),
+    });
 };
 </script>
 
 <template>
-    <AdminLayout>
+    <DynamicLayout>
         <Head title="Gestión de Evaluadores" />
 
         <div class="space-y-6">
@@ -149,6 +110,8 @@ const deleteUser = async (id, name) => {
                     </button>
                 </div>
             </div>
+
+            <p v-if="listDescription" class="text-sm text-gray-600">{{ listDescription }}</p>
 
             <!-- Filter Card -->
             <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4">
@@ -214,7 +177,7 @@ const deleteUser = async (id, name) => {
                                         </svg>
                                     </div>
                                 </th>
-                                <th scope="col" class="px-6 py-4 text-center tracking-wider">Acciones</th>
+                                <th v-if="canDelete" scope="col" class="px-6 py-4 text-center tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -223,7 +186,7 @@ const deleteUser = async (id, name) => {
                                 <td class="px-6 py-4 font-semibold text-gray-800">{{ user.name }}</td>
                                 <td class="px-6 py-4 text-gray-600">{{ user.email }}</td>
 
-                                <td class="px-6 py-4 text-center">
+                                <td v-if="canDelete" class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
                                         <button v-if="useCan('users.delete')" @click="deleteUser(user.id, user.name)" class="p-2 text-red-600 border border-red-600 rounded-full hover:bg-red-600 hover:text-white transition group cursor-pointer" title="Eliminar">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
@@ -234,7 +197,7 @@ const deleteUser = async (id, name) => {
                                 </td>
                             </tr>
                             <tr v-if="!users.data || users.data.length === 0">
-                                <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                                <td :colspan="canDelete ? 4 : 3" class="px-6 py-12 text-center text-gray-500">
                                     No se encontraron evaluadores
                                 </td>
                             </tr>
@@ -248,7 +211,7 @@ const deleteUser = async (id, name) => {
                 </div>
             </div>
         </div>
-    </AdminLayout>
+    </DynamicLayout>
 </template>
 
 <style scoped>

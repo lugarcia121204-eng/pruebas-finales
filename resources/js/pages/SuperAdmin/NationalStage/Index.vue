@@ -1,8 +1,9 @@
 <script setup>
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue';
 import Pagination from '@/Shared/Pagination.vue';
+import SearchableFilterSelect from '@/components/SearchableFilterSelect.vue';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
 import { alertaExito, alertaError } from '@/utils/alerts.js';
@@ -23,13 +24,16 @@ const bulkAssigning = ref(false);
 const nationalStatus = (status) => ({ unassigned: 'Sin asignar', pending: 'Pendiente de revisión nacional', approved: 'Aprobada en etapa nacional', rejected: 'Rechazada en etapa nacional' }[status] ?? status);
 const search = ref(props.filters.search ?? '');
 const institutionId = ref(props.filters.institution_id ?? '');
+const administratorFilterId = ref(props.filters.administrator_id ?? '');
 const applyFilters = () => router.get(route('superadmin.national-stage.index'), {
     search: search.value || undefined,
     institution_id: institutionId.value || undefined,
+    administrator_id: administratorFilterId.value || undefined,
 }, { preserveState: true, replace: true });
 const clearFilters = () => {
     search.value = '';
     institutionId.value = '';
+    administratorFilterId.value = '';
     applyFilters();
 };
 const toggleApplication = (application) => {
@@ -84,9 +88,14 @@ const assignSelectedApplications = () => {
     <LayoutAuthenticated>
         <Head title="Etapa nacional" />
         <div class="space-y-6">
-            <div>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Etapa nacional</h1>
                 <p class="mt-2 text-gray-600">Solicitudes aprobadas por los administradores de las instituciones.</p>
+                </div>
+                <Link :href="route('superadmin.national-stage.assignments')" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--institutional-primary)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--institutional-primary-dark)]">
+                    <Users class="size-5" aria-hidden="true" />Consultar asignaciones nacionales
+                </Link>
             </div>
             <form @submit.prevent="applyFilters" class="bg-white rounded-lg border border-gray-200 shadow-sm p-5 space-y-4">
                 <h2 class="font-semibold text-gray-900">Buscar solicitudes</h2>
@@ -97,10 +106,7 @@ const assignSelectedApplications = () => {
                     </div>
                     <div>
                         <label for="national-institution" class="block text-sm font-medium mb-2">Institución</label>
-                        <select id="national-institution" v-model="institutionId" class="w-full rounded-lg border border-gray-300 p-2.5">
-                            <option value="">Todas las instituciones</option>
-                            <option v-for="institution in institutions" :key="institution.id" :value="institution.id">{{ institution.name }}</option>
-                        </select>
+                        <SearchableFilterSelect input-id="national-institution" v-model="institutionId" :options="institutions" empty-label="Todas las instituciones" />
                     </div>
                 </div>
                 <div class="flex gap-3">
@@ -142,7 +148,7 @@ const assignSelectedApplications = () => {
                         <header class="flex flex-wrap items-center justify-between gap-3 bg-[var(--institutional-primary)] px-4 py-4 text-white sm:px-5">
                             <div class="flex items-center gap-3">
                                 <Users class="size-5 shrink-0" aria-hidden="true" />
-                                <h3 id="national-approved-title" class="font-bold">Solicitudes aprobadas en etapa local ({{ applications.total }})</h3>
+                                <h3 id="national-approved-title" class="font-bold">{{ filters.administrator_id ? 'Solicitudes asignadas' : 'Solicitudes pendientes de asignar' }} ({{ applications.total }})</h3>
                             </div>
                             <button
                                 type="button"
@@ -155,6 +161,10 @@ const assignSelectedApplications = () => {
                             </button>
                         </header>
 
+                        <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-5">
+                            <label for="national-administrator-filter" class="mb-2 block text-sm font-medium text-gray-700">Admin Nacional</label>
+                            <SearchableFilterSelect input-id="national-administrator-filter" v-model="administratorFilterId" @change="applyFilters" :options="nationalAdministrators" empty-label="Pendientes de asignar" />
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-gray-100 text-xs uppercase text-gray-700">
@@ -173,11 +183,12 @@ const assignSelectedApplications = () => {
                                         <th scope="col" class="min-w-44 px-4 py-3">Docente</th>
                                         <th scope="col" class="min-w-36 px-4 py-3">Convocatoria</th>
                                         <th scope="col" class="min-w-44 px-4 py-3">Institución</th>
+                                        <th scope="col" class="min-w-44 px-4 py-3">Admin Nacional asignado</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200">
                                     <tr
-                                        v-for="application in applications.data"
+                                        v-for="(application, index) in applications.data"
                                         :key="application.id"
                                         class="transition-colors hover:bg-gray-50"
                                         :class="{ 'bg-blue-50/70': selectedIds.includes(application.id) }"
@@ -192,7 +203,7 @@ const assignSelectedApplications = () => {
                                                 @change="toggleApplication(application)"
                                             />
                                         </td>
-                                        <td class="px-4 py-3 font-medium text-gray-700">{{ application.id }}</td>
+                                        <td class="px-4 py-3 font-medium text-gray-700">{{ (applications.from ?? 1) + index }}</td>
                                         <td class="px-4 py-3 font-medium text-gray-900">
                                             <div>{{ application.teacher }}</div>
                                             <span
@@ -206,9 +217,12 @@ const assignSelectedApplications = () => {
                                         </td>
                                         <td class="px-4 py-3 text-gray-700">{{ application.announcement }}</td>
                                         <td class="px-4 py-3 text-gray-700">{{ application.institution }}</td>
+                                        <td class="px-4 py-3 text-gray-700">
+                                            {{ application.national_administrator || 'Sin asignar' }}
+                                        </td>
                                     </tr>
                                     <tr v-if="!applications.data.length">
-                                        <td colspan="5" class="px-4 py-12 text-center text-gray-500">No hay solicitudes aprobadas que coincidan con los filtros.</td>
+                                        <td colspan="6" class="px-4 py-12 text-center text-gray-500">No hay solicitudes aprobadas que coincidan con los filtros.</td>
                                     </tr>
                                 </tbody>
                             </table>

@@ -30,6 +30,7 @@ class AssignmentService
             \App\Services\AdminInstitutionAccess::evaluator((int) $id);
         }
         DB::transaction(function () use ($applicationId, $evaluatorIds) {
+            \App\Models\Application::whereKey($applicationId)->lockForUpdate()->firstOrFail();
             foreach ($evaluatorIds as $userId) {
                 // Verificamos que no exista una evaluación previa para ese dúo
                 $exists = Evaluation::where('application_id', $applicationId)
@@ -37,7 +38,7 @@ class AssignmentService
                     ->exists();
 
                 if (!$exists) {
-                    Evaluation::create([
+                    $evaluation = Evaluation::create([
                         'application_id' => $applicationId,
                         'evaluator_id'   => $userId,
                         'status'         => 'pending',
@@ -45,12 +46,13 @@ class AssignmentService
                     ]);
 
                     // Contar cuántas evaluaciones tiene el evaluador
-                    $evaluationsCount = Evaluation::where('evaluator_id', $userId)
+                    $evaluationsCount = Evaluation::withAvailableApplication()->where('evaluator_id', $userId)
                         ->where('status', 'pending')
+                        ->whereHas('application', fn ($application) => $application->pending())
                         ->count();
 
                     // Enviar notificación individual
-                    $this->notificationService->notifyEvaluatorAssignment($userId, $evaluationsCount);
+                    $this->notificationService->notifyEvaluatorAssignment($userId, $evaluationsCount, $evaluation);
                 }
             }
         });

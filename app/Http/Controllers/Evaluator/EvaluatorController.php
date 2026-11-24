@@ -16,49 +16,51 @@ class EvaluatorController extends Controller
         $user = $request->user();
         $search = $request->input('search');
 
-        // Statistics using advanced Eloquent relationship scopes (1 Query)
-        $user->loadCount([
-            'evaluations as total' => fn ($query) => $query->withAvailableApplication(),
-            'evaluations as pendientes' => fn($q) => $q->withAvailableApplication()->pending()->whereHas('application', fn($q2) => $q2->where('status', 'pending'))
-        ]);
-
-        $totalAsignadas = $user->total;
-        $pendientes = $user->pendientes;
+        $rows = $request->validate(['rows' => ['nullable', 'integer', 'in:5,10,25,50']])['rows'] ?? 10;
+        $local = \App\Models\Evaluation::withAvailableApplication()->where('evaluator_id', $user->id);
+        $latestLocalId = (clone $local)->latest()->orderByDesc('id')->value('id');
+        $national = \App\Models\NationalEvaluation::where('evaluator_id', $user->id)
+            ->whereHas('review.application', fn ($query) => $query->approved());
+        $latestNationalId = (clone $national)->latest()->orderByDesc('id')->value('id');
+        $localPending = (clone $local)->pending()->whereHas('application', fn ($query) => $query->where('status', 'pending'));
+        $nationalPending = (clone $national)->where('status', 'pending')
+            ->whereHas('review', fn ($query) => $query->where('status', 'pending'));
+        $totalAsignadas = (clone $local)->count() + (clone $national)->count();
+        $pendientes = (clone $localPending)->count() + (clone $nationalPending)->count();
         $evaluadas = $totalAsignadas - $pendientes;
 
-        // Pending Applications
-        $applications = \App\Models\Evaluation::withAvailableApplication()->where('evaluator_id', $user->id)
-            ->pending()
-            ->whereHas('application', function ($q) {
-                $q->where('status', 'pending');
-            })
-            ->with([
-                'application.announcement',
-                'application.user.subArea',
-                'application' => function ($query) {
-                    $query->withCount('documents');
-                }
-            ])
-            ->when($search, function ($query, $search) {
-                $query->searchByTeacherOrAnnouncement($search);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate($request->input('rows', 10))
-            ->withQueryString();
+        $localPending->when($search, fn ($query) => $query->searchByTeacherOrAnnouncement($search));
+        $nationalPending->when($search, fn ($query) => $query->whereHas('review.application', fn ($app) => $app
+            ->where(fn ($match) => $match->whereHas('user', fn ($teacher) => $teacher->where('name', 'like', "%{$search}%"))
+                ->orWhereHas('announcement', fn ($announcement) => $announcement->where('name', 'like', "%{$search}%")))));
 
-        // Transform data for view
-        $applications->getCollection()->transform(function ($evaluation) {
+        $pending = $localPending->select('id', 'created_at')->selectRaw("'local' as stage")
+            ->unionAll($nationalPending->select('id', 'created_at')->selectRaw("'national' as stage"));
+        $applications = \Illuminate\Support\Facades\DB::query()->fromSub($pending, 'pending_evaluations')
+            ->orderByDesc('created_at')->orderBy('stage')->orderByDesc('id')->paginate($rows)->withQueryString();
+        $items = $applications->getCollection();
+        $localEvaluations = \App\Models\Evaluation::with(['application.announcement', 'application.user.subArea',
+            'application' => fn ($query) => $query->withCount('documents')])
+            ->whereIn('id', $items->where('stage', 'local')->pluck('id'))->get()->keyBy('id');
+        $nationalEvaluations = \App\Models\NationalEvaluation::with(['review.application.announcement', 'review.application.user.subArea',
+            'review.application' => fn ($query) => $query->withCount('documents')])
+            ->whereIn('id', $items->where('stage', 'national')->pluck('id'))->get()->keyBy('id');
+        $applications->setCollection($items->map(function ($item) use ($localEvaluations, $nationalEvaluations, $latestNationalId, $latestLocalId) {
+            $evaluation = $item->stage === 'national' ? $nationalEvaluations[$item->id] : $localEvaluations[$item->id];
+            $application = $item->stage === 'national' ? $evaluation->review->application : $evaluation->application;
             return [
-                'id' => $evaluation->application->id,
+                'id' => $application->id,
                 'evaluation_id' => $evaluation->id,
-                'announcement_name' => $evaluation->application->announcement->name,
-                'teacher_name' => $evaluation->application->user->name,
-                'teacher_degree' => $evaluation->application->user->subArea?->name ?? 'N/A',
-                'application_date' => $evaluation->application->created_at->isoFormat('D [de] MMMM [de] YYYY'),
-                'documents_count' => $evaluation->application->documents_count ?? 0,
+                'stage' => $item->stage,
+                'is_latest' => $evaluation->id === ($item->stage === 'national' ? $latestNationalId : $latestLocalId),
+                'announcement_name' => $application->announcement->name,
+                'teacher_name' => $application->user->name,
+                'teacher_degree' => $application->user->subArea?->name ?? 'N/A',
+                'application_date' => $application->created_at->isoFormat('D [de] MMMM [de] YYYY'),
+                'documents_count' => $application->documents_count ?? 0,
                 'status' => 'Pendiente',
             ];
-        });
+        }));
 
         return Inertia::render('Evaluator/Dashboard', [
             'stats' => [
@@ -194,8 +196,9 @@ class EvaluatorController extends Controller
                   ->orWhereHas('application', function ($q2) {
                       $q2->where('status', '!=', 'pending');
                   });
-            })
-            ->with([
+            });
+        $latestLocalId = (clone $query)->latest()->orderByDesc('id')->value('id');
+        $query->with([
                 'application.announcement',
                 'application.user.subArea',
                 'application' => function ($query) {
@@ -217,12 +220,12 @@ class EvaluatorController extends Controller
         }
 
         $applications = $query
-            ->orderBy('updated_at', 'desc')
+            ->orderByDesc('created_at')->orderByDesc('id')
             ->paginate($request->input('rows', 10))
             ->withQueryString();
 
         // Transform data
-        $applications->getCollection()->transform(function ($evaluation) {
+        $applications->getCollection()->transform(function ($evaluation) use ($latestLocalId) {
             $finalStatus = $evaluation->status;
             if ($finalStatus === 'pending' && $evaluation->application->status !== 'pending') {
                 $finalStatus = 'evaluated_by_admin';
@@ -231,6 +234,7 @@ class EvaluatorController extends Controller
             return [
                 'id' => $evaluation->application->id,
                 'evaluation_id' => $evaluation->id,
+                'is_latest' => $evaluation->id === $latestLocalId,
                 'announcement_name' => $evaluation->application->announcement->name,
                 'teacher_name' => $evaluation->application->user->name,
                 'teacher_degree' => $evaluation->application->user->subArea?->name ?? 'N/A',

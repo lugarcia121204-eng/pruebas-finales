@@ -25,6 +25,7 @@ class NationalEvaluationController extends Controller
             'rows' => ['nullable', 'integer', 'in:5,10,25,50'],
         ]);
         $base = $this->assigned($request);
+        $latestAssignmentId = (clone $base)->latest()->orderByDesc('id')->value('id');
         return Inertia::render('NationalEvaluation/Index', [
             'stats' => [
                 'completed' => (clone $base)->where('status', 'completed')->count(),
@@ -37,8 +38,9 @@ class NationalEvaluationController extends Controller
                 ->when($filters['search'] ?? null, fn ($query, $search) => $query->whereHas('review.application', fn ($app) => $app->where(fn ($match) => $match
                     ->whereHas('user', fn ($user) => $user->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('announcement', fn ($announcement) => $announcement->where('name', 'like', "%{$search}%")))))
-                ->latest()->paginate($filters['rows'] ?? 10)->withQueryString()->through(fn ($evaluation) => [
+                ->latest()->orderByDesc('id')->paginate($filters['rows'] ?? 10)->withQueryString()->through(fn ($evaluation) => [
                     'evaluation_id' => $evaluation->id, 'status' => $evaluation->status,
+                    'is_latest' => $evaluation->id === $latestAssignmentId,
                     'teacher_name' => $evaluation->review->application->user?->name,
                     'announcement_name' => $evaluation->review->application->announcement?->name,
                     'documents_count' => $evaluation->review->application->documents_count,
@@ -98,7 +100,7 @@ class NationalEvaluationController extends Controller
             }
             $evaluation->update(['status' => 'completed', 'answers' => $answers, 'score' => $score, 'comment' => $data['comment'] ?? null]);
         });
-        return back()->with('success', 'Evaluación nacional registrada.');
+        return redirect()->route('evaluator.dashboard')->with('success', 'Evaluación nacional registrada.');
     }
 
     public function document(Request $request, int $id, int $document)

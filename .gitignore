@@ -40,3 +40,10 @@ yarn-error.log
 /test-results/
 **/~$*
 /storage/app/firma/
+
+# Temporary exports and local development artifacts
+/tmp/
+/output/
+/.qodo/
+/temp_pdf_reader/
+/storage/app/private/pdf_qa/

@@ -39,6 +39,30 @@ class SingleEvaluatorFlowTest extends TestCase {
   $this->assertDatabaseCount('recognitions',0);
   $this->assertDatabaseMissing('recognitions',['user_id'=>$application->user_id,'type'=>'postulante','stage'=>'national','active'=>true]);
  }
+ public function test_dashboard_combines_owned_local_and_national_pending_assignments(): void {
+  [$evaluator,$admin,$application,$local]=$this->fixture();
+  $nationalApplication=Application::create(['user_id'=>$application->user_id,'announcement_id'=>$application->announcement_id,'status'=>'approved']);
+  $review=\App\Models\NationalReview::create(['application_id'=>$nationalApplication->id,'administrator_id'=>$admin->id,'assigned_by'=>$admin->id,'status'=>'pending']);
+  $national=\App\Models\NationalEvaluation::create(['national_review_id'=>$review->id,'evaluator_id'=>$evaluator->id,'status'=>'pending']);
+  $other=User::factory()->create();
+  \App\Models\NationalEvaluation::create(['national_review_id'=>$review->id,'evaluator_id'=>$other->id,'status'=>'pending']);
+  $response=$this->actingAs($evaluator)->get(route('evaluator.dashboard'))->assertOk();
+  $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page)=>$page->component('Evaluator/Dashboard')
+   ->where('stats.total',2)->where('stats.pendientes',2)->where('stats.evaluadas',0)->where('applications.total',2));
+  $items=collect($response->inertiaProps('applications.data'));
+  $this->assertSame($local->id,$items->firstWhere('stage','local')['evaluation_id']);
+  $this->assertSame($national->id,$items->firstWhere('stage','national')['evaluation_id']);
+  $this->get(route('evaluator.dashboard',['search'=>'no matching teacher']))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page)=>$page->where('applications.total',0)->where('stats.total',2));
+  $this->get(route('evaluator.dashboard',['rows'=>5]))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page)=>$page->where('applications.per_page',5)->where('applications.total',2));
+  $national->update(['status'=>'completed','score'=>10]);
+  $this->get(route('evaluator.dashboard'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page)=>$page
+   ->where('stats.total',2)->where('stats.pendientes',1)->where('stats.evaluadas',1)->where('applications.total',1)->where('applications.data.0.stage','local'));
+  $national->update(['status'=>'pending']);
+  $review->update(['status'=>'rejected']);
+  $this->get(route('evaluator.dashboard'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page)=>$page->where('applications.total',1));
+  $nationalApplication->delete();
+  $this->get(route('evaluator.dashboard'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page)=>$page->where('stats.total',1)->where('applications.total',1));
+ }
  public function test_local_verdict_notifies_teacher_immediately_without_duplicate_on_resubmit(): void {
   foreach (['approved', 'rejected'] as $status) {
    [$evaluator,$admin,$application,$evaluation]=$this->fixture();

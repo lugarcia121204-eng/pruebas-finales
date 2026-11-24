@@ -368,10 +368,10 @@ const formatDate = (dateString) => {
                             <h3 class="text-xs uppercase text-gray-500 font-semibold mb-2">Vía de Solicitud</h3>
                             <div class="inline-flex">
                                 <span v-if="application.via === 'larga'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #1B396A; border: 1px solid #0f2347;">
-                                    Vía Larga
+                                    Modalidad productividad (Evaluación Docente)
                                 </span>
-                                <span v-else-if="application.via === 'corta'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #10A558; border: 1px solid #0d8d47;">
-                                    Vía Corta
+                                <span v-else-if="application.via === 'corta'" class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition" style="background-color: #1B396A; border: 1px solid #0f2347;">
+                                    Diferenciado (Promoción Docente)
                                 </span>
                                 <span v-else class="inline-flex items-center px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 border border-gray-300">
                                     No Especificada
@@ -460,10 +460,9 @@ const formatDate = (dateString) => {
                     </div>
                 </div>
 
-                <!-- Main Content Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Column Left: Rubric -->
-                    <div class="lg:col-span-2">
+                <!-- Rubric followed by progress and actions -->
+                <div class="flex flex-col gap-8">
+                    <div>
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             <div class="bg-[var(--institutional-primary)] px-6 py-4 border-b border-gray-200 flex justify-between items-center text-white">
                                 <div>
@@ -525,9 +524,9 @@ const formatDate = (dateString) => {
                         </div>
                     </div>
 
-                    <!-- Column Right: Progress Summary & Actions -->
-                    <div class="lg:col-span-1">
-                        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6 sticky top-6">
+                    <!-- Progress Summary & Actions -->
+                    <div>
+                        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
                             <h3 class="text-lg font-bold text-gray-900 mb-4">Progreso de Evaluación</h3>
                             
                             <!-- Progress Bar -->

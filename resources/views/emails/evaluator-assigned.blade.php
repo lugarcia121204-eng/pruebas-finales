@@ -202,25 +202,31 @@
             <p class="greeting">Hola {{ $evaluatorName }},</p>
 
             <p class="message">
-                Se te han asignado nuevas evaluaciones en el Sistema de Becas TecNM.<br>
+                Se te ha asignado una nueva evaluación {{ $stage === 'national' ? 'nacional' : 'local' }} en el Sistema de Becas TecNM.<br>
                 Por favor, revisa tu panel de evaluaciones para comenzar con la revisión.
             </p>
 
             <div class="info-box">
-                <span class="info-label">Evaluaciones asignadas</span>
+                <span class="info-label">Evaluaciones pendientes en etapa {{ $stage === 'national' ? 'nacional' : 'local' }}</span>
                 <div class="info-value">{{ $evaluationsCount }}</div>
             </div>
 
             <div class="warning-box">
                 <p class="warning-text">
-                    ⏰ Tienes {{ $daysLimit }} días hábiles para completar las evaluaciones a partir de hoy.<br>
-                    Pasado este tiempo, las asignaciones serán removidas automáticamente.
+                    @if ($deadline)
+                        Fecha límite para completar la evaluación: {{ $deadline }}.
+                    @else
+                        Tienes {{ $daysLimit }} días hábiles para completar las evaluaciones a partir de hoy.
+                    @endif
                 </p>
             </div>
 
             <p class="message">
                 Te recomendamos iniciar sesión lo antes posible para revisar las solicitudes asignadas.
             </p>
+            @if ($evaluationUrl)
+                <p class="message"><a href="{{ $evaluationUrl }}">Abrir evaluación</a></p>
+            @endif
         </div>
 
         <div class="footer">

@@ -159,7 +159,12 @@ class NationalReviewController extends Controller
                 if ($teacherInstitutionId && (!$evaluator->institution_id || (int) $evaluator->institution_id === (int) $teacherInstitutionId)) {
                     throw ValidationException::withMessages(['evaluator_ids' => 'Selecciona evaluadores de una sede distinta a la del docente.']);
                 }
-                $review->evaluations()->firstOrCreate(['evaluator_id' => $evaluator->id], ['rubric_id' => $rubric->id, 'status' => 'pending']);
+                $evaluation = $review->evaluations()->firstOrCreate(['evaluator_id' => $evaluator->id], ['rubric_id' => $rubric->id, 'status' => 'pending']);
+                if ($evaluation->wasRecentlyCreated) {
+                    $pendingCount = \App\Models\NationalEvaluation::where('evaluator_id', $evaluator->id)->where('status', 'pending')
+                        ->whereHas('review.application', fn ($application) => $application->approved())->count();
+                    app(\App\Services\NotificationService::class)->notifyEvaluatorAssignment($evaluator->id, $pendingCount, $evaluation);
+                }
             }
         });
         return back()->with('success', 'Evaluadores asignados para la etapa nacional.');
@@ -180,7 +185,7 @@ class NationalReviewController extends Controller
             $review->update(['status' => $data['status'], 'comment' => $data['comment'] ?? null, 'decided_at' => now()]);
             app(\App\Services\FinalRecognitionService::class)->sync($review->application);
         });
-        return back()->with('success', 'Dictamen nacional registrado.');
+        return redirect()->route('national-review.index')->with('success', 'Dictamen nacional registrado.');
     }
 
     public function document(Request $request, int $id, int $document)

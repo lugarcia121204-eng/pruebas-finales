@@ -17,9 +17,7 @@ class ClosedAnnouncementReportTest extends TestCase
     {
         parent::setUp();
         \Illuminate\Support\Facades\Storage::fake('public');
-        $template = new \FPDF('P', 'mm', 'Letter');
-        $template->AddPage(); $template->SetFont('Arial', '', 12); $template->Cell(0, 10, 'Institutional letterhead');
-        \Illuminate\Support\Facades\Storage::disk('public')->put('templates/template_reporte_membrete.pdf', $template->Output('S'));
+
     }
 
 
@@ -88,5 +86,61 @@ class ClosedAnnouncementReportTest extends TestCase
         $this->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page->has('announcements', 1)->where('localApproved.total', 1)->where('nationalApproved.total', 0));
         Announcement::create(['name' => 'Otra cerrada', 'status' => 'cerrada']);
         $this->get($url.'?announcement_id='.$announcement->id)->assertOk()->assertInertia(fn (Assert $page) => $page->has('announcements', 2)->where('localApproved.total', 1));
+    }
+
+    public function test_acta_date_and_time_follow_each_export_in_mexico_city(): void
+    {
+        $announcement = new Announcement(['name' => 'Prueba']);
+        try {
+            foreach (['local', 'national'] as $stage) {
+                foreach ([
+                    ['2026-11-23 05:45:00 UTC', '23:45', '22 de noviembre de 2026'],
+                    ['2026-11-24 16:07:00 UTC', '10:07', '24 de noviembre de 2026'],
+                ] as [$instant, $time, $date]) {
+                    $this->travelTo(\Carbon\Carbon::parse($instant));
+                    $pdf = new \App\Services\ApprovedReportPdf($announcement, $stage, 'Prueba');
+                    $pdf->SetCompression(false);
+                    $content = $pdf->render(collect());
+                    $this->assertStringContainsString($time.' horas del', $content);
+                    $this->assertStringContainsString($date, $content);
+                    $this->assertStringNotContainsString('13:48 horas', $content);
+                }
+            }
+        } finally {
+            $this->travelBack();
+        }
+    }
+
+    public function test_acta_uses_stage_evaluations_without_fabricating_participant_points_or_levels(): void
+    {
+        $announcement = new Announcement(['name' => 'Prueba']);
+        $teacher = new User(['name' => 'Participante actual', 'email' => 'docente@example.test']);
+        $teacher->setRelation('institution', new Institution(['name' => 'Instituto actual']));
+        $evaluator = new User(['name' => 'Evaluador actual']);
+        $local = new \App\Models\Evaluation(['evaluator_id' => 5, 'status' => 'approved', 'score' => 37]);
+        $local->setRelation('evaluator', $evaluator);
+        $national = new \App\Models\NationalEvaluation(['evaluator_id' => 5, 'status' => 'completed', 'score' => 19]);
+        $national->setRelation('evaluator', $evaluator);
+        $review = new NationalReview();
+        $review->setRelation('evaluations', collect([$national]));
+        $application = new Application();
+        $application->setRelation('user', $teacher)->setRelation('evaluations', collect([$local]))->setRelation('nationalReview', $review);
+        foreach (['local' => '37', 'national' => '19'] as $stage => $score) {
+            $pdf = new \App\Services\ApprovedReportPdf($announcement, $stage, 'Todas las instituciones');
+            $pdf->SetCompression(false);
+            $content = $pdf->render(collect([$application]));
+            $this->assertStringContainsString('Participante actual', $content);
+            $this->assertStringContainsString('Evaluador actual', $content);
+            $this->assertStringContainsString('Instituto actual', $content);
+            $this->assertStringContainsString('('.$score.') Tj', $content);
+            $this->assertStringNotContainsString('('.($stage === 'local' ? '19' : '37').') Tj', $content);
+            $this->assertStringContainsString('/Subtype /Form', $content);
+        }
+        $pdf = new \App\Services\ApprovedReportPdf($announcement, 'local', 'Todas las instituciones');
+        $pdf->SetCompression(false);
+        $content = $pdf->render(collect(array_fill(0, 65, $application)));
+        $this->assertGreaterThan(2, $pdf->PageNo());
+        $this->assertSame(65, substr_count($content, '(Participante actual) Tj'));
+        $this->assertSame(65, substr_count($content, '(37) Tj'));
     }
 }

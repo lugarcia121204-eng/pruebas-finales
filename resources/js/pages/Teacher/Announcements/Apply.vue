@@ -408,7 +408,7 @@ const submit = async () => {
                                     <input type="radio" name="via" :checked="form.via === 'larga'" value="larga" class="w-4 h-4 text-[var(--institutional-primary)] bg-gray-100 border-gray-300 focus:ring-[var(--institutional-primary)]" @click.prevent="handleViaChange('larga')" />
                                 </div>
                                 <div class="flex-1">
-                                    <span class="block text-sm font-semibold text-gray-900 mb-1">Vía Larga (Evaluación Docente)</span>
+                                    <span class="block text-sm font-semibold text-gray-900 mb-1">Modalidad productividad (Evaluación Docente)</span>
                                     <span class="block text-xs text-gray-500">Deberás presentar todos los documentos probatorios requeridos en esta modalidad.</span>
                                 </div>
                             </label>
@@ -417,7 +417,7 @@ const submit = async () => {
                                     <input type="radio" name="via" :checked="form.via === 'corta'" value="corta" class="w-4 h-4 text-[var(--institutional-primary)] bg-gray-100 border-gray-300 focus:ring-[var(--institutional-primary)]" @click.prevent="handleViaChange('corta')" />
                                 </div>
                                 <div class="flex-1">
-                                    <span class="block text-sm font-semibold text-gray-900 mb-1">Vía Corta (Promoción Docente)</span>
+                                    <span class="block text-sm font-semibold text-gray-900 mb-1">Diferenciado (Promoción Docente)</span>
                                     <span class="block text-xs text-gray-500">Aplica si presentas dictamen del Sistema de Promoción Docente. Requiere menos documentos.</span>
                                 </div>
                             </label>

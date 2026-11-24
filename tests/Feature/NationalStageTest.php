@@ -37,7 +37,7 @@ class NationalStageTest extends TestCase
         $sameCampus = User::factory()->create(['institution_id' => $campus->id]);
         $other = User::factory()->create(['institution_id' => $otherCampus->id]);
         foreach ([$sameCampus, $other] as $evaluator) $evaluator->assignRole('Evaluador');
-        $announcement = Announcement::create(['name' => 'Test']);
+        $announcement = Announcement::create(['name' => 'Test', 'status' => 'activa']);
         $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
         $review = \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $national->id, 'assigned_by' => $national->id, 'status' => 'pending']);
         $localRubric = Rubric::create(['title' => 'Local', 'stage' => Rubric::LOCAL, 'is_active' => true]);
@@ -70,7 +70,7 @@ class NationalStageTest extends TestCase
         $state = DB::table('states')->insertGetId(['name' => 'Estado prueba', 'abbreviation' => 'TS']);
         $institution = Institution::create(['name' => 'Campus nacional', 'state_id' => $state]);
         $teacher = User::factory()->create(['name' => 'Docente nacional', 'institution_id' => $institution->id]);
-        $announcement = Announcement::create(['name' => 'Convocatoria nacional']);
+        $announcement = Announcement::create(['name' => 'Convocatoria nacional', 'status' => 'activa']);
         foreach (['pending', 'approved'] as $status) {
             $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
             $review = \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $national->id, 'assigned_by' => $national->id, 'status' => $status]);
@@ -97,7 +97,7 @@ class NationalStageTest extends TestCase
         $evaluator = User::factory()->create(); $evaluator->assignRole('Evaluador');
         $outsider = User::factory()->create(); $outsider->assignRole('Evaluador');
         $teacher = User::factory()->create();
-        $announcement = Announcement::create(['name' => 'Test']);
+        $announcement = Announcement::create(['name' => 'Test', 'status' => 'activa']);
         $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
         $review = \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $national->id, 'assigned_by' => $national->id, 'status' => 'pending']);
         $rubric = Rubric::create(['title' => 'Rúbrica nacional', 'stage' => Rubric::NATIONAL, 'is_active' => true]);
@@ -123,7 +123,10 @@ class NationalStageTest extends TestCase
         $this->assertSame('pending', $evaluation->fresh()->status);
         $this->travelBack();
         $this->post($submit, ['answers' => [$question->id => 999999]])->assertSessionHasErrors('answers');
-        $this->post($submit, ['answers' => [$question->id => $option->id], 'score' => 99999])->assertSessionHasNoErrors();
+        $this->from(route('national-evaluations.show', $evaluation->id))
+            ->post($submit, ['answers' => [$question->id => $option->id], 'score' => 99999])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('evaluator.dashboard'));
         $this->assertEquals(10, $evaluation->fresh()->score);
         $rubric->delete();
 
@@ -157,7 +160,10 @@ class NationalStageTest extends TestCase
         $this->actingAs($otherAdmin)->get($responsesUrl)->assertNotFound();
         $this->actingAs($national);
         $this->post(route('national-review.verdict', $review->id), ['status' => 'rejected'])->assertSessionHasErrors('comment');
-        $this->post(route('national-review.verdict', $review->id), ['status' => 'rejected', 'comment' => 'No cumple el segundo filtro.'])->assertSessionHasNoErrors();
+        $this->from(route('national-review.show', $review->id))
+            ->post(route('national-review.verdict', $review->id), ['status' => 'rejected', 'comment' => 'No cumple el segundo filtro.'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('national-review.index'));
         $this->assertSame('rejected', $review->fresh()->status);
         $this->assertSame('approved', $application->fresh()->status);
         $this->assertNotNull($review->fresh()->decided_at);
@@ -172,16 +178,22 @@ class NationalStageTest extends TestCase
         $other = User::factory()->create(); $other->assignRole('Admin Nacional');
         $local = User::factory()->create(); $local->assignRole('Admin');
         $teacher = User::factory()->create();
-        $announcement = Announcement::create(['name' => 'Test']);
+        $announcement = Announcement::create(['name' => 'Test', 'status' => 'activa']);
         $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
         $url = route('superadmin.national-stage.assign', $application->id);
         $this->actingAs($operator)->post($url, ['administrator_id' => $local->id])->assertSessionHasErrors('administrator_id');
         $this->post($url, ['administrator_id' => $national->id])->assertSessionHasNoErrors();
         $review = \App\Models\NationalReview::firstOrFail();
+        $notice = \App\Models\Notification::where('type', 'national_review_assignment')->sole();
+        $this->assertSame($national->id, $notice->user_id);
+        $this->assertSame($review->id, $notice->data['review_id']);
+        $this->assertSame($application->id, $notice->data['application_id']);
+        $this->assertNull($notice->read_at);
         $this->assertEquals('pending', $review->status);
         $this->assertEquals('approved', $application->fresh()->status);
         $this->post($url, ['administrator_id' => $national->id])->assertSessionHasNoErrors();
         $this->assertDatabaseCount('national_reviews', 1);
+        $this->assertSame(1, \App\Models\Notification::where('type', 'national_review_assignment')->count());
         $this->actingAs($national)->get(route('national-review.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->has('reviews.data', 1)->where('reviews.data.0.status', 'pending'));
         $this->get(route('national-review.index', ['search' => 'Sin coincidencias', 'rows' => 5, 'sort_field' => 'status', 'sort_direction' => 'asc']))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('reviews.total', 0)->where('reviews.per_page', 5));
@@ -207,7 +219,7 @@ class NationalStageTest extends TestCase
         $operator->assignRole('Super Admin');
         $this->actingAs($operator);
         $state = DB::table('states')->insertGetId(['name' => 'Test', 'abbreviation' => 'TS']);
-        $announcement = Announcement::create(['name' => 'Convocatoria prueba']);
+        $announcement = Announcement::create(['name' => 'Convocatoria prueba', 'status' => 'activa']);
         $applications = [];
         foreach (['Campus A', 'Campus B'] as $name) {
             $institution = Institution::create(['name' => $name, 'state_id' => $state]);
@@ -239,5 +251,152 @@ class NationalStageTest extends TestCase
             $user->assignRole($role);
             $this->actingAs($user)->get(route('superadmin.national-stage.index'))->assertForbidden();
         }
+    }
+
+    public function test_stage_only_lists_active_announcement_teachers_and_institutions_even_with_filters(): void
+    {
+        foreach (['Super Admin', 'Admin Nacional'] as $role) Role::findOrCreate($role, 'web');
+        $operator = User::factory()->create()->assignRole('Super Admin');
+        $national = User::factory()->create()->assignRole('Admin Nacional');
+        $state = DB::table('states')->insertGetId(['name' => 'Prueba', 'abbreviation' => 'PR']);
+        $active = Announcement::create(['name' => 'Actual', 'status' => 'activa']);
+        $closed = Announcement::create(['name' => 'Anterior', 'status' => 'cerrada']);
+        $draft = Announcement::create(['name' => 'Pendiente', 'status' => 'pendiente']);
+        $institutions = [];
+        $applications = [];
+        foreach ([$active, $closed, $draft] as $index => $announcement) {
+            $institution = Institution::create(['name' => 'Sede '.$index, 'state_id' => $state]);
+            $teacher = User::factory()->create(['name' => 'Docente '.$index, 'institution_id' => $institution->id]);
+            $institutions[] = $institution;
+            $applications[] = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
+        }
+        $url = route('superadmin.national-stage.index');
+        $this->actingAs($operator)->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[0]->id)
+            ->has('institutions', 1)->where('institutions.0.id', $institutions[0]->id));
+        $this->get($url.'?search=Docente%201')->assertInertia(fn (Assert $page) => $page->where('applications.total', 0));
+        $this->get($url.'?institution_id='.$institutions[1]->id)->assertInertia(fn (Assert $page) => $page->where('applications.total', 0));
+        foreach (array_slice($applications, 0, 2) as $application) {
+            \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $national->id, 'assigned_by' => $operator->id, 'status' => 'pending']);
+        }
+        $this->get($url.'?administrator_id='.$national->id)->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[0]->id));
+        $active->update(['status' => 'cerrada']);
+        $this->get($url)->assertInertia(fn (Assert $page) => $page->where('applications.total', 0)->has('institutions', 0));
+        $closed->update(['status' => 'activa']);
+        $this->get($url.'?administrator_id='.$national->id)->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[1]->id));
+    }
+
+    public function test_bulk_national_assignments_notify_each_request_only_to_its_administrator(): void
+    {
+        foreach (['Super Admin', 'Admin Nacional'] as $role) Role::findOrCreate($role, 'web');
+        $operator = User::factory()->create();
+        $operator->assignRole('Super Admin');
+        $national = User::factory()->create();
+        $national->assignRole('Admin Nacional');
+        $other = User::factory()->create();
+        $other->assignRole('Admin Nacional');
+        $teacher = User::factory()->create();
+        $announcement = Announcement::create(['name' => 'Asignación nacional', 'status' => 'activa']);
+        $applications = collect();
+        foreach (range(1, 3) as $number) {
+            $applications->push(Application::create([
+                'user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved',
+            ]));
+        }
+        $url = route('superadmin.national-stage.assign-many');
+        $payload = ['administrator_id' => $national->id, 'application_ids' => $applications->take(2)->pluck('id')->all()];
+        $this->actingAs($operator)->post($url, $payload)->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseCount('national_reviews', 2);
+        $notices = \App\Models\Notification::where('type', 'national_review_assignment')->get();
+        $this->assertCount(2, $notices);
+        $this->assertEqualsCanonicalizing($payload['application_ids'], $notices->pluck('data.application_id')->all());
+        foreach ($notices as $notice) {
+            $this->assertSame($national->id, $notice->user_id);
+            $this->assertNull($notice->read_at);
+            $this->assertStringContainsString($announcement->name, $notice->data['message']);
+        }
+        $this->post($url, $payload)->assertSessionHasErrors('application_ids');
+        $this->post($url, ['administrator_id' => $national->id, 'application_ids' => [$applications[0]->id, $applications[2]->id]])
+            ->assertSessionHasErrors('application_ids');
+        $this->assertDatabaseCount('national_reviews', 2);
+        $this->assertDatabaseCount('notifications', 2);
+        $this->get(route('superadmin.national-stage.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[2]->id));
+        $this->actingAs($national)->getJson(route('admin.notifications.index'))->assertOk()
+            ->assertJsonPath('unread_count', 2)->assertJsonCount(2, 'notifications.data');
+        $this->postJson(route('admin.notifications.mark-as-read', $notices[0]->id))->assertOk();
+        $this->getJson(route('admin.notifications.index'))->assertOk()->assertJsonPath('unread_count', 1);
+        $this->actingAs($other)->getJson(route('admin.notifications.index'))->assertOk()->assertJsonPath('unread_count', 0);
+        $this->postJson(route('admin.notifications.mark-as-read', $notices[1]->id))->assertNotFound();
+    }
+
+    public function test_assignment_list_is_alphabetical_paginated_and_excludes_all_assigned_states(): void
+    {
+        foreach (['Super Admin', 'Admin Nacional'] as $role) Role::findOrCreate($role, 'web');
+        $operator = User::factory()->create();
+        $operator->assignRole('Super Admin');
+        $administrator = User::factory()->create();
+        $administrator->assignRole('Admin Nacional');
+        $announcement = Announcement::create(['name' => 'Orden de asignaciones', 'status' => 'activa']);
+        $expected = [];
+        foreach (range(17, 1) as $number) {
+            $teacher = User::factory()->create(['name' => sprintf('Docente %02d', $number)]);
+            $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
+            $expected[$number] = $application->id;
+        }
+        foreach (['pending', 'approved', 'rejected'] as $status) {
+            $teacher = User::factory()->create(['name' => 'Asignado '.$status]);
+            $application = Application::create(['user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved']);
+            \App\Models\NationalReview::create(['application_id' => $application->id, 'administrator_id' => $administrator->id, 'assigned_by' => $operator->id, 'status' => $status]);
+        }
+        ksort($expected);
+        $ids = array_values($expected);
+        $url = route('superadmin.national-stage.index');
+        $this->actingAs($operator)->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 17)->where('applications.from', 1)->has('applications.data', 15)
+            ->where('applications.data', fn ($rows) => collect($rows)->pluck('id')->all() === array_slice($ids, 0, 15)));
+        $this->get($url.'?page=2')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 17)->where('applications.from', 16)->has('applications.data', 2)
+            ->where('applications.data', fn ($rows) => collect($rows)->pluck('id')->all() === array_slice($ids, 15)));
+    }
+
+    public function test_superadmin_can_filter_assigned_applications_by_national_administrator(): void
+    {
+        foreach (['Super Admin', 'Admin Nacional'] as $role) Role::findOrCreate($role, 'web');
+        $operator = User::factory()->create();
+        $operator->assignRole('Super Admin');
+        $national = User::factory()->create(['name' => 'Administrador seleccionado']);
+        $national->assignRole('Admin Nacional');
+        $other = User::factory()->create(['name' => 'Otro administrador']);
+        $other->assignRole('Admin Nacional');
+        $teacher = User::factory()->create(['name' => 'Docente seleccionado']);
+        $announcement = Announcement::create(['name' => 'Prueba de filtro', 'status' => 'activa']);
+        $applications = [];
+        foreach ([$national, $other, null] as $administrator) {
+            $application = Application::create([
+                'user_id' => $teacher->id, 'announcement_id' => $announcement->id, 'status' => 'approved',
+            ]);
+            $applications[] = $application;
+            if ($administrator) {
+                \App\Models\NationalReview::create([
+                    'application_id' => $application->id, 'administrator_id' => $administrator->id,
+                    'assigned_by' => $operator->id, 'status' => 'pending',
+                ]);
+            }
+        }
+        $url = route('superadmin.national-stage.index');
+        $this->actingAs($operator)->get($url)->assertOk();
+        $this->get($url.'?administrator_id='.$national->id)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[0]->id)
+            ->where('applications.data.0.national_administrator', $national->name)
+            ->where('filters.administrator_id', (string) $national->id));
+        $this->get($url.'?administrator_id='.$other->id)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[1]->id));
+        $this->get($url.'?administrator_id='.$national->id.'&search=SinCoincidencias')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 0));
+        $this->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('applications.total', 1)->where('applications.data.0.id', $applications[2]->id));
     }
 }

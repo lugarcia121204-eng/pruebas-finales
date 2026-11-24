@@ -48,7 +48,7 @@ const submit = async () => {
 
         if (confirmed) {
             form.post(route('national-evaluations.submit', props.evaluation.id), {
-                preserveScroll: true,
+                preserveScroll: false,
                 onSuccess: () => alertaExito('Evaluación registrada', 'La evaluación nacional se guardó correctamente.'),
             });
         }
@@ -102,7 +102,7 @@ const submit = async () => {
                     <div>
                         <dt class="text-xs uppercase text-gray-500 font-semibold mb-2">Vía de Solicitud</dt>
                         <dd>
-                            <span v-if="['larga', 'corta'].includes(applicant.via)" class="inline-flex px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md" :class="applicant.via === 'larga' ? 'bg-[var(--institutional-primary)]' : 'bg-green-700'">{{ applicant.via === 'larga' ? 'Vía Larga' : 'Vía Corta' }}</span>
+                            <span v-if="['larga', 'corta'].includes(applicant.via)" class="inline-flex px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-md bg-[var(--institutional-primary)]">{{ applicant.via === 'larga' ? 'Modalidad productividad (Evaluación Docente)' : 'Diferenciado (Promoción Docente)' }}</span>
                             <span v-else class="text-gray-600">No especificada</span>
                         </dd>
                     </div>
@@ -111,8 +111,8 @@ const submit = async () => {
 
             <DocumentPreviewCards :documents="documents" route-name="national-evaluations.document" :owner-id="evaluation.id" />
 
-            <form @submit.prevent="submit" class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <section class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <form @submit.prevent="submit" class="flex flex-col gap-8">
+                <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="bg-[var(--institutional-primary)] px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-3 text-white">
                         <div>
                             <h2 class="font-bold text-lg">{{ isPending ? 'Rúbrica de Evaluación' : 'Resultados de Evaluación' }}</h2>
@@ -153,35 +153,41 @@ const submit = async () => {
                     </div>
                 </section>
 
-                <aside class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-6">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">{{ isPending ? 'Progreso de Evaluación' : 'Resumen de Evaluación' }}</h2>
-                    <div v-if="isPending && rubric" class="space-y-3 mb-6">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-600">Criterios evaluados</span>
-                            <span class="font-bold text-gray-900">{{ selectedOptions.length }} / {{ questions.length }}</span>
+                <aside>
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">{{ isPending ? 'Progreso de Evaluación' : 'Resumen de Evaluación' }}</h3>
+                        <div v-if="rubric" class="space-y-3 mb-6">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600">Criterios evaluados:</span>
+                                <span class="font-bold text-gray-900">{{ selectedOptions.length }} / {{ questions.length }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5" aria-hidden="true">
+                                <div class="bg-[var(--institutional-primary)] h-2.5 rounded-full transition-all duration-500" :style="{ width: progressPercentage + '%' }"></div>
+                            </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5" aria-hidden="true">
-                            <div class="bg-[var(--institutional-primary)] h-2.5 rounded-full transition-all duration-500" :style="{ width: progressPercentage + '%' }"></div>
+
+                        <div class="mb-6">
+                            <label for="evaluation-comment" class="block mb-2 text-sm font-medium text-gray-700">Observaciones</label>
+                            <textarea id="evaluation-comment" v-model="form.comment" :disabled="!canEdit" maxlength="1000" rows="4" placeholder="Escribe tus observaciones sobre la evaluación..." class="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-700 shadow-sm focus:border-[var(--institutional-primary)] focus:ring-[var(--institutional-primary)] disabled:bg-gray-50 disabled:opacity-100" />
                         </div>
-                    </div>
 
-                    <label for="evaluation-comment" class="block mb-2 text-sm font-medium text-gray-900">Observaciones</label>
-                    <textarea id="evaluation-comment" v-model="form.comment" :disabled="!canEdit" maxlength="1000" rows="4" placeholder="Escribe tus observaciones sobre la evaluación..." class="w-full rounded-lg border border-gray-300 bg-gray-50 p-3 focus:border-[var(--institutional-primary)] focus:ring-[var(--institutional-primary)] disabled:opacity-100" />
+                        <p v-for="(error, field) in form.errors" :key="field" class="mt-2 text-sm text-red-600">{{ error }}</p>
 
-                    <p v-for="(error, field) in form.errors" :key="field" class="mt-2 text-sm text-red-600">{{ error }}</p>
+                        <hr class="my-6 border-gray-200" v-if="canEdit">
 
-                    <div class="flex flex-col gap-3 border-t border-gray-200 pt-5 mt-5">
-                        <template v-if="canEdit">
-                            <Link :href="route('national-evaluations.index')" class="w-full text-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">Cancelar</Link>
-                            <button type="submit" :disabled="confirming || form.processing || !rubric" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--institutional-primary)] hover:bg-[var(--institutional-primary-dark)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--institutional-primary)] disabled:opacity-50 uppercase tracking-wide transition-colors">
-                                <Save class="w-5 h-5 shrink-0" aria-hidden="true" />
-                                {{ form.processing ? 'Guardando...' : 'Guardar evaluación nacional' }}
-                            </button>
-                        </template>
-                        <p v-else-if="!isPending" class="text-center py-4 px-3 rounded-lg text-sm font-medium border text-green-700 bg-green-50 border-green-200">Evaluación finalizada. Puntaje: {{ evaluation.score }}</p>
-                        <p v-else class="text-center py-4 px-3 rounded-lg text-sm font-medium border text-gray-700 bg-gray-50 border-gray-200">
-                            {{ !evaluationPeriodOpen ? 'La convocatoria está fuera del periodo de evaluación nacional.' : 'La revisión nacional ha concluido.' }}
-                        </p>
+                        <div class="flex flex-col gap-3">
+                            <template v-if="canEdit">
+                                <Link :href="route('national-evaluations.index')" class="w-full flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition gap-2 items-center cursor-pointer">Cancelar</Link>
+                                <button type="submit" :disabled="confirming || form.processing || !rubric" class="w-full px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[var(--institutional-primary)] hover:bg-[var(--institutional-primary-dark)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--institutional-primary)] disabled:opacity-50 transition-colors flex items-center justify-center gap-2 uppercase tracking-wide cursor-pointer">
+                                    <Save class="w-5 h-5 shrink-0" aria-hidden="true" />
+                                    {{ form.processing ? 'Guardando...' : 'Guardar evaluación nacional' }}
+                                </button>
+                            </template>
+                            <p v-else-if="!isPending" class="text-center py-4 px-3 rounded-lg text-sm font-medium border text-green-700 bg-green-50 border-green-200">Evaluación finalizada. Puntaje: {{ evaluation.score }}</p>
+                            <p v-else class="text-center py-4 px-3 rounded-lg text-sm font-medium border text-gray-700 bg-gray-50 border-gray-200">
+                                {{ !evaluationPeriodOpen ? 'La convocatoria está fuera del periodo de evaluación nacional.' : 'La revisión nacional ha concluido.' }}
+                            </p>
+                        </div>
                     </div>
                 </aside>
             </form>

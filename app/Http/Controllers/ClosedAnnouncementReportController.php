@@ -35,7 +35,8 @@ class ClosedAnnouncementReportController extends Controller
         $selected = $this->announcements($request)->findOrFail($announcement);
         $applications = $this->applications($request)->where('announcement_id', $selected->id)->approved()
             ->when($stage === 'national', fn ($query) => $query->finallyApproved())
-            ->with('user.institution')->join('users as report_teachers', 'report_teachers.id', '=', 'applications.user_id')
+            ->with(['user.institution', $stage === 'local' ? 'evaluations.evaluator' : 'nationalReview.evaluations.evaluator'])
+            ->join('users as report_teachers', 'report_teachers.id', '=', 'applications.user_id')
             ->select('applications.*')->orderBy('report_teachers.name')->orderBy('applications.id')->get();
         $scope = $user->isSuperAdmin() ? 'Todas las instituciones' : ($user->hasRole('Admin Nacional')
             ? 'Solicitudes nacionales asignadas a '.$user->name : ($user->institution?->name ?? 'Sin institucion asignada'));

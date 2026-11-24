@@ -362,7 +362,7 @@ const viewDetails = (id) => {
                                     </th>
                                     <th scope="col" class="px-6 py-4 text-center tracking-wider">Archivo</th>
                                     <th scope="col" class="px-6 py-4 text-center tracking-wider">Activo</th>
-                                    <th scope="col" class="px-6 py-4 text-center tracking-wider">Vía</th>
+                                    <th scope="col" class="px-6 py-4 text-center tracking-wider">Modalidad</th>
                                     <th scope="col" class="px-6 py-4 text-center tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
@@ -416,7 +416,7 @@ const viewDetails = (id) => {
                                             </label>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <div class="via-segment" role="group" aria-label="Seleccionar via del documento">
+                                            <div class="via-segment" role="group" aria-label="Seleccionar modalidad del documento">
                                                 <button
                                                     @click="document.via = 'ambas'; updateVia(document.id, 'ambas')"
                                                     class="via-option via-option-neutral cursor-pointer"
@@ -429,14 +429,14 @@ const viewDetails = (id) => {
                                                     class="via-option via-option-long cursor-pointer"
                                                     :class="{ 'is-active': document.via === 'larga' }"
                                                 >
-                                                    LARGA
+                                                    Modalidad productiva
                                                 </button>
                                                 <button
                                                     @click="document.via = 'corta'; updateVia(document.id, 'corta')"
                                                     class="via-option via-option-short cursor-pointer"
                                                     :class="{ 'is-active': document.via === 'corta' }"
                                                 >
-                                                    CORTA
+                                                    Diferenciado
                                                 </button>
                                             </div>
                                         </td>
@@ -695,7 +695,8 @@ const viewDetails = (id) => {
 .via-segment {
     display: inline-flex;
     width: 100%;
-    max-width: 230px;
+    min-width: 300px;
+    max-width: 340px;
     border-radius: 0.5rem;
     border: 1px solid #d1d5db;
     background: #f8fafc;

@@ -15,15 +15,21 @@ class EvaluatorAssigned extends Mailable
     public $evaluatorName;
     public $evaluationsCount;
     public $daysLimit;
+    public $stage = 'local';
+    public $deadline = null;
+    public $evaluationUrl = null;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($evaluatorName, $evaluationsCount, $daysLimit = 5)
+    public function __construct($evaluatorName, $evaluationsCount, $daysLimit = 5, $stage = 'local', $deadline = null, $evaluationUrl = null)
     {
         $this->evaluatorName = $evaluatorName;
         $this->evaluationsCount = $evaluationsCount;
         $this->daysLimit = $daysLimit;
+        $this->stage = $stage;
+        $this->deadline = $deadline;
+        $this->evaluationUrl = $evaluationUrl;
     }
 
     /**

@@ -103,6 +103,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware('role:Admin Nacional')->prefix('national-review')->name('national-review.')->group(function () {
+        Route::get('/evaluators', [\App\Http\Controllers\NationalEvaluatorController::class, 'index'])->name('evaluators.index');
+        Route::get('/evaluator-recognitions', [\App\Http\Controllers\NationalEvaluatorRecognitionController::class, 'index'])->name('evaluator-recognitions.index');
+        Route::post('/evaluator-recognitions/active', [\App\Http\Controllers\NationalEvaluatorRecognitionController::class, 'toggle'])->name('evaluator-recognitions.toggle');
         Route::get('/dashboard', [\App\Http\Controllers\NationalDashboardController::class, 'administrator'])->name('dashboard');
         Route::get('/dashboard/export', [\App\Http\Controllers\NationalDashboardController::class, 'export'])->name('dashboard.export');
         Route::get('/', [\App\Http\Controllers\NationalReviewController::class, 'index'])->name('index');
@@ -151,6 +154,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::resource('work-documents', \App\Http\Controllers\SuperAdmin\WorkDocumentController::class)->only(['index', 'store', 'update', 'destroy']);
             Route::get('dashboard', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
             Route::get('national-stage', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'index'])->name('national-stage.index');
+            Route::get('national-stage/assignments', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'assignments'])->name('national-stage.assignments');
             Route::post('national-stage/{id}/assign', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'assign'])->name('national-stage.assign');
             Route::post('national-stage/assign-many', [\App\Http\Controllers\SuperAdmin\NationalStageController::class, 'assignMany'])->name('national-stage.assign-many');
             Route::get('dashboard/export', [\App\Http\Controllers\SuperAdmin\DashboardController::class, 'export'])->name('dashboard.export');

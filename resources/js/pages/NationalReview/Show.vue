@@ -1,13 +1,15 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref, watch, onUnmounted } from 'vue';
+import { nextTick, ref, watch, onUnmounted } from 'vue';
 import axios from 'axios';
 import { ArrowLeft, Eye, FileText } from 'lucide-vue-next';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import DynamicLayout from '@/layouts/DynamicLayout.vue';
+import DialogModal from '@/components/DialogModal.vue';
+import { AlertTriangle, X } from 'lucide-vue-next';
 import VueSelect from 'vue-select';
 import 'vue-select/dist/vue-select.css';
-import { alertaExito } from '@/utils/alerts.js';
+import { alertaConfirmacionEscrita, alertaExito } from '@/utils/alerts.js';
 const props = defineProps({ review: Object, evaluators: Array, evaluationPeriodOpen: Boolean });
 const previewOpen = ref(false);
 const previewDocument = ref(null);
@@ -45,13 +47,59 @@ const openPreview = async (document) => {
 watch(previewOpen, (open) => { if (!open) clearPreview(); });
 onUnmounted(clearPreview);
 const formatDate = (value) => value ? new Date(value).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Mexico_City' }) : 'No registrada';
+const formatEvaluationScore = (evaluation) => {
+    if (evaluation.status !== 'completed' || evaluation.score === null || evaluation.score === undefined || evaluation.score === '') return '—';
+    const score = Number(evaluation.score);
+    return Number.isFinite(score) ? score.toLocaleString('es-MX', { maximumFractionDigits: 2 }) : '—';
+};
 const assignment = useForm({ evaluator_ids: [] });
 const closing = ref(false);
 const decision = useForm({ status: '', comment: '' });
-const finishReview = () => decision.post(route('national-review.verdict', props.review.id), {
-    preserveScroll: true,
-    onSuccess: () => { closing.value = false; alertaExito('Revisión finalizada', 'El resultado nacional se guardó correctamente.'); },
-});
+const confirmingDecision = ref(false);
+const approveReview = () => {
+    decision.clearErrors();
+    decision.status = 'approved';
+    decision.comment = '';
+    finishReview();
+};
+const rejectReview = () => {
+    decision.clearErrors();
+    decision.status = 'rejected';
+    closing.value = true;
+};
+const finishReview = async () => {
+    if (decision.status === 'rejected' && !decision.comment.trim()) {
+        decision.setError('comment', 'El motivo del rechazo es obligatorio.');
+        return;
+    }
+    if (!decision.status || confirmingDecision.value || decision.processing) return;
+
+    confirmingDecision.value = true;
+    closing.value = false;
+    await nextTick();
+
+    try {
+        const approved = decision.status === 'approved';
+        const confirmed = await alertaConfirmacionEscrita(
+            approved ? '¿Aprobar solicitud en etapa nacional?' : '¿Rechazar solicitud en etapa nacional?',
+            approved
+                ? 'Esta acción aprobará la solicitud en la etapa nacional. Esta operación no se puede deshacer.'
+                : 'Esta acción rechazará la solicitud en la etapa nacional. Esta operación no se puede deshacer.',
+            'CONFIRMAR',
+        );
+        if (!confirmed) {
+            closing.value = !approved;
+            return;
+        }
+        decision.post(route('national-review.verdict', props.review.id), {
+            preserveScroll: false,
+            onSuccess: () => alertaExito('Revisión finalizada', 'El resultado nacional se guardó correctamente.'),
+            onError: () => { closing.value = !approved; },
+        });
+    } finally {
+        confirmingDecision.value = false;
+    }
+};
 const assign = () => assignment.post(route('national-review.assign-evaluators', props.review.id), { preserveScroll: true, onSuccess: () => { assignment.reset(); alertaExito('Asignados', 'Los evaluadores recibirán una nueva evaluación nacional.'); } });
 </script>
 
@@ -77,7 +125,7 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                     <div><dt class="text-sm font-medium text-gray-600 mb-1">Institución</dt><dd class="text-base text-gray-900">{{ review.institution || 'No registrada' }}</dd></div>
                     <div><dt class="text-sm font-medium text-gray-600 mb-1">Tipo de Beca</dt><dd class="text-base text-gray-900">{{ review.announcement || 'No registrado' }}</dd></div>
                     <div><dt class="text-sm font-medium text-gray-600 mb-1">Tipo de Plaza</dt><dd class="text-base text-gray-900">{{ review.position_type || 'No especificado' }}</dd></div>
-                    <div><dt class="text-sm font-medium text-gray-600 mb-2">Vía de Solicitud</dt><dd><span v-if="['larga', 'corta'].includes(review.via)" class="inline-flex rounded-lg px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm" :class="review.via === 'larga' ? 'bg-[var(--institutional-primary)]' : 'bg-green-700'">{{ review.via === 'larga' ? 'Vía larga' : 'Vía corta' }}</span><span v-else class="text-gray-600">No especificada</span></dd></div>
+                    <div><dt class="text-sm font-medium text-gray-600 mb-2">Vía de Solicitud</dt><dd><span v-if="['larga', 'corta'].includes(review.via)" class="inline-flex rounded-lg px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm bg-[var(--institutional-primary)]">{{ review.via === 'larga' ? 'Modalidad productividad (Evaluación Docente)' : 'Diferenciado (Promoción Docente)' }}</span><span v-else class="text-gray-600">No especificada</span></dd></div>
                     <div><dt class="text-sm font-medium text-gray-600 mb-1">Fecha de Solicitud</dt><dd class="text-base text-gray-900">{{ formatDate(review.application_date) }}</dd></div>
                     <div><dt class="text-sm font-medium text-gray-600 mb-1">Correo Electrónico</dt><dd class="text-base text-gray-900 break-words">{{ review.teacher_email || 'No registrado' }}</dd></div>
                     <div><dt class="text-sm font-medium text-gray-600 mb-1">CURP</dt><dd class="text-base text-gray-900">{{ review.teacher_curp || 'No registrada' }}</dd></div>
@@ -115,7 +163,7 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                 <p v-if="review.status === 'pending' && !evaluationPeriodOpen" class="text-sm text-amber-800">La convocatoria está fuera del periodo de evaluación nacional.</p>
                 <form v-if="review.status === 'pending' && evaluationPeriodOpen" @submit.prevent="assign" class="space-y-3">
                     <label for="national-evaluators" class="block font-medium">Asignar evaluadores</label>
-                    <VueSelect input-id="national-evaluators" v-model="assignment.evaluator_ids" :options="evaluators.filter(user => !review.evaluations.some(evaluation => evaluation.evaluator_id === user.id))" :reduce="user => user.id" label="label" multiple placeholder="Seleccionar evaluadores...">
+                    <VueSelect input-id="national-evaluators" v-model="assignment.evaluator_ids" :options="evaluators.filter(user => !review.evaluations.some(evaluation => evaluation.evaluator_id === user.id))" :reduce="user => user.id" label="label" multiple placeholder="Seleccionar evaluadores..." class="national-evaluators-select">
                         <template #no-options>No hay evaluadores disponibles.</template>
                     </VueSelect>
                     <p v-if="assignment.errors.evaluator_ids" class="text-red-600">{{ assignment.errors.evaluator_ids }}</p>
@@ -127,16 +175,16 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[920px] text-left">
                         <thead class="bg-[var(--institutional-primary)] text-white">
-                            <tr><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase w-12">ID</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase">Nombre</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase">Comentarios</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase text-center">Estado</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase text-center">Acciones</th></tr>
+                            <tr><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase w-12">ID</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase">Nombre</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase">Comentarios</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase text-right whitespace-nowrap">Puntaje de rúbrica</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase text-center">Estado</th><th scope="col" class="px-6 py-3 text-xs font-semibold uppercase text-center">Acciones</th></tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr v-for="(evaluation, index) in review.evaluations" :key="evaluation.id" class="hover:bg-gray-50">
                                 <td class="px-6 py-4 text-sm text-gray-500">{{ index + 1 }}</td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ evaluation.evaluator }}</td>
                                 <td class="max-w-xs break-words whitespace-pre-line px-6 py-4 text-sm"><span v-if="evaluation.comment" class="text-gray-800">{{ evaluation.comment }}</span><span v-else class="italic text-gray-400">Sin comentarios</span></td>
+                                <td class="px-6 py-4 text-right text-sm font-semibold text-gray-900">{{ formatEvaluationScore(evaluation) }}</td>
                                 <td class="px-6 py-4 text-center whitespace-nowrap">
                                     <span class="inline-flex items-center gap-1.5 rounded-md border border-gray-100 bg-white px-2.5 py-1 text-xs font-bold shadow-sm" :class="evaluation.status === 'completed' ? 'text-green-700' : 'text-yellow-700'"><span class="h-2 w-2 rounded-full" :class="evaluation.status === 'completed' ? 'bg-green-500' : 'bg-yellow-500'"></span>{{ evaluation.status === 'completed' ? 'Completada' : 'Pendiente' }}</span>
-                                    <p v-if="evaluation.status === 'completed'" class="mt-1 text-xs text-gray-500">Puntaje: {{ evaluation.score }}</p>
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <Link v-if="evaluation.status === 'completed'" :href="route('national-review.responses', [review.id, evaluation.id])" class="inline-flex items-center gap-2 rounded-lg border border-[var(--institutional-primary)] px-3 py-2 text-xs font-bold text-[var(--institutional-primary)] shadow-sm hover:bg-blue-50">
@@ -147,7 +195,7 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
                                     </button>
                                 </td>
                             </tr>
-                            <tr v-if="!review.evaluations.length"><td colspan="5" class="px-6 py-8 text-center text-gray-500">A?n no se han asignado evaluadores para el segundo filtro.</td></tr>
+                            <tr v-if="!review.evaluations.length"><td colspan="6" class="px-6 py-8 text-center text-gray-500">Aún no se han asignado evaluadores para el segundo filtro.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -160,24 +208,68 @@ const assign = () => assignment.post(route('national-review.assign-evaluators', 
             <div class="space-y-4">
                 <div v-if="evaluationPeriodOpen && review.status === 'pending' && review.evaluations.length && review.evaluations.every(evaluation => evaluation.status === 'completed')" class="border-t border-gray-200 pt-4 flex flex-wrap items-center justify-between gap-4">
                     <p class="text-sm text-gray-600">Todas las evaluaciones están completas. Puedes finalizar la revisión nacional.</p>
-                    <button type="button" @click="closing = true" class="rounded-lg bg-[var(--institutional-primary)] px-5 py-2.5 font-medium text-white">Finalizar revisión</button>
+                    <div class="w-full flex flex-col sm:flex-row gap-4">
+                        <button type="button" @click="approveReview" :disabled="confirmingDecision || decision.processing" class="flex-1 bg-[var(--institutional-primary)] text-white py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-[var(--institutional-primary-dark)] transition shadow-md cursor-pointer transform hover:-translate-y-0.5 disabled:opacity-50">Aprobar</button>
+                        <button type="button" @click="rejectReview" :disabled="confirmingDecision || decision.processing" class="flex-1 bg-[#d32f2f] text-white py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-[#b71c1c] transition shadow-md cursor-pointer transform hover:-translate-y-0.5 disabled:opacity-50">Rechazar</button>
+                        <Link :href="route('national-review.index')" class="w-full sm:w-auto px-6 py-2.5 bg-white border border-[var(--institutional-primary)] rounded-lg text-[11px] font-bold uppercase tracking-wider text-[var(--institutional-primary)] hover:bg-gray-50 transition shadow-sm text-center cursor-pointer">Cancelar</Link>
+                    </div>
+                    <p v-if="decision.errors.status" class="text-sm text-red-600">{{ decision.errors.status }}</p>
                 </div>
             </div>
-            <Dialog v-model:open="closing">
-                <DialogContent>
-                    <DialogTitle>Finalizar revisión nacional</DialogTitle>
-                    <DialogDescription>Confirma el resultado del segundo filtro. Esta decisión determina la emisión del reconocimiento.</DialogDescription>
-                    <form @submit.prevent="finishReview" class="space-y-4">
-                        <label for="final-national-result" class="block font-medium">Resultado</label>
-                        <select id="final-national-result" v-model="decision.status" required class="w-full rounded-lg border border-gray-300 p-3"><option disabled value="">Selecciona un resultado</option><option value="approved">Aprobar</option><option value="rejected">Rechazar</option></select>
-                        <label for="final-national-comment" class="block font-medium">Motivo <span v-if="decision.status === 'rejected'">(obligatorio)</span></label>
-                        <textarea id="final-national-comment" v-model="decision.comment" :required="decision.status === 'rejected'" maxlength="1000" rows="3" class="w-full rounded-lg border border-gray-300 p-3" />
-                        <p v-for="(error, key) in decision.errors" :key="key" class="text-sm text-red-600">{{ error }}</p>
-                        <div class="flex justify-end gap-3"><button type="button" @click="closing = false" class="rounded-lg border px-4 py-2">Cancelar</button><button :disabled="decision.processing" class="rounded-lg bg-[var(--institutional-primary)] px-4 py-2 text-white disabled:opacity-50">Confirmar resultado</button></div>
+            <DialogModal :show="closing" @close="closing = false" maxWidth="lg">
+                <template #title>
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <AlertTriangle class="h-6 w-6 text-red-600" aria-hidden="true" />
+                            <span class="font-bold text-lg text-gray-800 uppercase tracking-tight">Rechazar solicitud nacional</span>
+                        </div>
+                        <button type="button" @click="closing = false" aria-label="Cerrar" class="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"><X class="h-6 w-6" /></button>
+                    </div>
+                </template>
+                <template #content>
+                    <form id="national-rejection-form" @submit.prevent="finishReview" class="space-y-4 pt-4">
+                        <div class="relative flex items-center gap-4 px-5 py-4 rounded-lg bg-white shadow-sm border border-gray-100 border-l-[5px] border-l-red-500">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-red-500 opacity-80 mb-0.5">Instrucciones</span>
+                                <span class="text-sm font-bold leading-tight text-gray-800">Proporciona una justificación detallada para rechazar la solicitud en la etapa nacional.</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="final-national-comment" class="block mb-2 text-base text-gray-900 font-medium uppercase tracking-tight">Motivo del rechazo: <span class="text-red-500">*</span></label>
+                            <textarea id="final-national-comment" v-model="decision.comment" required maxlength="1000" class="bg-[#F3F4F6] border-t-0 border-x-0 text-gray-900 text-sm rounded-lg focus:ring-0 block w-full p-2.5 border-b-2 border-b-gray-300 focus:border-b-[var(--institutional-primary)] transition-all min-h-[160px] leading-relaxed" placeholder="Escribe aquí los motivos detallados..." />
+                            <div class="flex justify-between items-center mt-1"><span class="text-xs text-gray-500">Escribe una descripción</span><span class="text-gray-400 text-sm">{{ decision.comment.length }}/1000</span></div>
+                            <p v-for="(error, key) in decision.errors" :key="key" class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        </div>
                     </form>
-                </DialogContent>
-            </Dialog>
+                </template>
+                <template #footer>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <button type="button" @click="closing = false" class="flex-1 sm:flex-none px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-xs font-bold uppercase tracking-widest hover:bg-gray-200 transition cursor-pointer">Cancelar</button>
+                        <button type="submit" form="national-rejection-form" :disabled="confirmingDecision || decision.processing" class="flex-1 sm:flex-none px-8 py-2.5 bg-red-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition shadow-lg shadow-red-200/50 disabled:opacity-50 cursor-pointer">Confirmar rechazo</button>
+                    </div>
+                </template>
+            </DialogModal>
 
         </div>
     </DynamicLayout>
 </template>
+
+<style scoped>
+.national-evaluators-select :deep(.vs__dropdown-toggle) {
+    min-height: 52px;
+    padding: 7px 12px;
+    border-radius: 0.5rem;
+}
+.national-evaluators-select :deep(.vs__selected-options) {
+    align-items: center;
+    min-width: 0;
+}
+.national-evaluators-select :deep(.vs__search),
+.national-evaluators-select :deep(.vs__selected) {
+    font-size: 1rem;
+}
+.national-evaluators-select :deep(.vs__search) {
+    margin-top: 0;
+    padding: 4px 0;
+}
+</style>
